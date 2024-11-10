@@ -24,26 +24,18 @@ private:
 
     Block blockList[NUM_BLOCKS];
     Point positions[NUM_BLOCKS][NUM_POSITIONS];
-    int rotatePos;
+    int rotatePos = std::rand() % 4; 
 
-public:
-    // Constructor
-    Shape() : rotatePos(std::rand() % NUM_BLOCKS) {
-        static bool isSeeded = false;
-        if (!isSeeded) {
-            std::srand(static_cast<unsigned int>(std::time(nullptr)));
-            isSeeded = true;
-        }
-
-        // Initialize the first block with a default position and color
-        // You may replace (0, 0) and a color with actual intended values
-        uint16_t color = TFT_WHITE; // Example color, replace as necessary
-        blockList[0] = Block(0, 0, color);
-
-        // Generate all remaining blocks based on the first block's position
-        generateShape();
+protected:
+    // Protected Constructor
+    Shape() {
+        // Randomly select a valid rotation position
+        rotatePos = std::rand() % 4; // Generates a number between 0 and 3
+        Serial.print("Initialized rotatePos to: ");
+        Serial.println(rotatePos); // Debug print to check random value
     }
 
+public:
     // Virtual destructor for base class
     virtual ~Shape() {}
 
@@ -110,9 +102,9 @@ public:
     // Sets the blocks of the new Shape into the blockList
     void generateShape() {
         uint16_t color = blockList[0].getColor();
-         blockList[1] = Block(blockList[0].getX(), blockList[0].getY() - 1, blockList[0].getColor());
-        blockList[2] = Block(blockList[0].getX(), blockList[0].getY() + 1, blockList[0].getColor());
-        blockList[3] = Block(blockList[0].getX(), blockList[0].getY() + 2, blockList[0].getColor());
+        for (int i = 1; i < NUM_BLOCKS; ++i) {
+            blockList[i] = Block(getXPosition(i - 1), getYPosition(i - 1), color);
+        }
     }
 
     // Gets the horizontal coordinate of the indexed block of blockList

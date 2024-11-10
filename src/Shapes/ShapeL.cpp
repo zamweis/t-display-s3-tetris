@@ -2,7 +2,7 @@
 #include "Block.h"
 #include "Point.h"
 
-ShapeL::ShapeL() {
+ShapeL::ShapeL() : Shape() {
     uint16_t color = TFT_ORANGE;
 
     if (rotatePos == getROTATEPOSITION1()) {
@@ -28,6 +28,8 @@ ShapeL::ShapeL() {
     setPoint(3, 0, Point(-1, 1));
     setPoint(3, 1, Point(-1, 0));
     setPoint(3, 2, Point(1, 0));
+    
+    generateShape();
 }
 
 void ShapeL::drawNextShape(TFT_eSPI& tft, int boxSize) {

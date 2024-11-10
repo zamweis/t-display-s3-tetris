@@ -4,7 +4,7 @@
 #include <iostream>
 
 // Constructor implementation for ShapeI
-ShapeI::ShapeI() {
+ShapeI::ShapeI() : Shape() {
     // Initialize rotation position
     uint16_t color = TFT_WHITE; // Example 16-bit color representation (yellow)
 
@@ -35,6 +35,8 @@ ShapeI::ShapeI() {
     setPoint(3, 0, Point(0, -1));
     setPoint(3, 1, Point(0, 1));
     setPoint(3, 2, Point(0, 2));
+
+    generateShape();
 }
 
 // Implementation of drawNextShape

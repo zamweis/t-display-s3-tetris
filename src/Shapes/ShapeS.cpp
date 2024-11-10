@@ -2,7 +2,7 @@
 #include "Block.h"
 #include "Point.h"
 
-ShapeS::ShapeS() {
+ShapeS::ShapeS() : Shape() {
     uint16_t color = TFT_GREEN;
 
     blockList[0] = Block(4, -2, color);
@@ -22,6 +22,8 @@ ShapeS::ShapeS() {
     setPoint(3, 0, Point(1, 0));
     setPoint(3, 1, Point(0, 1));
     setPoint(3, 2, Point(-1, 1));
+    
+    generateShape();
 }
 
 void ShapeS::drawNextShape(TFT_eSPI& tft, int boxSize) {

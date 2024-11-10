@@ -46,8 +46,21 @@ void Block::moveDown() {
 
 void Block::draw(TFT_eSPI &tft, int boxSize) const {
     // Calculate padding for centering within the grid cell
-    int padding = (boxSize - (boxSize - 4)) / 2; // Adjust the padding based on boxSize
-    tft.fillRect(x * boxSize + padding, y * boxSize + padding, boxSize - 3, boxSize - 3, color);
+    int padding = 2; // Adjust the padding based on boxSize
+
+    // Debug statements
+    Serial.println("Drawing block:");
+    Serial.print("X: ");
+    Serial.print(x);
+    Serial.print(",Y: ");
+    Serial.println(y);
+
+    if (y >= 0) {
+        tft.fillRect(x * boxSize + padding, y * boxSize + padding, boxSize - 3, boxSize - 3, color);
+    } else {
+        Serial.println("Block is outside visible area, negating y.");
+        tft.fillRect(x * boxSize + padding, -y * boxSize + padding, boxSize - 3, boxSize - 3, color);
+    }
 }
 
 void Block::drawWithOffset(TFT_eSPI &tft, int boxSize, int xOffset, int yOffset) const {

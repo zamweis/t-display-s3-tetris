@@ -2,7 +2,7 @@
 #include "Block.h"
 #include "Point.h"
 
-ShapeO::ShapeO() {
+ShapeO::ShapeO() : Shape() {
     uint16_t color = TFT_YELLOW;
 
     blockList[0] = Block(4, -1, color);
@@ -12,6 +12,8 @@ ShapeO::ShapeO() {
         setPoint(i, 1, Point(0, -1));
         setPoint(i, 2, Point(1, -1));
     }
+    
+    generateShape();
 }
 
 void ShapeO::drawNextShape(TFT_eSPI& tft, int boxSize) {

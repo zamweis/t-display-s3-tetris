@@ -3,7 +3,7 @@
 #include "Point.h"
 #include <iostream>
 
-ShapeJ::ShapeJ() {
+ShapeJ::ShapeJ() : Shape() {
     uint16_t color = TFT_BLUE; // Example 16-bit color (adjust as needed)
 
     // Initialize blocks based on rotation position
@@ -29,6 +29,8 @@ ShapeJ::ShapeJ() {
     setPoint(3, 0, Point(1, 0));
     setPoint(3, 1, Point(-1, 0));
     setPoint(3, 2, Point(-1, -1));
+
+    generateShape();
 }
 
 void ShapeJ::drawNextShape(TFT_eSPI& tft, int boxSize) {
