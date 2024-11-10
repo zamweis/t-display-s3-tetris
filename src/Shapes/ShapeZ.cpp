@@ -5,7 +5,7 @@
 ShapeZ::ShapeZ() : Shape() {
     uint16_t color = TFT_RED;
 
-    blockList[0] = Block(4, -2, color);
+    blockList[0] = Block(4, 1, color);
 
     setPoint(0, 0, Point(1, -1));
     setPoint(0, 1, Point(1, 0));
@@ -24,10 +24,4 @@ ShapeZ::ShapeZ() : Shape() {
     setPoint(3, 2, Point(-1, 0));
     
     generateShape();
-}
-
-void ShapeZ::drawNextShape(TFT_eSPI& tft, int boxSize) {
-    for (int i = 0; i < 4; ++i) {
-        blockList[i].draw(tft, boxSize);
-    }
 }

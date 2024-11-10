@@ -42,6 +42,8 @@ void Block::moveRight() {
 
 void Block::moveDown() {
     y += 1;
+    Serial.print("Block moved down to y: ");
+    Serial.println(y);
 }
 
 void Block::draw(TFT_eSPI &tft, int boxSize,  uint16_t colorOverride) const {
@@ -49,18 +51,10 @@ void Block::draw(TFT_eSPI &tft, int boxSize,  uint16_t colorOverride) const {
     int padding = 2; // Adjust the padding based on boxSize
     uint16_t drawColor = (colorOverride != 0) ? colorOverride : color;
 
-    // Debug statements
-    Serial.println("Drawing block:");
-    Serial.print("X: ");
-    Serial.print(x);
-    Serial.print(",Y: ");
-    Serial.println(y);
-
     if (y >= 0) {
         tft.fillRect(x * boxSize + padding, y * boxSize + padding, boxSize - 3, boxSize - 3, drawColor);
     } else {
-        Serial.println("Block is outside visible area, negating y.");
-        tft.fillRect(x * boxSize + padding, -y * boxSize + padding, boxSize - 3, boxSize - 3, drawColor);
+        Serial.println("Block is outside visible area, ignoring");
     }
 }
 

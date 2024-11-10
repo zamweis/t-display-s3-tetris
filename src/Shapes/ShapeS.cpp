@@ -5,7 +5,7 @@
 ShapeS::ShapeS() : Shape() {
     uint16_t color = TFT_GREEN;
 
-    blockList[0] = Block(4, -2, color);
+    blockList[0] = Block(4, 1, color);
 
     setPoint(0, 0, Point(0, -1));
     setPoint(0, 1, Point(1, 0));
@@ -24,10 +24,4 @@ ShapeS::ShapeS() : Shape() {
     setPoint(3, 2, Point(-1, 1));
     
     generateShape();
-}
-
-void ShapeS::drawNextShape(TFT_eSPI& tft, int boxSize) {
-    for (int i = 0; i < 4; ++i) {
-        blockList[i].draw(tft, boxSize);
-    }
 }

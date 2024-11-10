@@ -13,135 +13,92 @@
 #define BOX_SIZE 17
 
 uint16_t backgroundColor;
-
 TFT_eSPI tft = TFT_eSPI();  // Initialize TFT display
+Shape* shape = nullptr;
+BlockMap blockMap;
 
-// Function to create a shape based on an index
-Shape* createShapeByIndex(int index, int x, int y) {
-    Shape* shape = nullptr;
-    uint16_t color;
-
-    // Debug: Print shape creation index
-    Serial.print("Creating shape with index: ");
-    Serial.println(index);
-
+// Function to create a shape based on a random index
+Shape* createRandomShape() {
+    Shape* newShape = nullptr;
+    int index = rand() % 7;  // Generate a random index between 0 and 6
     switch (index) {
-        case 0: shape = new ShapeI(); break;
-        case 1: shape = new ShapeJ(); break;
-        case 2: shape = new ShapeL(); break;
-        case 3: shape = new ShapeO(); break;
-        case 4: shape = new ShapeS(); break;
-        case 5: shape = new ShapeT(); break;
-        case 6: shape = new ShapeZ(); break;
-        default:
-            Serial.println("Invalid shape index!");
-            return nullptr; // Fallback in case of an unexpected index
-    }
-    
-    if (shape) {
-        // Debug: Confirm shape creation
-        Serial.println("Shape created successfully.");
-        Serial.print("Shape rotation: ");
-        Serial.println(shape->getRotatePosition());
-
-        /*
-        // Print block information
-        Serial.println("Block list for the shape:");
-        for (int i = 0; i < 4; ++i) {
-            try {
-                Block& block = shape->getBlock(i);
-                Serial.print("Block ");
-                Serial.print(i);
-                Serial.print(" - X: ");
-                Serial.print(block.getX());
-                Serial.print(", Y: ");
-                Serial.print(block.getY());
-                Serial.print(", Color: ");
-                Serial.println(block.getColor());
-            } catch (const std::out_of_range& e) {
-                Serial.print("Error accessing block ");
-                Serial.print(i);
-                Serial.println(": Index out of range.");
-            }
-        }
-        */
+        case 0: newShape = new ShapeI(); break;
+        case 1: newShape = new ShapeJ(); break;
+        case 2: newShape = new ShapeL(); break;
+        case 3: newShape = new ShapeO(); break;
+        case 4: newShape = new ShapeS(); break;
+        case 5: newShape = new ShapeT(); break;
+        case 6: newShape = new ShapeZ(); break;
+        default: break;
     }
 
-    return shape;
+    if (!newShape) {
+        Serial.println("Failed to create shape. Returning nullptr.");
+    }
+    return newShape;
 }
 
-void drawGrid(TFT_eSPI& tft) {
-    // Background
-    tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundColor); // Dark background color
-
-    // Columns
+void drawGrid() {
+    tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundColor); // Background color
     tft.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, TFT_BLACK); // Outer border
+
     for (int col = 0; col <= SCREEN_WIDTH / BOX_SIZE; ++col) {
-        int x = col * BOX_SIZE;
-        tft.drawLine(x, 0, x, SCREEN_HEIGHT, TFT_BLACK);
+        tft.drawLine(col * BOX_SIZE, 0, col * BOX_SIZE, SCREEN_HEIGHT, TFT_BLACK);
     }
-
-    // Rows
     for (int row = 0; row <= SCREEN_HEIGHT / BOX_SIZE; ++row) {
-        int y = row * BOX_SIZE;
-        tft.drawLine(0, y, SCREEN_WIDTH, y, TFT_BLACK);
+        tft.drawLine(0, row * BOX_SIZE, SCREEN_WIDTH, row * BOX_SIZE, TFT_BLACK);
     }
 
-    // Debug: Print completion message for grid drawing
     Serial.println("Grid drawn successfully.");
 }
 
 void setup() {
-    Serial.begin(115200); // Initialize serial communication for debugging
+    Serial.begin(115200);
     Serial.println("Initializing TFT display...");
 
     tft.init();
-    tft.setRotation(0);  // Set display to portrait mode
-
+    tft.setRotation(0);
     backgroundColor = tft.color565(30, 30, 30);
-    
+
     Serial.println("Drawing grid...");
-    drawGrid(tft);
-    
-    // Seed random generator
-    srand(static_cast<unsigned int>(time(nullptr)));
-    Serial.println("Random generator seeded.");
+    drawGrid();
+
+    srand(static_cast<unsigned int>(time(nullptr))); // Seed random generator
+
+    // Create the first shape
+    shape = createRandomShape();
+    if (shape) {
+        shape->drawShape(tft, BOX_SIZE);
+    } else {
+        Serial.println("Failed to create initial shape.");
+    }
 }
 
 void loop() {
-    drawGrid(tft);
-    // Calculate center position for the shapes
-    int centerX = (SCREEN_WIDTH / 2) / BOX_SIZE;
-    int centerY = (SCREEN_HEIGHT / 2) / BOX_SIZE;
-
-    // Debug: Print center positions
-    //Serial.print("Center positions - X: ");
-    //Serial.print(centerX);
-    //Serial.print(", Y: ");
-   // Serial.println(centerY);
-
-    // Loop through and draw each shape, one at a time
-    for (int i = 0; i < 7; ++i) {
-        // Create and draw the shape
-        Shape* shape = createShapeByIndex(i, centerX, centerY);
-        if (shape) {
-            //Serial.print("Drawing shape with index: ");
-            //Serial.println(i);
-
-            shape->drawShape(tft, BOX_SIZE);
-
-            // Debug: Indicate completion of shape drawing
-           //Serial.println("Shape drawn. Waiting...");
-
-            delay(1000); // Wait for 1 second before drawing the next shape
-
-            // Debug: Deleting shape
-            //Serial.println("Deleting shape...");
-            shape->eraseShape(tft, BOX_SIZE, backgroundColor);
-            delete shape;
-            //Serial.println("Shape deleted.");
+    if (shape) {
+        // Check if the shape can move down
+        if (shape->isMovableDownWards(blockMap)) {
+            Serial.println("Shape is movable downwards. Erasing and redrawing.");
+            shape->eraseShape(tft, BOX_SIZE, backgroundColor); // Erase old position
+            shape->moveDown(blockMap); // Move shape down
+            shape->drawShape(tft, BOX_SIZE); // Draw new position
         } else {
-            Serial.println("Failed to create shape.");
+            Serial.println("Shape cannot move down. Adding to block map.");
+            // Shape can't move down; add it to the block map
+            blockMap.addBlocks(shape->getBlockList(), 4); // Ensure size matches number of blocks
+            delete shape; // Free memory
+            shape = nullptr; // Reset pointer
+        }
+    } else {
+        Serial.println("Creating a new shape.");
+        // Create a new shape when there is no active shape
+        shape = createRandomShape();
+        if (shape) {
+            shape->drawShape(tft, BOX_SIZE); // Draw the new shape
+        } else {
+            Serial.println("Failed to create new shape.");
         }
     }
+
+    delay(500); // Adjust the speed of shape movement as needed
 }

@@ -15,13 +15,6 @@ public:
      * Initializes the L-shaped tetromino.
      */
     ShapeL();
-
-    /**
-     * @brief Draws the next shape preview.
-     * @param tft Reference to the TFT_eSPI display object.
-     * @param boxSize Size of each box for rendering the shape.
-     */
-    void drawNextShape(TFT_eSPI& tft, int boxSize) override;
 };
 
 #endif // SHAPEL_H

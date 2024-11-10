@@ -8,7 +8,10 @@ class Shape;
 
 class BlockMap {
 private:
-    Block* map[10][10];
+    static constexpr int MAP_WIDTH = 10;
+    static constexpr int MAP_HEIGHT = 20;
+    static constexpr int MAX_LINE_INDEX = MAP_HEIGHT - 1; // Define MAX_LINE_INDEX here
+    Block* map[MAP_WIDTH][MAP_HEIGHT]; // Corrected dimensions
 
 public:
     BlockMap();
@@ -22,13 +25,13 @@ public:
     void removeBlock(int x, int y);
     void clearLine(int lineIndex);
     bool isLineFull(int lineIndex) const;
-    int clearFullLines(Shape& activeShape); // No error since Shape is forward-declared
+    int clearFullLines(Shape& activeShape);
     bool isLineEmpty(int lineIndex) const;
     void moveBlockDown(int x, int y);
     bool isBlockMovableDownwards(int x, int y) const;
     void moveLineDown(int lineIndex);
     int getFirstNotEmptyLine(int lineIndex) const;
-    void moveAllNotEmptyLinesDown(Shape& activeShape); // No error since Shape is forward-declared
+    void moveAllNotEmptyLinesDown(Shape& activeShape);
 };
 
 #endif // BLOCKMAP_H

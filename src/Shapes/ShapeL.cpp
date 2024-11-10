@@ -6,11 +6,11 @@ ShapeL::ShapeL() : Shape() {
     uint16_t color = TFT_ORANGE;
 
     if (rotatePos == getROTATEPOSITION1()) {
-        setBlock(Block(4, -1, color), 0);
+        setBlock(Block(4, 1, color), 0);
     } else if (rotatePos == getROTATEPOSITION2()) {
-        setBlock(Block(5, -2, color), 0);
+        setBlock(Block(5, 1, color), 0);
     } else {
-        setBlock(Block(4, -2, color), 0);
+        setBlock(Block(4, 1, color), 0);
     }
 
     setPoint(0, 0, Point(1, 1));
@@ -30,10 +30,4 @@ ShapeL::ShapeL() : Shape() {
     setPoint(3, 2, Point(1, 0));
     
     generateShape();
-}
-
-void ShapeL::drawNextShape(TFT_eSPI& tft, int boxSize) {
-    for (int i = 0; i < 4; ++i) {
-        blockList[i].drawWithOffset(tft, boxSize, 0, -20);
-    }
 }

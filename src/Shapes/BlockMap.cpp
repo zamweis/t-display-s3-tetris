@@ -2,10 +2,6 @@
 #include "Shape.h" // Include the full definition of Shape
 #include <iostream>
 
-// Constants for block map dimensions
-constexpr int MAP_WIDTH = 10;
-constexpr int MAP_HEIGHT = 20;
-constexpr int MAX_LINE_INDEX = MAP_HEIGHT - 1;
 
 // Constructor
 BlockMap::BlockMap() {
@@ -20,31 +16,35 @@ BlockMap::BlockMap() {
 BlockMap::~BlockMap() {
     for (int x = 0; x < MAP_WIDTH; ++x) {
         for (int y = 0; y < MAP_HEIGHT; ++y) {
-            delete map[x][y];
-            map[x][y] = nullptr;
+            if (map[x][y] != nullptr) {
+                delete map[x][y];
+                map[x][y] = nullptr;
+            }
         }
     }
 }
 
-// Adds a given block to blockMap at the corresponding position
 void BlockMap::addBlock(Block* block) {
     if (block != nullptr && block->getX() >= 0 && block->getX() < MAP_WIDTH &&
         block->getY() >= 0 && block->getY() < MAP_HEIGHT) {
+        // Free existing block memory (if any)
         if (map[block->getX()][block->getY()] != nullptr) {
-            delete map[block->getX()][block->getY()]; // Clean up if block already exists
+            delete map[block->getX()][block->getY()]; // Prevent memory leaks
         }
+        // Assign new block pointer
         map[block->getX()][block->getY()] = block;
+    } else {
+        delete block; // Clean up the block if it's out of bounds
     }
 }
 
-// Adds all the blocks of a shape into the blockMap
 void BlockMap::addBlocks(Block blockList[], int size) {
     for (int i = 0; i < size; ++i) {
-        addBlock(new Block(blockList[i])); // Copy the block into the map
+        // Creating a copy using `new` is fine, but you must ensure ownership and proper cleanup
+        addBlock(new Block(blockList[i])); // Copy constructor should create a deep copy
     }
 }
 
-// Checks if a field is empty
 bool BlockMap::isFieldEmpty(int x, int y) const {
     if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
         return map[x][y] == nullptr;

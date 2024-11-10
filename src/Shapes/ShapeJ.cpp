@@ -8,9 +8,9 @@ ShapeJ::ShapeJ() : Shape() {
 
     // Initialize blocks based on rotation position
     if (rotatePos == ROTATEPOSITION3) {
-        blockList[0] = Block(4, -1, color);
+        blockList[0] = Block(5, 1, color);
     } else {
-        blockList[0] = Block(4, -2, color);
+        blockList[0] = Block(5, 1, color);
     }
 
     // Setting points for rotations
@@ -31,12 +31,4 @@ ShapeJ::ShapeJ() : Shape() {
     setPoint(3, 2, Point(-1, -1));
 
     generateShape();
-}
-
-void ShapeJ::drawNextShape(TFT_eSPI& tft, int boxSize) {
-    for (int i = 0; i < 4; ++i) {
-        std::cout << "Drawing block at x: " << blockList[i].getX()
-                  << ", y: " << blockList[i].getY() << std::endl;
-        // Replace with your drawing logic using tft if necessary
-    }
 }
