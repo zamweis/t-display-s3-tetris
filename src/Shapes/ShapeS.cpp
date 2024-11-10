@@ -4,8 +4,11 @@
 
 ShapeS::ShapeS() : Shape() {
     uint16_t color = TFT_GREEN;
-
-    blockList[0] = Block(4, 1, color);
+    if (getRotatePosition() == getROTATEPOSITION1()) {
+        blockList[0] = Block(4, -3, color);
+    } else {
+        blockList[0] = Block(4, -3, color);
+    }
 
     setPoint(0, 0, Point(0, -1));
     setPoint(0, 1, Point(1, 0));

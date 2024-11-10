@@ -20,7 +20,7 @@ BlockMap blockMap;
 // Function to create a shape based on a random index
 Shape* createRandomShape() {
     Shape* newShape = nullptr;
-    int index = rand() % 7;  // Generate a random index between 0 and 6
+    int index =  0;  // Generate a random index between 0 and 6
     switch (index) {
         case 0: newShape = new ShapeI(); break;
         case 1: newShape = new ShapeJ(); break;
@@ -68,6 +68,7 @@ void setup() {
     // Create the first shape
     shape = createRandomShape();
     if (shape) {
+        shape->moveToHighestBlockAtMinusOne();
         shape->drawShape(tft, BOX_SIZE);
     } else {
         Serial.println("Failed to create initial shape.");
@@ -94,11 +95,12 @@ void loop() {
         // Create a new shape when there is no active shape
         shape = createRandomShape();
         if (shape) {
+            shape->moveToHighestBlockAtMinusOne();
             shape->drawShape(tft, BOX_SIZE); // Draw the new shape
         } else {
             Serial.println("Failed to create new shape.");
         }
     }
 
-    delay(500); // Adjust the speed of shape movement as needed
+    delay(250); // Adjust the speed of shape movement as needed
 }

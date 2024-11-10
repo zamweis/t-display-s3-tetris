@@ -8,9 +8,9 @@ ShapeJ::ShapeJ() : Shape() {
 
     // Initialize blocks based on rotation position
     if (rotatePos == ROTATEPOSITION3) {
-        blockList[0] = Block(5, 1, color);
+        blockList[0] = Block(5, -1, color);
     } else {
-        blockList[0] = Block(5, 1, color);
+        blockList[0] = Block(5, -2, color);
     }
 
     // Setting points for rotations

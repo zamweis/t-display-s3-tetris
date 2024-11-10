@@ -23,7 +23,7 @@ public:
     static constexpr int NUM_BLOCKS = 4;
     static constexpr int NUM_POSITIONS = 3;
     static constexpr int MAP_WIDTH = 10;
-    static constexpr int MAP_HEIGHT = 20;
+    static constexpr int MAP_HEIGHT = 19;
 
     Block blockList[NUM_BLOCKS];
     Point positions[NUM_BLOCKS][NUM_POSITIONS];
@@ -51,6 +51,7 @@ public:
     bool isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap);
     void moveLeft(BlockMap& blockMap);
     Block getRightBlock();
+    Block getHighestBlock();
     bool isMovableToTheRight(BlockMap& blockMap);
     bool isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap);
     void moveRight(BlockMap& blockMap);
@@ -62,6 +63,7 @@ public:
     void drawShape(TFT_eSPI& tft, int boxSize) const;
     void drawShapeBorderOnly(TFT_eSPI& tft, int boxSize, int offset) const;
     void eraseShape(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) const;
+    void moveToHighestBlockAtMinusOne();
 
 private:
     bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap);

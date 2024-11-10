@@ -9,7 +9,7 @@ class Shape;
 class BlockMap {
 private:
     static constexpr int MAP_WIDTH = 10;
-    static constexpr int MAP_HEIGHT = 20;
+    static constexpr int MAP_HEIGHT = 19;
     static constexpr int MAX_LINE_INDEX = MAP_HEIGHT - 1; // Define MAX_LINE_INDEX here
     Block* map[MAP_WIDTH][MAP_HEIGHT]; // Corrected dimensions
 

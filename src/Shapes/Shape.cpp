@@ -19,21 +19,15 @@ Point (*Shape::getPositions())[NUM_POSITIONS] {
 }
 
 void Shape::setBlock(const Block& block, int index) {
-    if (index >= 0 && index < NUM_BLOCKS) {
-        blockList[index] = block;
-    }
+    blockList[index] = block;
 }
 
 void Shape::setPoint(int x, int y, const Point& point) {
-    if (x >= 0 && x < NUM_BLOCKS && y >= 0 && y < NUM_POSITIONS) {
-        positions[x][y] = point;
-    }
+   positions[x][y] = point;
 }
 
 void Shape::setRotatePosition(int rotatePosition) {
-    if (rotatePosition >= ROTATEPOSITION0 && rotatePosition <= ROTATEPOSITION3) {
-        rotatePos = rotatePosition;
-    }
+    rotatePos = rotatePosition;
 }
 
 int Shape::getRotatePosition() const {
@@ -108,27 +102,33 @@ Block Shape::getLeftBlock() {
 }
 
 bool Shape::isMovableToTheLeft(BlockMap& blockMap) {
+    bool result = true;
     if (getLeftBlock().getX() == 0) {
-        return false;
-    }
-    for (const auto& block : blockList) {
-        if (isInCollisionWithLeftBlock(block, blockMap)) {
-            return false;
+        result = false;
+    } else {
+        for (int i = 0; i <= 3; i++) {
+            if (result == true) {
+                result = !isInCollisionWithLeftBlock(getBlock(i), blockMap);
+            }
         }
     }
-    return true;
+    return result;
 }
 
 bool Shape::isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap) {
+    bool result = false;
     int x = block.getX() - 1;
     int y = block.getY();
-    return !blockMap.isFieldEmpty(x, y);
+    if (blockMap.isFieldEmpty(x, y) == false) {
+        result = true;
+    }
+    return result;
 }
 
 void Shape::moveLeft(BlockMap& blockMap) {
     if (isMovableToTheLeft(blockMap)) {
-        for (auto& block : blockList) {
-            block.moveLeft();
+        for (int i = 0; i <= 3; i++) {
+            blockList[i].moveLeft();
         }
     }
 }
@@ -144,21 +144,27 @@ Block Shape::getRightBlock() {
 }
 
 bool Shape::isMovableToTheRight(BlockMap& blockMap) {
-    if (getRightBlock().getX() == MAP_WIDTH - 1) {
-        return false;
-    }
-    for (const auto& block : blockList) {
-        if (isInCollisionWithRightBlock(block, blockMap)) {
-            return false;
+    bool result = true;
+    if (getRightBlock().getX() == MAP_WIDTH) {
+        result = false;
+    } else {
+        for (int i = 0; i <= 3; i++) {
+            if (result == true) {
+                result = !isInCollisionWithRightBlock(getBlock(i), blockMap);
+            }
         }
     }
-    return true;
+    return result;
 }
 
 bool Shape::isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap) {
+    bool result = false;
     int x = block.getX() + 1;
     int y = block.getY();
-    return !blockMap.isFieldEmpty(x, y);
+    if (blockMap.isFieldEmpty(x, y) == false) {
+        result = true;
+    }
+    return result;
 }
 
 void Shape::moveRight(BlockMap& blockMap) {
@@ -179,22 +185,40 @@ Block Shape::getLowestBlock() {
     return lowestBlock;
 }
 
-bool Shape::isMovableDownWards(BlockMap& blockMap) {
-    if (getLowestBlock().getY() == MAP_HEIGHT - 1) {
-        return false;
-    }
-    for (const auto& block : blockList) {
-        if (isInCollisionWithLowerBlock(block, blockMap)) {
-            return false;
+Block Shape::getHighestBlock() {
+    Block highestBlock = blockList[0];
+    for (int i = 1; i <= 3; i++) {
+        if (highestBlock.getY() > blockList[i].getY()) {
+            highestBlock = blockList[i];
         }
     }
-    return true;
+    return highestBlock;
+}
+
+bool Shape::isMovableDownWards(BlockMap& blockMap) {
+    bool result = true;
+    if (getHighestBlock().getY() < 0) {
+        result = true;
+    } else if (getLowestBlock().getY() == MAP_HEIGHT) {
+        result = false;
+    } else {
+        for (int i = 0; i <= 3; i++) {
+            if (result == true) {
+                result = !isInCollisionWithLowerBlock(getBlock(i), blockMap);
+            }
+        }
+    }
+    return result;
 }
 
 bool Shape::isInCollisionWithLowerBlock(const Block& block, BlockMap& blockMap) {
+    bool result = false;
     int x = block.getX();
     int y = block.getY() + 1;
-    return !blockMap.isFieldEmpty(x, y);
+    if (blockMap.isFieldEmpty(x, y) == false) {
+        result = true;
+    }
+    return result;
 }
 
 void Shape::moveDown(BlockMap& blockMap) {
@@ -214,6 +238,7 @@ void Shape::fallDown(BlockMap& blockMap) {
 void Shape::drawShape(TFT_eSPI& tft, int boxSize) const {
     for (int i = 0; i < NUM_BLOCKS; ++i) {
         blockList[i].draw(tft, boxSize);
+
     }
 }
 
@@ -239,3 +264,13 @@ bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
     }
     return true;
 }
+
+void Shape::moveToHighestBlockAtMinusOne() {
+    Block highestBlock = getHighestBlock();
+    int yOffset = highestBlock.getY() - (-1);
+
+    for (auto& block : blockList) {
+        block.setY(block.getY() - yOffset);
+    }
+}
+
