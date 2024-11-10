@@ -12,6 +12,8 @@
 #define SCREEN_HEIGHT 320
 #define BOX_SIZE 17
 
+uint16_t backgroundColor;
+
 TFT_eSPI tft = TFT_eSPI();  // Initialize TFT display
 
 // Function to create a shape based on an index
@@ -42,6 +44,7 @@ Shape* createShapeByIndex(int index, int x, int y) {
         Serial.print("Shape rotation: ");
         Serial.println(shape->getRotatePosition());
 
+        /*
         // Print block information
         Serial.println("Block list for the shape:");
         for (int i = 0; i < 4; ++i) {
@@ -61,6 +64,7 @@ Shape* createShapeByIndex(int index, int x, int y) {
                 Serial.println(": Index out of range.");
             }
         }
+        */
     }
 
     return shape;
@@ -68,7 +72,7 @@ Shape* createShapeByIndex(int index, int x, int y) {
 
 void drawGrid(TFT_eSPI& tft) {
     // Background
-    tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, tft.color565(30, 30, 30)); // Dark background color
+    tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundColor); // Dark background color
 
     // Columns
     tft.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, TFT_BLACK); // Outer border
@@ -93,6 +97,8 @@ void setup() {
 
     tft.init();
     tft.setRotation(0);  // Set display to portrait mode
+
+    backgroundColor = tft.color565(30, 30, 30);
     
     Serial.println("Drawing grid...");
     drawGrid(tft);
@@ -131,6 +137,7 @@ void loop() {
 
             // Debug: Deleting shape
             //Serial.println("Deleting shape...");
+            shape->eraseShape(tft, BOX_SIZE, backgroundColor);
             delete shape;
             //Serial.println("Shape deleted.");
         } else {

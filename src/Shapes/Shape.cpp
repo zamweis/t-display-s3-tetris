@@ -295,6 +295,13 @@ public:
         }
     }
 
+    // Erases all the blocks of the shape by drawing them with a background color
+    void eraseShape(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) const {
+        for (int i = 0; i < NUM_BLOCKS; ++i) {
+            blockList[i].draw(tft, boxSize, backgroundColor);
+        }
+    }
+
 private:
     // Helper method for rotation validation
     bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {

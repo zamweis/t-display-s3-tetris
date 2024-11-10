@@ -27,7 +27,7 @@ public:
     void moveDown();
 
     // Marking these methods as const to allow calling on const objects
-    void draw(TFT_eSPI &tft, int boxSize) const;
+    void draw(TFT_eSPI &tft, int boxSize, uint16_t color = 0) const;
     void drawWithOffset(TFT_eSPI &tft, int boxSize, int xOffset, int yOffset) const;
     void drawBorderOnly(TFT_eSPI &tft, int boxSize, int offset) const;
 };

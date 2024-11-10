@@ -126,6 +126,12 @@ public:
             blockList[i].drawBorderOnly(tft, boxSize, offset);
         }
     }
+
+    void eraseShape(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) {
+        for (int i = 0; i < 4; i++) {
+            blockList[i].draw(tft, boxSize, backgroundColor);
+        }
+    }
 };
 
 #endif // SHAPE_H
