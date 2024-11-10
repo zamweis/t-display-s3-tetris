@@ -1,89 +1,64 @@
-#include <iostream>
-#include <string>
-#include <TFT_eSPI.h> // Include the TFT_eSPI library for ESP32-S3
+#include "Block.h"
 
-class Block
-{
-private:
-    int x;
-    int y;
-    uint16_t color; // Use 16-bit color values for TFT displays
+// Constructor
+Block::Block(int x, int y, uint16_t color) : x(x), y(y), color(color) {}
 
-public:
-    // Constructor
-    Block(int x, int y, uint16_t color) : x(x), y(y), color(color) {}
+// Set coordinates
+void Block::setCoordinates(int x, int y) {
+    this->x = x;
+    this->y = y;
+}
 
-    // Set coordinates
-    void setCoordinates(int x, int y)
-    {
-        this->x = x;
-        this->y = y;
-    }
+// Setters
+void Block::setX(int x) {
+    this->x = x;
+}
 
-    // Setters
-    void setX(int x)
-    {
-        this->x = x;
-    }
+void Block::setY(int y) {
+    this->y = y;
+}
 
-    void setY(int y)
-    {
-        this->y = y;
-    }
+void Block::setColor(uint16_t color) {
+    this->color = color;
+}
 
-    void setColor(uint16_t color)
-    {
-        this->color = color;
-    }
+// Getters
+int Block::getX() const {
+    return x;
+}
 
-    // Getters
-    int getX() const
-    {
-        return x;
-    }
+int Block::getY() const {
+    return y;
+}
 
-    int getY() const
-    {
-        return y;
-    }
+uint16_t Block::getColor() const {
+    return color;
+}
 
-    uint16_t getColor() const
-    {
-        return color;
-    }
+// Movement methods
+void Block::moveLeft() {
+    x -= 1;
+}
 
-    // Movement methods
-    void moveLeft()
-    {
-        x -= 1;
-    }
+void Block::moveRight() {
+    x += 1;
+}
 
-    void moveRight()
-    {
-        x += 1;
-    }
+void Block::moveDown() {
+    y += 1;
+}
 
-    void moveDown()
-    {
-        y += 1;
-    }
+// Drawing methods
+void Block::draw(TFT_eSPI &tft, int boxSize) {
+    tft.fillRect(x * boxSize + 2, y * boxSize + 2, boxSize - 5, boxSize - 5, color);
+    tft.drawRect(x * boxSize + 2, y * boxSize + 2, boxSize - 5, boxSize - 5, TFT_WHITE); // Optional: Draw a border
+}
 
-    // Draw methods
-    // This assumes you have a `TFT_eSPI` instance named `tft`.
-    void draw(TFT_eSPI &tft, int boxSize)
-    {
-        tft.fillRect(x * boxSize + 2, y * boxSize + 2, boxSize - 5, boxSize - 5, color);
-        tft.drawRect(x * boxSize + 2, y * boxSize + 2, boxSize - 5, boxSize - 5, TFT_WHITE); // Optional: Draw a border
-    }
+void Block::drawWithOffset(TFT_eSPI &tft, int boxSize, int xOffset, int yOffset) {
+    tft.fillRect((x - 2) * boxSize + xOffset, (y + 4) * boxSize + yOffset, boxSize - 5, boxSize - 5, color);
+    tft.drawRect((x - 2) * boxSize + xOffset, (y + 4) * boxSize + yOffset, boxSize - 5, boxSize - 5, TFT_WHITE); // Optional: Draw a border
+}
 
-    void drawWithOffset(TFT_eSPI &tft, int boxSize, int xOffset, int yOffset)
-    {
-        tft.fillRect((x - 2) * boxSize + xOffset, (y + 4) * boxSize + yOffset, boxSize - 5, boxSize - 5, color);
-        tft.drawRect((x - 2) * boxSize + xOffset, (y + 4) * boxSize + yOffset, boxSize - 5, boxSize - 5, TFT_WHITE); // Optional: Draw a border
-    }
-
-    void drawBorderOnly(TFT_eSPI &tft, int boxSize, int offset)
-    {
-        tft.drawRect(x * boxSize + 2, (y + offset) * boxSize + 2, boxSize - 5, boxSize - 5, color);
-    }
-};
+void Block::drawBorderOnly(TFT_eSPI &tft, int boxSize, int offset) {
+    tft.drawRect(x * boxSize + 2, (y + offset) * boxSize + 2, boxSize - 5, boxSize - 5, color);
+}
