@@ -3,7 +3,6 @@
 #include "Point.h"
 
 ShapeT::ShapeT() {
-    rotatePos = ROTATEPOSITION0;
     uint16_t color = TFT_MAGENTA;
 
     blockList[0] = Block(4, -2, color);

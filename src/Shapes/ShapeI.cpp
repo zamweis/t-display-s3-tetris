@@ -6,7 +6,6 @@
 // Constructor implementation for ShapeI
 ShapeI::ShapeI() {
     // Initialize rotation position
-    rotatePos = ROTATEPOSITION0;
     uint16_t color = TFT_WHITE; // Example 16-bit color representation (yellow)
 
     // Initialize blocks based on rotation position

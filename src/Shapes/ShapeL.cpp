@@ -3,7 +3,6 @@
 #include "Point.h"
 
 ShapeL::ShapeL() {
-    rotatePos = ROTATEPOSITION0;
     uint16_t color = TFT_ORANGE;
 
     if (rotatePos == getROTATEPOSITION1()) {

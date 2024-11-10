@@ -18,51 +18,67 @@ private:
     static constexpr int NUM_BLOCKS = 4;
     static constexpr int NUM_POSITIONS = 3;
 
+    // Constants for map dimensions (assumed values, replace with actual if different)
+    static constexpr int MAP_WIDTH = 10;
+    static constexpr int MAP_HEIGHT = 22;
+
     Block blockList[NUM_BLOCKS];
     Point positions[NUM_BLOCKS][NUM_POSITIONS];
     int rotatePos;
 
 public:
     // Constructor
-    Shape() : rotatePos(std::rand() % NUM_BLOCKS) { // Initialize rotation position randomly
-        // Seed the random number generator if not already done elsewhere
+    Shape() : rotatePos(std::rand() % NUM_BLOCKS) {
         static bool isSeeded = false;
         if (!isSeeded) {
-            std::srand(std::time(nullptr));
+            std::srand(static_cast<unsigned int>(std::time(nullptr)));
             isSeeded = true;
         }
+
+        // Initialize the first block with a default position and color
+        // You may replace (0, 0) and a color with actual intended values
+        uint16_t color = TFT_WHITE; // Example color, replace as necessary
+        blockList[0] = Block(0, 0, color);
+
+        // Generate all remaining blocks based on the first block's position
+        generateShape();
     }
 
     // Virtual destructor for base class
     virtual ~Shape() {}
 
-    // Accessor methods
+    // Gets the blockList where all the blocks are located in
     Block* getBlockList() {
         return blockList;
     }
 
+    // Gets the list which is used to generate a shape
     Point (*getPositions())[NUM_POSITIONS] {
         return positions;
     }
 
+    // Sets a block into blockList
     void setBlock(const Block& block, int index) {
         if (index >= 0 && index < NUM_BLOCKS) {
             blockList[index] = block;
         }
     }
 
+    // Sets a point into positions
     void setPoint(int x, int y, const Point& point) {
         if (x >= 0 && x < NUM_BLOCKS && y >= 0 && y < NUM_POSITIONS) {
             positions[x][y] = point;
         }
     }
 
+    // Sets a value to rotatePosition
     void setRotatePosition(int rotatePosition) {
         if (rotatePosition >= ROTATEPOSITION0 && rotatePosition <= ROTATEPOSITION3) {
             rotatePos = rotatePosition;
         }
     }
 
+    // Gets the current rotatePos
     int getRotatePosition() const {
         return rotatePos;
     }
@@ -83,6 +99,7 @@ public:
         return ROTATEPOSITION3;
     }
 
+    // Gets the block from blockList at the indexed position
     Block& getBlock(int index) {
         if (index >= 0 && index < NUM_BLOCKS) {
             return blockList[index];
@@ -90,13 +107,18 @@ public:
         throw std::out_of_range("Index out of range");
     }
 
+    // Sets the blocks of the new Shape into the blockList
     void generateShape() {
         uint16_t color = blockList[0].getColor();
         for (int i = 1; i < NUM_BLOCKS; ++i) {
-            blockList[i] = Block(getXPosition(i - 1), getYPosition(i - 1), color);
+            // Assuming positions[i-1] contains relative coordinates
+            int newX = getXPosition(i - 1);
+            int newY = getYPosition(i - 1);
+            blockList[i] = Block(newX, newY, color);
         }
     }
 
+    // Gets the horizontal coordinate of the indexed block of blockList
     int getXPosition(int index) const {
         if (index >= 0 && index < NUM_POSITIONS) {
             return blockList[0].getX() + static_cast<int>(positions[rotatePos][index].getX());
@@ -104,6 +126,7 @@ public:
         return blockList[0].getX(); // Default fallback
     }
 
+    // Gets the vertical coordinate of the indexed block of blockList
     int getYPosition(int index) const {
         if (index >= 0 && index < NUM_POSITIONS) {
             return blockList[0].getY() + static_cast<int>(positions[rotatePos][index].getY());
@@ -111,13 +134,36 @@ public:
         return blockList[0].getY(); // Default fallback
     }
 
-    // Pure virtual functions for rotation and movement checks (to be implemented in derived classes)
-    virtual bool isRotatableAntiClockwise(BlockMap& blockMap) = 0;
-    virtual bool isRotatableClockwise(BlockMap& blockMap) = 0;
-    virtual void rotateAntiClockwise(BlockMap& blockMap) = 0;
-    virtual void rotateClockwise(BlockMap& blockMap) = 0;
+    // Checks if the shape is allowed to rotate anticlockwise
+    bool isRotatableAntiClockwise(BlockMap& blockMap) {
+        int tmpRotatePosition = (rotatePos == ROTATEPOSITION3) ? ROTATEPOSITION0 : rotatePos + 1;
+        return checkRotationValidity(tmpRotatePosition, blockMap);
+    }
 
-    Block getLeftBlock() const {
+    // Checks if the shape is allowed to rotate clockwise
+    bool isRotatableClockwise(BlockMap& blockMap) {
+        int tmpRotatePosition = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
+        return checkRotationValidity(tmpRotatePosition, blockMap);
+    }
+
+    // Rotates the shape anticlockwise
+    void rotateAntiClockwise(BlockMap& blockMap) {
+        if (isRotatableAntiClockwise(blockMap)) {
+            rotatePos = (rotatePos == ROTATEPOSITION3) ? ROTATEPOSITION0 : rotatePos + 1;
+            generateShape();
+        }
+    }
+
+    // Rotates the shape clockwise
+    void rotateClockwise(BlockMap& blockMap) {
+        if (isRotatableClockwise(blockMap)) {
+            rotatePos = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
+            generateShape();
+        }
+    }
+
+    // Gets the block with the lowest horizontal-coordinate value
+    Block getLeftBlock() {
         Block leftBlock = blockList[0];
         for (int i = 1; i < NUM_BLOCKS; ++i) {
             if (leftBlock.getX() > blockList[i].getX()) {
@@ -127,28 +173,149 @@ public:
         return leftBlock;
     }
 
-    // Movement methods (to be implemented in derived classes)
-    virtual bool isMovableToTheLeft(BlockMap& blockMap) = 0;
-    virtual bool isMovableToTheRight(BlockMap& blockMap) = 0;
-    virtual bool isMovableDownwards(BlockMap& blockMap) = 0;
+    // Checks if all the blocks of the shape can be moved one field to the left
+    bool isMovableToTheLeft(BlockMap& blockMap) {
+        if (getLeftBlock().getX() == 0) {
+            return false;
+        }
+        for (const auto& block : blockList) {
+            if (isInCollisionWithLeftBlock(block, blockMap)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-    virtual void moveLeft(BlockMap& blockMap) = 0;
-    virtual void moveRight(BlockMap& blockMap) = 0;
-    virtual void moveDown(BlockMap& blockMap) = 0;
-    virtual void fallDown(BlockMap& blockMap) = 0;
+    // Checks if a given block can be moved one field to the left without colliding
+    bool isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap) {
+        int x = block.getX() - 1;
+        int y = block.getY();
+        return !blockMap.isFieldEmpty(x, y);
+    }
 
-    // Drawing methods
+    // Moves all the blocks of the shape one field to the left
+    void moveLeft(BlockMap& blockMap) {
+        if (isMovableToTheLeft(blockMap)) {
+            for (auto& block : blockList) {
+                block.moveLeft();
+            }
+        }
+    }
+
+    // Gets the block with the highest horizontal coordinate value
+    Block getRightBlock() {
+        Block rightBlock = blockList[0];
+        for (int i = 1; i < NUM_BLOCKS; ++i) {
+            if (rightBlock.getX() < blockList[i].getX()) {
+                rightBlock = blockList[i];
+            }
+        }
+        return rightBlock;
+    }
+
+    // Checks if all the blocks of the shape can be moved one field to the right
+    bool isMovableToTheRight(BlockMap& blockMap) {
+        if (getRightBlock().getX() == MAP_WIDTH - 1) {
+            return false;
+        }
+        for (const auto& block : blockList) {
+            if (isInCollisionWithRightBlock(block, blockMap)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Checks if a given block can be moved one field to the right without colliding
+    bool isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap) {
+        int x = block.getX() + 1;
+        int y = block.getY();
+        return !blockMap.isFieldEmpty(x, y);
+    }
+
+    // Moves all the blocks of the shape one field to the right
+    void moveRight(BlockMap& blockMap) {
+        if (isMovableToTheRight(blockMap)) {
+            for (auto& block : blockList) {
+                block.moveRight();
+            }
+        }
+    }
+
+    // Gets the block with the highest vertical coordinate value
+    Block getLowestBlock() {
+        Block lowestBlock = blockList[0];
+        for (int i = 1; i < NUM_BLOCKS; ++i) {
+            if (lowestBlock.getY() < blockList[i].getY()) {
+                lowestBlock = blockList[i];
+            }
+        }
+        return lowestBlock;
+    }
+
+    // Checks if all the blocks of the shape can be moved one field downwards
+    bool isMovableDownWards(BlockMap& blockMap) {
+        if (getLowestBlock().getY() == MAP_HEIGHT - 1) {
+            return false;
+        }
+        for (const auto& block : blockList) {
+            if (isInCollisionWithLowerBlock(block, blockMap)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Checks if a given block can be moved one field downwards without colliding
+    bool isInCollisionWithLowerBlock(const Block& block, BlockMap& blockMap) {
+        int x = block.getX();
+        int y = block.getY() + 1;
+        return !blockMap.isFieldEmpty(x, y);
+    }
+
+    // Moves all the blocks of the shape one field downwards
+    void moveDown(BlockMap& blockMap) {
+        if (isMovableDownWards(blockMap)) {
+            for (auto& block : blockList) {
+                block.moveDown();
+            }
+        }
+    }
+
+    // Moves the shape downwards as far as possible
+    void fallDown(BlockMap& blockMap) {
+        while (isMovableDownWards(blockMap)) {
+            moveDown(blockMap);
+        }
+    }
+
+    // Draws all the blocks of the shape
     void drawShape(TFT_eSPI& tft, int boxSize) const {
         for (int i = 0; i < NUM_BLOCKS; ++i) {
             blockList[i].draw(tft, boxSize);
         }
     }
 
-    virtual void drawNextShape(TFT_eSPI& tft, int boxSize) = 0; // Pure virtual function
+    // Pure virtual function for derived classes to implement drawing next shape
+    virtual void drawNextShape(TFT_eSPI& tft, int boxSize) = 0;
 
+    // Draws only the borders of every block of the shape
     void drawShapeBorderOnly(TFT_eSPI& tft, int boxSize, int offset) const {
-        for (int i = 0; i < NUM_BLOCKS; ++i) {
-            blockList[i].drawBorderOnly(tft, boxSize, offset);
+        for (const auto& block : blockList) {
+            block.drawBorderOnly(tft, boxSize, offset);
         }
+    }
+
+private:
+    // Helper method for rotation validation
+    bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
+        for (int i = 1; i < NUM_BLOCKS; ++i) {
+            int x = blockList[0].getX() + static_cast<int>(positions[tmpRotatePosition][i - 1].getX());
+            int y = blockList[0].getY() + static_cast<int>(positions[tmpRotatePosition][i - 1].getY());
+            if (y >= MAP_HEIGHT || x < 0 || x >= MAP_WIDTH || !blockMap.isFieldEmpty(x, y)) {
+                return false;
+            }
+        }
+        return true;
     }
 };

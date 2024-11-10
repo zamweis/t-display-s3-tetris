@@ -4,7 +4,6 @@
 #include <iostream>
 
 ShapeJ::ShapeJ() {
-    rotatePos = ROTATEPOSITION0;
     uint16_t color = TFT_BLUE; // Example 16-bit color (adjust as needed)
 
     // Initialize blocks based on rotation position

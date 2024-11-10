@@ -3,7 +3,6 @@
 #include "Point.h"
 
 ShapeO::ShapeO() {
-    rotatePos = ROTATEPOSITION0;
     uint16_t color = TFT_YELLOW;
 
     blockList[0] = Block(4, -1, color);

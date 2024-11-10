@@ -46,12 +46,10 @@ void Block::moveDown() {
 
 void Block::draw(TFT_eSPI &tft, int boxSize) const {
     tft.fillRect(x * boxSize + 2, y * boxSize + 2, boxSize - 5, boxSize - 5, color);
-    tft.drawRect(x * boxSize + 2, y * boxSize + 2, boxSize - 5, boxSize - 5, TFT_WHITE); // Optional: Draw a border
 }
 
 void Block::drawWithOffset(TFT_eSPI &tft, int boxSize, int xOffset, int yOffset) const {
     tft.fillRect((x - 2) * boxSize + xOffset, (y + 4) * boxSize + yOffset, boxSize - 5, boxSize - 5, color);
-    tft.drawRect((x - 2) * boxSize + xOffset, (y + 4) * boxSize + yOffset, boxSize - 5, boxSize - 5, TFT_WHITE); // Optional: Draw a border
 }
 
 void Block::drawBorderOnly(TFT_eSPI &tft, int boxSize, int offset) const {

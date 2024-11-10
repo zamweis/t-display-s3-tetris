@@ -3,7 +3,6 @@
 #include "Point.h"
 
 ShapeZ::ShapeZ() {
-    rotatePos = ROTATEPOSITION0;
     uint16_t color = TFT_RED;
 
     blockList[0] = Block(4, -2, color);

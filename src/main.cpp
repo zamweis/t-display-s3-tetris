@@ -60,4 +60,21 @@ void setup() {
 }
 
 void loop() {
+    // Calculate center position for the shapes
+    int centerX = (SCREEN_WIDTH / 2) / BOX_SIZE;
+    int centerY = (SCREEN_HEIGHT / 2) / BOX_SIZE;
+
+    // Loop through and draw each shape, one at a time
+    for (int i = 0; i < 7; ++i) {
+        // Clear the screen
+        tft.fillScreen(TFT_BLACK);
+
+        // Create and draw the shape
+        Shape* shape = createShapeByIndex(i, centerX, centerY);
+        if (shape) {
+            shape->drawShape(tft, BOX_SIZE);
+            delay(1000); // Wait for 1 second before drawing the next shape
+            delete shape; // Clean up memory
+        }
+    }
 }
