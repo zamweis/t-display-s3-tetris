@@ -197,9 +197,7 @@ Block Shape::getHighestBlock() {
 
 bool Shape::isMovableDownWards(BlockMap& blockMap) {
     bool result = true;
-    if (getHighestBlock().getY() < 0) {
-        result = true;
-    } else if (getLowestBlock().getY() == MAP_HEIGHT) {
+    if (getLowestBlock().getY() >= MAP_HEIGHT) {
         result = false;
     } else {
         for (int i = 0; i <= 3; i++) {
@@ -267,7 +265,7 @@ bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
 
 void Shape::moveToHighestBlockAtMinusOne() {
     Block highestBlock = getHighestBlock();
-    int yOffset = highestBlock.getY() - (-1);
+    int yOffset = highestBlock.getY() - (-2);
 
     for (auto& block : blockList) {
         block.setY(block.getY() - yOffset);

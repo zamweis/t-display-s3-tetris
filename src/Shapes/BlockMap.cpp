@@ -46,9 +46,12 @@ void BlockMap::addBlocks(Block blockList[], int size) {
 }
 
 bool BlockMap::isFieldEmpty(int x, int y) const {
+    if(y < 0) {
+        return true;
+    }
     if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
         return map[x][y] == nullptr;
-    }
+    } 
     return false;
 }
 

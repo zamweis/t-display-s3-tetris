@@ -5,9 +5,9 @@
 ShapeS::ShapeS() : Shape() {
     uint16_t color = TFT_GREEN;
     if (getRotatePosition() == getROTATEPOSITION1()) {
-        blockList[0] = Block(4, -3, color);
+        blockList[0] = Block(4, -30, color);
     } else {
-        blockList[0] = Block(4, -3, color);
+        blockList[0] = Block(4, -30, color);
     }
 
     setPoint(0, 0, Point(0, -1));

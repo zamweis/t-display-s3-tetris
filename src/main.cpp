@@ -20,7 +20,7 @@ BlockMap blockMap;
 // Function to create a shape based on a random index
 Shape* createRandomShape() {
     Shape* newShape = nullptr;
-    int index =  0;  // Generate a random index between 0 and 6
+    int index = rand() % 7;  // Generate a random index between 0 and 6
     switch (index) {
         case 0: newShape = new ShapeI(); break;
         case 1: newShape = new ShapeJ(); break;
