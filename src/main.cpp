@@ -8,50 +8,56 @@
 #include "Shapes/ShapeT.h"
 #include "Shapes/ShapeZ.h"
 
-#define SCREEN_WIDTH 240
-#define SCREEN_HEIGHT 135
+#define SCREEN_WIDTH 170
+#define SCREEN_HEIGHT 320
 #define BOX_SIZE 10
 
+TFT_eSPI tft = TFT_eSPI();  // Initialize TFT display
+
+// Function to create a shape based on an index
+Shape* createShapeByIndex(int index, int x, int y) {
+    Shape* shape = nullptr;
+    uint16_t color;
+
+    switch (index) {
+        case 0: shape = new ShapeI(); color = TFT_WHITE; break;
+        case 1: shape = new ShapeJ(); color = TFT_BLUE; break;
+        case 2: shape = new ShapeL(); color = TFT_ORANGE; break;
+        case 3: shape = new ShapeO(); color = TFT_YELLOW; break;
+        case 4: shape = new ShapeS(); color = TFT_GREEN; break;
+        case 5: shape = new ShapeT(); color = TFT_MAGENTA; break;
+        case 6: shape = new ShapeZ(); color = TFT_RED; break;
+        default: return nullptr; // Fallback in case of an unexpected index
+    }
+
+    // Set the initial block for the shape using the color specific to the shape
+    if (shape) {
+        shape->setBlock(Block(x, y, color), 0); // Set the initial block with the specified color
+    }
+
+    return shape;
+}
+
 void setup() {
-    TFT_eSPI tft = TFT_eSPI(); // Initialize your display instance
     tft.init();
-    tft.setRotation(1); // Adjust rotation as needed for your display
-
-    // Clear screen
+    tft.setRotation(0);  // Set display to portrait mode
     tft.fillScreen(TFT_BLACK);
+    
+    // Define dark color (e.g., dark gray)
+    uint16_t darkColor = tft.color565(50, 50, 50);  // RGB value for dark gray
 
-    // Calculate center position for the shapes
-    int centerX = SCREEN_WIDTH / 2 / BOX_SIZE;
-    int centerY = SCREEN_HEIGHT / 2 / BOX_SIZE;
+    // Calculate rectangle dimensions and positions with a 10-pixel border
+    int rectX = 10;
+    int rectY = 10;
+    int rectWidth = SCREEN_WIDTH - 20;
+    int rectHeight = SCREEN_HEIGHT - 20;
 
-    // Create shapes
-    ShapeI shapeI;
-    ShapeJ shapeJ;
-    ShapeL shapeL;
-    ShapeO shapeO;
-    ShapeS shapeS;
-    ShapeT shapeT;
-    ShapeZ shapeZ;
+    // Draw filled rectangle
+    tft.fillRect(rectX, rectY, rectWidth, rectHeight, darkColor);
 
-    // Set starting positions
-    shapeI.setBlock(Block(centerX, centerY, TFT_WHITE), 0);
-    shapeJ.setBlock(Block(centerX, centerY, TFT_BLUE), 0);
-    shapeL.setBlock(Block(centerX, centerY, TFT_ORANGE), 0);
-    shapeO.setBlock(Block(centerX, centerY, TFT_YELLOW), 0);
-    shapeS.setBlock(Block(centerX, centerY, TFT_GREEN), 0);
-    shapeT.setBlock(Block(centerX, centerY, TFT_MAGENTA), 0);
-    shapeZ.setBlock(Block(centerX, centerY, TFT_RED), 0);
-
-    // Draw shapes
-    shapeI.drawNextShape(tft, BOX_SIZE);
-    shapeJ.drawNextShape(tft, BOX_SIZE);
-    shapeL.drawNextShape(tft, BOX_SIZE);
-    shapeO.drawNextShape(tft, BOX_SIZE);
-    shapeS.drawNextShape(tft, BOX_SIZE);
-    shapeT.drawNextShape(tft, BOX_SIZE);
-    shapeZ.drawNextShape(tft, BOX_SIZE);
+    // Seed random generator
+    srand(static_cast<unsigned int>(time(nullptr)));
 }
 
 void loop() {
-    // Add any update or loop logic here if necessary
 }

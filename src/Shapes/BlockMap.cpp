@@ -2,10 +2,15 @@
 #include "Shape.h" // Include the full definition of Shape
 #include <iostream>
 
+// Constants for block map dimensions
+constexpr int MAP_WIDTH = 10;
+constexpr int MAP_HEIGHT = 22;
+constexpr int MAX_LINE_INDEX = MAP_HEIGHT - 1;
+
 // Constructor
 BlockMap::BlockMap() {
-    for (int x = 0; x < 10; ++x) {
-        for (int y = 0; y < 22; ++y) {
+    for (int x = 0; x < MAP_WIDTH; ++x) {
+        for (int y = 0; y < MAP_HEIGHT; ++y) {
             map[x][y] = nullptr;
         }
     }
@@ -13,8 +18,8 @@ BlockMap::BlockMap() {
 
 // Destructor
 BlockMap::~BlockMap() {
-    for (int x = 0; x < 10; ++x) {
-        for (int y = 0; y < 22; ++y) {
+    for (int x = 0; x < MAP_WIDTH; ++x) {
+        for (int y = 0; y < MAP_HEIGHT; ++y) {
             delete map[x][y];
             map[x][y] = nullptr;
         }
@@ -23,8 +28,8 @@ BlockMap::~BlockMap() {
 
 // Adds a given block to blockMap at the corresponding position
 void BlockMap::addBlock(Block* block) {
-    if (block != nullptr && block->getX() >= 0 && block->getX() < 10 &&
-        block->getY() >= 0 && block->getY() < 22) {
+    if (block != nullptr && block->getX() >= 0 && block->getX() < MAP_WIDTH &&
+        block->getY() >= 0 && block->getY() < MAP_HEIGHT) {
         if (map[block->getX()][block->getY()] != nullptr) {
             delete map[block->getX()][block->getY()]; // Clean up if block already exists
         }
@@ -41,7 +46,7 @@ void BlockMap::addBlocks(Block blockList[], int size) {
 
 // Checks if a field is empty
 bool BlockMap::isFieldEmpty(int x, int y) const {
-    if (x >= 0 && x < 10 && y >= 0 && y < 22) {
+    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
         return map[x][y] == nullptr;
     }
     return false;
@@ -49,7 +54,7 @@ bool BlockMap::isFieldEmpty(int x, int y) const {
 
 // Gets the block at given coordinates
 Block* BlockMap::getBlock(int x, int y) const {
-    if (x >= 0 && x < 10 && y >= 0 && y < 22) {
+    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
         return map[x][y];
     }
     return nullptr;
@@ -57,8 +62,8 @@ Block* BlockMap::getBlock(int x, int y) const {
 
 // Removes a specific block from blockMap
 void BlockMap::removeBlock(Block* block) {
-    if (block != nullptr && block->getX() >= 0 && block->getX() < 10 &&
-        block->getY() >= 0 && block->getY() < 22) {
+    if (block != nullptr && block->getX() >= 0 && block->getX() < MAP_WIDTH &&
+        block->getY() >= 0 && block->getY() < MAP_HEIGHT) {
         delete map[block->getX()][block->getY()];
         map[block->getX()][block->getY()] = nullptr;
     }
@@ -66,7 +71,7 @@ void BlockMap::removeBlock(Block* block) {
 
 // Removes a block from blockMap by its coordinates
 void BlockMap::removeBlock(int x, int y) {
-    if (x >= 0 && x < 10 && y >= 0 && y < 22) {
+    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
         delete map[x][y];
         map[x][y] = nullptr;
     }
@@ -74,8 +79,8 @@ void BlockMap::removeBlock(int x, int y) {
 
 // Clears all blocks in a given line
 void BlockMap::clearLine(int lineIndex) {
-    if (lineIndex >= 0 && lineIndex < 22) {
-        for (int x = 0; x < 10; ++x) {
+    if (lineIndex >= 0 && lineIndex < MAP_HEIGHT) {
+        for (int x = 0; x < MAP_WIDTH; ++x) {
             removeBlock(x, lineIndex);
         }
     }
@@ -83,8 +88,8 @@ void BlockMap::clearLine(int lineIndex) {
 
 // Checks if a line is full
 bool BlockMap::isLineFull(int lineIndex) const {
-    if (lineIndex >= 0 && lineIndex < 22) {
-        for (int x = 0; x < 10; ++x) {
+    if (lineIndex >= 0 && lineIndex < MAP_HEIGHT) {
+        for (int x = 0; x < MAP_WIDTH; ++x) {
             if (isFieldEmpty(x, lineIndex)) {
                 return false;
             }
@@ -110,7 +115,7 @@ int BlockMap::clearFullLines(Shape& activeShape) {
 
 // Moves a block down by one field
 void BlockMap::moveBlockDown(int x, int y) {
-    if (x >= 0 && x < 10 && y >= 0 && y < 21 && map[x][y] != nullptr) {
+    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAX_LINE_INDEX && map[x][y] != nullptr) {
         map[x][y + 1] = map[x][y];
         map[x][y] = nullptr;
         map[x][y + 1]->setY(y + 1);
@@ -119,7 +124,7 @@ void BlockMap::moveBlockDown(int x, int y) {
 
 // Checks if a block is movable downwards
 bool BlockMap::isBlockMovableDownwards(int x, int y) const {
-    if (y + 1 < 22 && x >= 0 && x < 10) {
+    if (y + 1 < MAP_HEIGHT && x >= 0 && x < MAP_WIDTH) {
         return map[x][y + 1] == nullptr;
     }
     return false;
@@ -127,8 +132,8 @@ bool BlockMap::isBlockMovableDownwards(int x, int y) const {
 
 // Moves an entire line down by one
 void BlockMap::moveLineDown(int lineIndex) {
-    if (lineIndex >= 0 && lineIndex < 21) {
-        for (int x = 0; x < 10; ++x) {
+    if (lineIndex >= 0 && lineIndex < MAX_LINE_INDEX) {
+        for (int x = 0; x < MAP_WIDTH; ++x) {
             if (!isFieldEmpty(x, lineIndex)) {
                 moveBlockDown(x, lineIndex);
             }
@@ -138,11 +143,11 @@ void BlockMap::moveLineDown(int lineIndex) {
 
 // Gets the index of the first line that isn't empty starting from a lineIndex
 int BlockMap::getFirstNotEmptyLine(int lineIndex) const {
-    if (lineIndex < 0 || lineIndex >= 22) {
+    if (lineIndex < 0 || lineIndex >= MAP_HEIGHT) {
         return -1;
     }
     for (int y = lineIndex; y >= 0; --y) {
-        for (int x = 0; x < 10; ++x) {
+        for (int x = 0; x < MAP_WIDTH; ++x) {
             if (!isFieldEmpty(x, y)) {
                 return y;
             }

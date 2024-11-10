@@ -7,7 +7,7 @@
 ShapeI::ShapeI() {
     // Initialize rotation position
     rotatePos = ROTATEPOSITION0;
-    uint16_t color = 0xFFE0; // Example 16-bit color representation (yellow)
+    uint16_t color = TFT_WHITE; // Example 16-bit color representation (yellow)
 
     // Initialize blocks based on rotation position
     if (rotatePos == ROTATEPOSITION0) {

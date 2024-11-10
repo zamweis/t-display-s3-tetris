@@ -4,7 +4,7 @@
 
 ShapeT::ShapeT() {
     rotatePos = ROTATEPOSITION0;
-    uint16_t color = 0xFFAA00;
+    uint16_t color = TFT_MAGENTA;
 
     blockList[0] = Block(4, -2, color);
 

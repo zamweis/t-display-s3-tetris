@@ -4,7 +4,7 @@
 
 ShapeS::ShapeS() {
     rotatePos = ROTATEPOSITION0;
-    uint16_t color = 0xA10048;
+    uint16_t color = TFT_GREEN;
 
     blockList[0] = Block(4, -2, color);
 

@@ -4,7 +4,7 @@
 
 ShapeO::ShapeO() {
     rotatePos = ROTATEPOSITION0;
-    uint16_t color = 0xC80000;
+    uint16_t color = TFT_YELLOW;
 
     blockList[0] = Block(4, -1, color);
 

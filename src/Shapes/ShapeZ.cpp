@@ -4,7 +4,7 @@
 
 ShapeZ::ShapeZ() {
     rotatePos = ROTATEPOSITION0;
-    uint16_t color = 0x000EDD;
+    uint16_t color = TFT_RED;
 
     blockList[0] = Block(4, -2, color);
 

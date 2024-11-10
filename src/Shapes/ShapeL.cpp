@@ -4,7 +4,7 @@
 
 ShapeL::ShapeL() {
     rotatePos = ROTATEPOSITION0;
-    uint16_t color = 0x00B5B5;
+    uint16_t color = TFT_ORANGE;
 
     if (rotatePos == getROTATEPOSITION1()) {
         setBlock(Block(4, -1, color), 0);
