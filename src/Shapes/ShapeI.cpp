@@ -1,90 +1,67 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
+#include "Block.h"
+#include "Shape.h"
+#include "Point.h"
 
-typedef struct {
-    int x;
-    int y;
-} Point;
+class ShapeI : public Shape {
+public:
+    ShapeI() {
+        // Initialize rotation position
+        rotatePos = ROTATEPOSITION0;
+        uint16_t color = 0xFFE0; // Example 16-bit color representation (yellow)
 
-typedef struct {
-    int x;
-    int y;
-    char *color; // Simplified color representation as a string
-} Block;
+        // Initialize blocks based on rotation position
+        if (rotatePos == ROTATEPOSITION0) {
+            blockList[0] = Block(5, -1, color);
+        } else if (rotatePos == ROTATEPOSITION1) {
+            blockList[0] = Block(4, -2, color);
+        } else if (rotatePos == ROTATEPOSITION2) {
+            blockList[0] = Block(3, -1, color);
+        } else {
+            blockList[0] = Block(4, -3, color);
+        }
 
-typedef struct {
-    Block blocks[4];
-    int rotatePosition;
-} ShapeI;
+        // Setting points based on rotation positions
+        setPoint(0, 0, Point(1, 0));
+        setPoint(0, 1, Point(-1, 0));
+        setPoint(0, 2, Point(-2, 0));
 
-// Function prototypes
-void initShapeI(ShapeI *shape);
-void setPoint(Point *point, int x, int y);
-void drawNextShape(ShapeI *shape);
+        setPoint(1, 0, Point(0, 1));
+        setPoint(1, 1, Point(0, -1));
+        setPoint(1, 2, Point(0, -2));
 
-// Constants for rotation positions
-const int ROTATE_POSITION_0 = 0;
-const int ROTATE_POSITION_1 = 1;
-const int ROTATE_POSITION_2 = 2;
-const int ROTATE_POSITION_3 = 3;
+        setPoint(2, 0, Point(-1, 0));
+        setPoint(2, 1, Point(1, 0));
+        setPoint(2, 2, Point(2, 0));
 
-void initShapeI(ShapeI *shape) {
-    shape->rotatePosition = ROTATE_POSITION_0; // Initialize rotation position
-    char *color = "255,238,0"; // Simplified color as a string
-
-    if (shape->rotatePosition == ROTATE_POSITION_0) {
-        shape->blocks[0] = (Block){5, -1, color};
-    } else if (shape->rotatePosition == ROTATE_POSITION_1) {
-        shape->blocks[0] = (Block){4, -2, color};
-    } else if (shape->rotatePosition == ROTATE_POSITION_2) {
-        shape->blocks[0] = (Block){3, -1, color};
-    } else {
-        shape->blocks[0] = (Block){4, -3, color};
+        setPoint(3, 0, Point(0, -1));
+        setPoint(3, 1, Point(0, 1));
+        setPoint(3, 2, Point(0, 2));
     }
 
-    // Setting points based on rotation
-    Point points[4][3];
-    // Rotate 0
-    setPoint(&points[0][0], 1, 0);
-    setPoint(&points[0][1], -1, 0);
-    setPoint(&points[0][2], -2, 0);
-    // Rotate 1
-    setPoint(&points[1][0], 0, 1);
-    setPoint(&points[1][1], 0, -1);
-    setPoint(&points[1][2], 0, -2);
-    // Rotate 2
-    setPoint(&points[2][0], -1, 0);
-    setPoint(&points[2][1], 1, 0);
-    setPoint(&points[2][2], 2, 0);
-    // Rotate 3
-    setPoint(&points[3][0], 0, -1);
-    setPoint(&points[3][1], 0, 1);
-    setPoint(&points[3][2], 0, 2);
-}
-
-void setPoint(Point *point, int x, int y) {
-    point->x = x;
-    point->y = y;
-}
-
-void drawNextShape(ShapeI *shape) {
-    int rotatePos = shape->rotatePosition;
-    for (int i = 0; i < 4; i++) {
-        if (rotatePos == ROTATE_POSITION_1 || rotatePos == ROTATE_POSITION_3) {
-            // Replace with your drawing logic; for example:
-            printf("Drawing block with offset (40, 0, 20) at x: %d, y: %d\n", shape->blocks[i].x, shape->blocks[i].y);
-        } else if (rotatePos == ROTATE_POSITION_2) {
-            printf("Drawing block with offset (40, 20, 0) at x: %d, y: %d\n", shape->blocks[i].x, shape->blocks[i].y);
-        } else {
-            printf("Drawing block with offset (40, -20, 0) at x: %d, y: %d\n", shape->blocks[i].x, shape->blocks[i].y);
+    void drawNextShape(TFT_eSPI& tft, int boxSize) override {
+        // Example drawing logic (modify as per your requirements)
+        for (int i = 0; i < 4; ++i) {
+            if (rotatePos == ROTATEPOSITION1 || rotatePos == ROTATEPOSITION3) {
+                // Drawing logic
+                std::cout << "Drawing block with offset (40, 0, 20) at x: " 
+                          << blockList[i].getX() << ", y: " << blockList[i].getY() << std::endl;
+            } else if (rotatePos == ROTATEPOSITION2) {
+                std::cout << "Drawing block with offset (40, 20, 0) at x: " 
+                          << blockList[i].getX() << ", y: " << blockList[i].getY() << std::endl;
+            } else {
+                std::cout << "Drawing block with offset (40, -20, 0) at x: " 
+                          << blockList[i].getX() << ", y: " << blockList[i].getY() << std::endl;
+            }
         }
     }
-}
+};
 
 int main() {
-    ShapeI shape;
-    initShapeI(&shape);
-    drawNextShape(&shape);
+    ShapeI shapeI;
+    // Example TFT_eSPI instance and boxSize (replace with actual values)
+    // TFT_eSPI tft;
+    // shapeI.drawNextShape(tft, 40);
 
     return 0;
 }

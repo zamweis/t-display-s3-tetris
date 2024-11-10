@@ -1,86 +1,29 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "Block.h"
+#include "Shape.h"
+#include "Point.h"
 
-typedef struct {
-    int x;
-    int y;
-} Point;
+class ShapeO : public Shape {
+public:
+    ShapeO() {
+        rotatePos = ROTATEPOSITION0;
+        uint16_t color = 0xC80000; // Example 16-bit color (adjust as needed)
 
-typedef struct {
-    int x;
-    int y;
-    char *color; // Simplified color representation as a string (or RGB values)
-} Block;
+        // Initialize blocks
+        blockList[0] = Block(4, -1, color);
 
-typedef struct {
-    Block blocks[4];
-    int rotatePosition;
-    Point points[4][3]; // Points for each rotation state
-} ShapeJ;
-
-// Function prototypes
-void initShapeJ(ShapeJ *shape);
-void setPoint(Point *point, int x, int y);
-void drawNextShape(ShapeJ *shape);
-
-// Constants for rotation positions
-const int ROTATE_POSITION_0 = 0;
-const int ROTATE_POSITION_1 = 1;
-const int ROTATE_POSITION_2 = 2;
-const int ROTATE_POSITION_3 = 3;
-
-void initShapeJ(ShapeJ *shape) {
-    shape->rotatePosition = ROTATE_POSITION_0; // Initialize rotation position
-    char *color = "0,156,0"; // Simplified color as a string (adjust for your color handling)
-
-    if (shape->rotatePosition == ROTATE_POSITION_3) {
-        shape->blocks[0] = (Block){4, -1, color};
-    } else {
-        shape->blocks[0] = (Block){4, -2, color};
-    }
-
-    // Setting points for rotations
-    // Rotate 0
-    setPoint(&shape->points[0][0], 0, -1);
-    setPoint(&shape->points[0][1], 0, 1);
-    setPoint(&shape->points[0][2], -1, 1);
-    // Rotate 1
-    setPoint(&shape->points[1][0], -1, 0);
-    setPoint(&shape->points[1][1], 1, 0);
-    setPoint(&shape->points[1][2], 1, 1);
-    // Rotate 2
-    setPoint(&shape->points[2][0], 0, 1);
-    setPoint(&shape->points[2][1], 0, -1);
-    setPoint(&shape->points[2][2], 1, -1);
-    // Rotate 3
-    setPoint(&shape->points[3][0], 1, 0);
-    setPoint(&shape->points[3][1], -1, 0);
-    setPoint(&shape->points[3][2], -1, -1);
-}
-
-void setPoint(Point *point, int x, int y) {
-    point->x = x;
-    point->y = y;
-}
-
-void drawNextShape(ShapeJ *shape) {
-    int rotatePos = shape->rotatePosition;
-    for (int i = 0; i < 4; i++) {
-        // This is a placeholder for drawing logic
-        if (rotatePos == ROTATE_POSITION_1 || rotatePos == ROTATE_POSITION_3) {
-            printf("Drawing block with offset (40, 0, -20) at x: %d, y: %d\n", shape->blocks[i].x, shape->blocks[i].y);
-        } else if (rotatePos == ROTATE_POSITION_2) {
-            printf("Drawing block with offset (40, -20, 0) at x: %d, y: %d\n", shape->blocks[i].x, shape->blocks[i].y);
-        } else {
-            printf("Drawing block with offset (40, 20, 0) at x: %d, y: %d\n", shape->blocks[i].x, shape->blocks[i].y);
+        // Setting points (since ShapeO typically doesn't rotate)
+        for (int i = 0; i < 4; ++i) {
+            setPoint(i, 0, Point(1, 0));
+            setPoint(i, 1, Point(0, -1));
+            setPoint(i, 2, Point(1, -1));
         }
     }
-}
 
-int main() {
-    ShapeJ shape;
-    initShapeJ(&shape);
-    drawNextShape(&shape);
-
-    return 0;
-}
+    void drawNextShape(TFT_eSPI& tft, int boxSize) override {
+        // Example drawing logic
+        for (int i = 0; i < 4; ++i) {
+            std::cout << "Drawing block at x: " << blockList[i].getX()
+                      << ", y: " << blockList[i].getY() << std::endl;
+        }
+    }
+};

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
-#include "Block.h"
-#include "Shape.h"
+#include "Shapes/Block.h"
+#include "Shapes/Shape.h"
 
 class BlockMap {
 private:

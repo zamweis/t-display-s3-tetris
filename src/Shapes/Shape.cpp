@@ -1,6 +1,8 @@
 #include <vector>
 #include <cstdlib> // For rand() and srand()
-#include "Block.h"
+#include <ctime>   // For seeding rand() with time()
+#include "Shapes/Block.h"
+#include "Shapes/BlockMap.h"
 #include "TFT_eSPI.h"
 #include "Utils/Utils.h" // Assuming `Utils` is a header file with random utility functions
 #include "Utils/Point.h" // Assuming you have a `Point` class
@@ -17,9 +19,11 @@ private:
     int rotatePos;
 
 public:
-    // Constructor
-    Shape() : rotatePos(Utils::rand(0, 3)) {
-        // Additional initialization if necessary
+   // Constructor
+    Shape() {
+        // Seed the random number generator (ideally done once in the program)
+        std::srand(std::time(nullptr));
+        rotatePos = std::rand() % 4; // Generates a random number between 0 and 3
     }
 
     // Virtual destructor for base class
