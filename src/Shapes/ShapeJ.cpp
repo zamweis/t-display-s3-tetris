@@ -1,6 +1,7 @@
 #include "Block.h"
 #include "Shape.h"
 #include "Point.h"
+#include <iostream>
 
 class ShapeJ : public Shape {
 public:

@@ -3,6 +3,9 @@
 
 #include "Block.h"
 
+// Forward declaration of Shape
+class Shape;
+
 class BlockMap {
 private:
     Block* map[10][22];
@@ -19,13 +22,13 @@ public:
     void removeBlock(int x, int y);
     void clearLine(int lineIndex);
     bool isLineFull(int lineIndex) const;
-    int clearFullLines(Shape& activeShape);
+    int clearFullLines(Shape& activeShape); // No error since Shape is forward-declared
     bool isLineEmpty(int lineIndex) const;
     void moveBlockDown(int x, int y);
     bool isBlockMovableDownwards(int x, int y) const;
     void moveLineDown(int lineIndex);
     int getFirstNotEmptyLine(int lineIndex) const;
-    void moveAllNotEmptyLinesDown(Shape& activeShape);
+    void moveAllNotEmptyLinesDown(Shape& activeShape); // No error since Shape is forward-declared
 };
 
 #endif // BLOCKMAP_H

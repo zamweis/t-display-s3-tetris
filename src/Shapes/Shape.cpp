@@ -1,11 +1,11 @@
 #include <vector>
 #include <cstdlib> // For rand() and srand()
 #include <ctime>   // For seeding rand() with time()
-#include "Shapes/Block.h"
-#include "Shapes/BlockMap.h"
+#include "Block.h"
+#include "BlockMap.h"
 #include "TFT_eSPI.h"
 #include "Utils/Utils.h" // Assuming `Utils` is a header file with random utility functions
-#include "Utils/Point.h" // Assuming you have a `Point` class
+#include "Point.h" // Assuming you have a `Point` class
 
 class Shape {
 private:

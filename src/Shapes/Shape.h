@@ -3,7 +3,7 @@
 
 #include "Block.h"
 #include "BlockMap.h"
-#include "Utils/Point.h"
+#include "Point.h"
 
 class Shape {
 protected:
