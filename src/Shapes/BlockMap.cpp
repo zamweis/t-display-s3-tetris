@@ -4,7 +4,7 @@
 
 // Constants for block map dimensions
 constexpr int MAP_WIDTH = 10;
-constexpr int MAP_HEIGHT = 22;
+constexpr int MAP_HEIGHT = 20;
 constexpr int MAX_LINE_INDEX = MAP_HEIGHT - 1;
 
 // Constructor

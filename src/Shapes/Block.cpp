@@ -45,13 +45,17 @@ void Block::moveDown() {
 }
 
 void Block::draw(TFT_eSPI &tft, int boxSize) const {
-    tft.fillRect(x * boxSize + 2, y * boxSize + 2, boxSize - 5, boxSize - 5, color);
+    // Calculate padding for centering within the grid cell
+    int padding = (boxSize - (boxSize - 4)) / 2; // Adjust the padding based on boxSize
+    tft.fillRect(x * boxSize + padding, y * boxSize + padding, boxSize - 3, boxSize - 3, color);
 }
 
 void Block::drawWithOffset(TFT_eSPI &tft, int boxSize, int xOffset, int yOffset) const {
-    tft.fillRect((x - 2) * boxSize + xOffset, (y + 4) * boxSize + yOffset, boxSize - 5, boxSize - 5, color);
+    int padding = (boxSize - (boxSize - 4)) / 2; // Centering adjustment
+    tft.fillRect((x - 2) * boxSize + xOffset + padding, (y + 4) * boxSize + yOffset + padding, boxSize - 3, boxSize - 3, color);
 }
 
 void Block::drawBorderOnly(TFT_eSPI &tft, int boxSize, int offset) const {
-    tft.drawRect(x * boxSize + 2, (y + offset) * boxSize + 2, boxSize - 5, boxSize - 5, color);
+    int padding = (boxSize - (boxSize - 4)) / 2; // Centering adjustment
+    tft.drawRect(x * boxSize + padding, (y + offset) * boxSize + padding, boxSize - 3, boxSize - 3, color);
 }

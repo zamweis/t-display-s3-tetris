@@ -8,7 +8,7 @@ class Shape;
 
 class BlockMap {
 private:
-    Block* map[10][22];
+    Block* map[10][10];
 
 public:
     BlockMap();

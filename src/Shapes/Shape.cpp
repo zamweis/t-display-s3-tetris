@@ -20,7 +20,7 @@ private:
 
     // Constants for map dimensions (assumed values, replace with actual if different)
     static constexpr int MAP_WIDTH = 10;
-    static constexpr int MAP_HEIGHT = 22;
+    static constexpr int MAP_HEIGHT = 20;
 
     Block blockList[NUM_BLOCKS];
     Point positions[NUM_BLOCKS][NUM_POSITIONS];
@@ -110,12 +110,9 @@ public:
     // Sets the blocks of the new Shape into the blockList
     void generateShape() {
         uint16_t color = blockList[0].getColor();
-        for (int i = 1; i < NUM_BLOCKS; ++i) {
-            // Assuming positions[i-1] contains relative coordinates
-            int newX = getXPosition(i - 1);
-            int newY = getYPosition(i - 1);
-            blockList[i] = Block(newX, newY, color);
-        }
+         blockList[1] = Block(blockList[0].getX(), blockList[0].getY() - 1, blockList[0].getColor());
+        blockList[2] = Block(blockList[0].getX(), blockList[0].getY() + 1, blockList[0].getColor());
+        blockList[3] = Block(blockList[0].getX(), blockList[0].getY() + 2, blockList[0].getColor());
     }
 
     // Gets the horizontal coordinate of the indexed block of blockList

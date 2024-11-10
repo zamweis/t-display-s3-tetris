@@ -10,7 +10,7 @@
 
 #define SCREEN_WIDTH 170
 #define SCREEN_HEIGHT 320
-#define BOX_SIZE 10
+#define BOX_SIZE 17
 
 TFT_eSPI tft = TFT_eSPI();  // Initialize TFT display
 
@@ -38,22 +38,33 @@ Shape* createShapeByIndex(int index, int x, int y) {
     return shape;
 }
 
+void drawGrid(TFT_eSPI& tft) {
+    // Background
+    tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, tft.color565(30, 30, 30)); // Dark background color
+
+    // Columns
+    tft.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, TFT_BLACK); // Outer border
+    for (int col = 0; col <= SCREEN_WIDTH / BOX_SIZE; ++col) {
+        int x = col * BOX_SIZE;
+        tft.drawLine(x, 0, x, SCREEN_HEIGHT, TFT_BLACK);
+    }
+
+    // Rows
+    for (int row = 0; row <= SCREEN_HEIGHT / BOX_SIZE; ++row) {
+        int y = row * BOX_SIZE;
+        tft.drawLine(0, y, SCREEN_WIDTH, y, TFT_BLACK);
+    }
+}
+
+
 void setup() {
     tft.init();
     tft.setRotation(0);  // Set display to portrait mode
-    tft.fillScreen(TFT_BLACK);
+    
+    drawGrid(tft);
     
     // Define dark color (e.g., dark gray)
     uint16_t darkColor = tft.color565(50, 50, 50);  // RGB value for dark gray
-
-    // Calculate rectangle dimensions and positions with a 10-pixel border
-    int rectX = 10;
-    int rectY = 10;
-    int rectWidth = SCREEN_WIDTH - 20;
-    int rectHeight = SCREEN_HEIGHT - 20;
-
-    // Draw filled rectangle
-    tft.fillRect(rectX, rectY, rectWidth, rectHeight, darkColor);
 
     // Seed random generator
     srand(static_cast<unsigned int>(time(nullptr)));
@@ -66,9 +77,6 @@ void loop() {
 
     // Loop through and draw each shape, one at a time
     for (int i = 0; i < 7; ++i) {
-        // Clear the screen
-        tft.fillScreen(TFT_BLACK);
-
         // Create and draw the shape
         Shape* shape = createShapeByIndex(i, centerX, centerY);
         if (shape) {
