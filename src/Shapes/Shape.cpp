@@ -288,9 +288,8 @@ int Shape::getWidth() {
 }
 
 void Shape::setPosition(int x, int y) {
-    // Update all blocks' positions relative to the new top-left corner
-   blockList[0].setCoordinates(x,y);
-    for (int i = 1; i < NUM_BLOCKS; ++i) {
-        blockList[i] = Block(getXPosition(i - 1), getYPosition(i - 1),  blockList[0].getColor());
-    }
+    // Update the position of the first block to the new coordinates
+    blockList[0].setCoordinates(x, y);
+
+    generateShape();   
 }

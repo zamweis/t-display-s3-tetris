@@ -45,9 +45,9 @@ char playerName[MAX_NAME_LENGTH] = {'A', 'A', 'A', 'A', 'A', 'A'};
 int currentCharIndex = 0;
 char currentChar = 'A';
 
-int score = 6000;
-int level = 9;
-int linesCleared = 60;
+int score = 0;
+int level = 1;
+int linesCleared = 0;
 
 enum ButtonState { IDLE, PRESSED, SHORT_PRESS, LONG_PRESS };
 ButtonState leftButtonState = IDLE;
@@ -55,7 +55,8 @@ ButtonState rightButtonState = IDLE;
 unsigned long buttonPressStart = 0;
 
 // Level speed table (values in milliseconds)
-const int levelSpeeds[] = { 100 };
+const int levelSpeeds[] = { 700, 600, 500, 450, 400, 350, 300, 250, 200, 150, 100, 50, 25 };
+
 
 int getMoveDownSpeed() {
     return (level < sizeof(levelSpeeds) / sizeof(levelSpeeds[0])) ? levelSpeeds[level - 1] : levelSpeeds[sizeof(levelSpeeds) / sizeof(levelSpeeds[0]) - 1];
@@ -63,7 +64,6 @@ int getMoveDownSpeed() {
 
 Shape* createRandomShape() {
     int index = random(0, 7);
-    index = 3;
     switch (index) {
         case 0: return new ShapeI();
         case 1: return new ShapeJ();
@@ -93,7 +93,6 @@ void waitForButtonClick(int buttonPin) {
         // Do nothing, just wait for the button release
     }
 }
-
 
 void drawGrid() {
     tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundColor);
