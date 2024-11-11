@@ -27,8 +27,18 @@ unsigned long lastMoveDownTime = 0;
 unsigned long lastMoveLeftTime = 0;
 unsigned long lastMoveRightTime = 0;
 
+enum ButtonState { IDLE, PRESSED, SHORT_PRESS, LONG_PRESS };
+ButtonState leftButtonState = IDLE;
+ButtonState rightButtonState = IDLE;
+unsigned long buttonPressStart = 0;
+
 const unsigned long initialMoveDelay = 120; // Initial delay for single move
-const unsigned long continuousMoveInterval = 0; // Interval for continuous movement
+
+const unsigned long rotationHoldThreshold = 300; // Time threshold to differentiate between move and rotate (in milliseconds)
+const unsigned long rotationDebounceInterval = 250; // Debounce interval for rotation when holding down (in milliseconds)
+
+unsigned long lastRotateLeftTime = 0;
+unsigned long lastRotateRightTime = 0;
 
 int score = 0;
 int level = 9;
@@ -38,7 +48,6 @@ bool leftButtonPressed = false;
 bool rightButtonPressed = false;
 bool leftButtonHeld = false;
 bool rightButtonHeld = false;
-
 
 // Expanded table for speeds at different levels (values in milliseconds)
 const int levelSpeeds[] = { 300, 250, 200, 150, 100, 80, 70, 60, 50, 45, 40, 35, 30, 25, 20, 15};
@@ -176,7 +185,7 @@ void drawScreen(bool isGameOver) {
         tft.println(score);
         tft.setCursor(0, 150);
         tft.println("Press a button");
-        tft.setCursor(28, 170);
+        tft.setCursor(27, 170);
         tft.println("to restart");
     } else {
         tft.setCursor(0, 120);
@@ -188,142 +197,107 @@ void drawScreen(bool isGameOver) {
 
 void setup() {
     Serial.begin(115200);
-
-    tft.init(); 
-    
-    // Initialize backlight control pin// Set initial brightness (128 out of 255 for 50% brightness)
+    tft.init();
     pinMode(BACKLIGHT_PIN, OUTPUT);
     analogWrite(BACKLIGHT_PIN, 100);
-    
     tft.setRotation(0);
     backgroundColor = tft.color565(30, 30, 30);
-    
-    // Draw the start screen
-    drawScreen(false); // False indicates this is the start screen
-
-    // Wait for a button press to start the game
-    while (digitalRead(BUTTON_LEFT) == HIGH && digitalRead(BUTTON_RIGHT) == HIGH) {
-        // Idle loop until a button is pressed
-    }
-
-    // Initialize the game state after a button press
+    drawScreen(false);
+    while (digitalRead(BUTTON_LEFT) == HIGH && digitalRead(BUTTON_RIGHT) == HIGH) {}
     resetGame();
 }
 
-void handleButtonMovement(unsigned long currentTime) {
-    // Handle left button
-    if (digitalRead(BUTTON_LEFT) == LOW) {
-        if (!leftButtonHeld) {
-            lastMoveLeftTime = currentTime; // Initial press, set timing
-            leftButtonHeld = true;
-            if (shape && shape->isMovableToTheLeft(blockMap)) {
-                shape->eraseShape(tft, BOX_SIZE, backgroundColor);
-                shape->moveLeft(blockMap);
-                shape->drawShape(tft, BOX_SIZE);
-            }
-        } else if (currentTime - lastMoveLeftTime >= initialMoveDelay) {
-            // Continuous movement after initial delay
-            if (currentTime - lastMoveLeftTime >= continuousMoveInterval) {
-                lastMoveLeftTime = currentTime; // Reset timing for continuous movement
-                if (shape && shape->isMovableToTheLeft(blockMap)) {
-                    shape->eraseShape(tft, BOX_SIZE, backgroundColor);
-                    shape->moveLeft(blockMap);
-                    shape->drawShape(tft, BOX_SIZE);
-                }
-            }
-        }
-    } else {
-        leftButtonHeld = false; // Reset button state when released
-    }
 
-    // Handle right button
-    if (digitalRead(BUTTON_RIGHT) == LOW) {
-        if (!rightButtonHeld) {
-            lastMoveRightTime = currentTime; // Initial press, set timing
-            rightButtonHeld = true;
-            if (shape && shape->isMovableToTheRight(blockMap)) {
+void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentTime, void (Shape::*moveFunc)(BlockMap &), void (Shape::*rotateFunc)(BlockMap &)) {
+    switch (state) {
+        case IDLE:
+            if (digitalRead(buttonPin) == LOW) {
+                state = PRESSED;
+                buttonPressStart = currentTime;
+            }
+            break;
+        case PRESSED:
+            if (digitalRead(buttonPin) == HIGH) {
+                if (currentTime - buttonPressStart < rotationHoldThreshold) {
+                    state = SHORT_PRESS;
+                } else {
+                    state = IDLE; // Long press but button released early
+                }
+            } else if (currentTime - buttonPressStart >= rotationHoldThreshold) {
+                state = LONG_PRESS;
+            }
+            break;
+        case SHORT_PRESS:
+            if (shape) {
                 shape->eraseShape(tft, BOX_SIZE, backgroundColor);
-                shape->moveRight(blockMap);
+                (shape->*moveFunc)(blockMap);
                 shape->drawShape(tft, BOX_SIZE);
             }
-        } else if (currentTime - lastMoveRightTime >= initialMoveDelay) {
-            // Continuous movement after initial delay
-            if (currentTime - lastMoveRightTime >= continuousMoveInterval) {
-                lastMoveRightTime = currentTime; // Reset timing for continuous movement
-                if (shape && shape->isMovableToTheRight(blockMap)) {
-                    shape->eraseShape(tft, BOX_SIZE, backgroundColor);
-                    shape->moveRight(blockMap);
-                    shape->drawShape(tft, BOX_SIZE);
+            state = IDLE;
+            break;
+        case LONG_PRESS:
+            if (digitalRead(buttonPin) == HIGH) {
+                state = IDLE;
+            } else {
+                // Handle continuous rotation with debounce
+                static unsigned long lastRotateTime = 0;
+                if (currentTime - lastRotateTime >= rotationDebounceInterval) {
+                    if (shape) {
+                        shape->eraseShape(tft, BOX_SIZE, backgroundColor);
+                        (shape->*rotateFunc)(blockMap);
+                        shape->drawShape(tft, BOX_SIZE);
+                        lastRotateTime = currentTime;
+                    }
                 }
             }
-        }
-    } else {
-        rightButtonHeld = false; // Reset button state when released
+            break;
     }
 }
 
+
 void loop() {
     unsigned long currentTime = millis();
-
-    // Check for game over
     if (blockMap.checkGameOver()) {
-        drawScreen(true); // True indicates this is the game over screen
-        
-        // Wait for button press to restart
+        drawScreen(true);
         while (true) {
             if (digitalRead(BUTTON_LEFT) == LOW || digitalRead(BUTTON_RIGHT) == LOW) {
                 resetGame();
                 break;
             }
         }
-        return; // Exit loop to prevent further execution
+        return;
     }
 
-    // Handle button inputs with refined logic
-    handleButtonMovement(currentTime);
+    handleButtonState(leftButtonState, BUTTON_LEFT, currentTime, &Shape::moveLeft, &Shape::rotateAntiClockwise);
+    handleButtonState(rightButtonState, BUTTON_RIGHT, currentTime, &Shape::moveRight, &Shape::rotateClockwise);
 
-    // Handle shape movement downwards based on timing
     if (shape) {
         if (currentTime - lastMoveDownTime >= getMoveDownSpeed()) {
-            lastMoveDownTime = currentTime; // Reset timing for next move
+            lastMoveDownTime = currentTime;
             if (shape->isMovableDownWards(blockMap)) {
-                shape->eraseShape(tft, BOX_SIZE, backgroundColor); // Erase old position
-                shape->moveDown(blockMap); // Move shape down
-                shape->drawShape(tft, BOX_SIZE); // Draw new position
+                shape->eraseShape(tft, BOX_SIZE, backgroundColor);
+                shape->moveDown(blockMap);
+                shape->drawShape(tft, BOX_SIZE);
             } else {
-                Serial.println("Shape cannot move down. Adding to block map.");
-
-                // Add blocks to the block map
                 if (shape->getBlockList() != nullptr) {
-                    blockMap.addBlocks(shape->getBlockList(), 4); // Ensure size matches number of blocks
-                } else {
-                    Serial.println("Error: Block list is null.");
+                    blockMap.addBlocks(shape->getBlockList(), 4);
                 }
-
-                // Clear full lines and update score/level
                 int clearedLines = blockMap.clearAndMoveAllFullLines(tft, BOX_SIZE, backgroundColor); 
                 if (clearedLines > 0) {
-                    updateScoreAndLevel(clearedLines); // Update score and level based on cleared lines
+                    updateScoreAndLevel(clearedLines);
                 }
-                
                 shape->eraseShape(tft, BOX_SIZE, backgroundColor);
                 blockMap.drawAllBlocks(tft, BOX_SIZE);
-
-                delete shape; // Free memory
-                shape = nullptr; // Reset pointer
+                delete shape;
+                shape = nullptr;
             }
         }
     } else {
-        Serial.println("Creating a new shape.");
         shape = createRandomShape();
         if (shape) {
             shape->moveToLowestBlockkAtMinusOne();
             shape->drawShape(tft, BOX_SIZE);
-        } else {
-            Serial.println("Failed to create new shape.");
         }
     }
-
-    // Draw all blocks in the block map after updating
     blockMap.drawAllBlocks(tft, BOX_SIZE);
 }
