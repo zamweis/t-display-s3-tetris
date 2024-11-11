@@ -10,9 +10,9 @@ ShapeI::ShapeI() : Shape() {
 
     // Initialize blocks based on rotation position
     if (rotatePos == ROTATEPOSITION1 || rotatePos == ROTATEPOSITION3) {
-        blockList[0] = Block(5, -2, color);
+        blockList[0] = Block(5, -30, color);
     } else {
-        blockList[0] = Block(5, -1, color);
+        blockList[0] = Block(5, -30, color);
     }
 
     // Setting points based on rotation positions

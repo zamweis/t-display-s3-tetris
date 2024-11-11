@@ -3,8 +3,10 @@
 #include <ctime>
 #include <iostream>
 
-Shape::Shape() : rotatePos(std::rand() % 4) {
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+Shape::Shape() {
+    
+    // Generate the random value
+    rotatePos = rand() % 4;
     std::cout << "Initialized rotatePos to: " << rotatePos << std::endl;
 }
 
@@ -187,7 +189,7 @@ Block Shape::getLowestBlock() {
 
 Block Shape::getHighestBlock() {
     Block highestBlock = blockList[0];
-    for (int i = 1; i <= 3; i++) {
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
         if (highestBlock.getY() > blockList[i].getY()) {
             highestBlock = blockList[i];
         }
@@ -263,12 +265,13 @@ bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
     return true;
 }
 
-void Shape::moveToHighestBlockAtMinusOne() {
-    Block highestBlock = getHighestBlock();
-    int yOffset = highestBlock.getY() - (-2);
+void Shape::moveToLowestBlockkAtMinusOne() {
+    Block lowestBlock = getLowestBlock(); // Assuming this function finds the block with the highest y value in the shape
+
+    int yOffset = lowestBlock.getY() - (-1); // Calculate offset to move the highest block to -1
 
     for (auto& block : blockList) {
-        block.setY(block.getY() - yOffset);
+        block.setY(block.getY() - yOffset); // Adjust each block's y position by the computed offset
     }
 }
 

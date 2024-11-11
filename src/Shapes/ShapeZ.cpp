@@ -5,7 +5,11 @@
 ShapeZ::ShapeZ() : Shape() {
     uint16_t color = TFT_RED;
 
-    blockList[0] = Block(4, 1, color);
+    if (getRotatePosition() == getROTATEPOSITION2()) {
+           blockList[0] = Block(4, -30, color);
+        } else {
+            blockList[0] = Block(4, -30, color);
+        }
 
     setPoint(0, 0, Point(1, -1));
     setPoint(0, 1, Point(1, 0));

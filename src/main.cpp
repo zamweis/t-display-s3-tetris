@@ -17,10 +17,24 @@ TFT_eSPI tft = TFT_eSPI();  // Initialize TFT display
 Shape* shape = nullptr;
 BlockMap blockMap;
 
+// Game variables
+unsigned long lastMoveDownTime = 0;
+int score = 0;
+int level = 1;
+int linesCleared = 0;
+const int initialSpeed = 1000; // Initial move-down delay in ms
+
+// Function to calculate the speed of shape movement based on the level
+int getMoveDownSpeed() {
+    return initialSpeed / (1 + level / 5); // Adjust speed as level increases
+}
+
 // Function to create a shape based on a random index
 Shape* createRandomShape() {
     Shape* newShape = nullptr;
-    int index = rand() % 7;  // Generate a random index between 0 and 6
+
+    // Generate a random number
+    int index = rand() % 7;
     switch (index) {
         case 0: newShape = new ShapeI(); break;
         case 1: newShape = new ShapeJ(); break;
@@ -52,6 +66,22 @@ void drawGrid() {
     Serial.println("Grid drawn successfully.");
 }
 
+// Function to update the score and level
+void updateScoreAndLevel(int clearedLines) {
+    const int pointsPerLine[4] = {40, 100, 300, 1200}; // Scoring based on number of lines cleared at once
+    if (clearedLines > 0 && clearedLines <= 4) {
+        score += pointsPerLine[clearedLines - 1] * level;
+        linesCleared += clearedLines;
+
+        // Increase the level for every 10 lines cleared
+        level = 1 + linesCleared / 10;
+        Serial.print("Score: ");
+        Serial.println(score);
+        Serial.print("Level: ");
+        Serial.println(level);
+    }
+}
+
 void setup() {
     Serial.begin(115200);
     Serial.println("Initializing TFT display...");
@@ -63,44 +93,48 @@ void setup() {
     Serial.println("Drawing grid...");
     drawGrid();
 
-    srand(static_cast<unsigned int>(time(nullptr))); // Seed random generator
+    srand(millis()); // Seed random generator
 
     // Create the first shape
     shape = createRandomShape();
     if (shape) {
-        shape->moveToHighestBlockAtMinusOne();
+        shape->moveToLowestBlockkAtMinusOne();
         shape->drawShape(tft, BOX_SIZE);
     } else {
         Serial.println("Failed to create initial shape.");
     }
+
+    lastMoveDownTime = millis(); // Initialize move-down timing
 }
 
 void loop() {
     if (shape) {
-        // Check if the shape can move down
         if (shape->isMovableDownWards(blockMap)) {
-            Serial.println("Shape is movable downwards. Erasing and redrawing.");
             shape->eraseShape(tft, BOX_SIZE, backgroundColor); // Erase old position
             shape->moveDown(blockMap); // Move shape down
             shape->drawShape(tft, BOX_SIZE); // Draw new position
         } else {
             Serial.println("Shape cannot move down. Adding to block map.");
-            // Shape can't move down; add it to the block map
-            blockMap.addBlocks(shape->getBlockList(), 4); // Ensure size matches number of blocks
+
+            // Add null pointer and bounds check
+            if (shape->getBlockList() != nullptr) {
+                blockMap.addBlocks(shape->getBlockList(), 4); // Ensure size matches number of blocks
+            } else {
+                Serial.println("Error: Block list is null.");
+            }
             delete shape; // Free memory
             shape = nullptr; // Reset pointer
         }
     } else {
         Serial.println("Creating a new shape.");
-        // Create a new shape when there is no active shape
         shape = createRandomShape();
         if (shape) {
-            shape->moveToHighestBlockAtMinusOne();
-            shape->drawShape(tft, BOX_SIZE); // Draw the new shape
+            shape->moveToLowestBlockkAtMinusOne();
+            shape->drawShape(tft, BOX_SIZE);
         } else {
             Serial.println("Failed to create new shape.");
         }
     }
 
-    delay(250); // Adjust the speed of shape movement as needed
+    delay(50); // Small delay to avoid excessive CPU usage
 }
