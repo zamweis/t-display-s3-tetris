@@ -2,7 +2,6 @@
 #include "Shape.h" // Include the full definition of Shape
 #include <iostream>
 
-
 // Constructor
 BlockMap::BlockMap() {
     for (int x = 0; x < MAP_WIDTH; ++x) {
@@ -115,21 +114,6 @@ bool BlockMap::isLineEmpty(int lineIndex) const {
     return true; // Return true for out-of-bounds line index
 }
 
-// Clears all full lines in a range covered by a shape
-int BlockMap::clearFullLines(Shape& activeShape, TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) {
-    int numberOfLines = 0;
-    int startLine = activeShape.getLowestBlock().getY();
-    int endLine = activeShape.getHighestBlock().getY(); // Assuming blocks are sorted by Y
-
-    for (int i = startLine; i >= endLine; --i) {
-        if (isLineFull(i)) {
-            clearLine(i, tft, boxSize, backgroundColor);
-            ++numberOfLines;
-        }
-    }
-    return numberOfLines;
-}
-
 // Moves a block down by one field
 void BlockMap::moveBlockDown(int x, int y) {
     if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAX_LINE_INDEX && map[x][y] != nullptr) {
@@ -139,14 +123,7 @@ void BlockMap::moveBlockDown(int x, int y) {
     }
 }
 
-// Checks if a block is movable downwards
-bool BlockMap::isBlockMovableDownwards(int x, int y) const {
-    if (y + 1 < MAP_HEIGHT && x >= 0 && x < MAP_WIDTH) {
-        return map[x][y + 1] == nullptr;
-    }
-    return false;
-}
-
+// Moves an entire line down by a specified number of lines
 void BlockMap::moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, int boxSize, uint16_t backgroundColor) {
     if (lineIndex >= 0 && lineIndex + amountOfLines < MAP_HEIGHT) {
         for (int x = 0; x < MAP_WIDTH; ++x) {
@@ -161,30 +138,20 @@ void BlockMap::moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, int
     }
 }
 
-// Gets the index of the first line that isn't empty starting from a lineIndex
-int BlockMap::getFirstNotEmptyLine(int lineIndex) const {
-    if (lineIndex < 0 || lineIndex >= MAP_HEIGHT) {
-        return -1;
-    }
-    for (int y = lineIndex; y >= 0; --y) {
-        for (int x = 0; x < MAP_WIDTH; ++x) {
-            if (!isFieldEmpty(x, y)) {
-                return y;
-            }
-        }
-    }
-    return -1;
-}
+// Clears all full lines and moves all lines above down by the number of cleared lines
+int BlockMap::clearAndMoveAllFullLines(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) {
+    int totalClearedLines = 0;
 
-// Moves all not empty lines down as far as possible
-void BlockMap::moveAllNotEmptyLinesDown(TFT_eSPI& tft, int clearedLines, int boxSize, uint16_t backgroundColor) {
-    if (clearedLines <= 0) return; // No lines to move if no lines were cleared
-
+    // Traverse from bottom to top to avoid index shifting issues
     for (int y = MAP_HEIGHT - 1; y >= 0; --y) {
-        if (!isLineEmpty(y)) {
-            moveLineDown(y, tft, clearedLines, boxSize, backgroundColor);
+        if (isLineFull(y)) {
+            clearLine(y, tft, boxSize, backgroundColor);
+            ++totalClearedLines;
+        } else if (totalClearedLines > 0) {
+            moveLineDown(y, tft, totalClearedLines, boxSize, backgroundColor);
         }
     }
+    return totalClearedLines;
 }
 
 void BlockMap::drawAllBlocks(TFT_eSPI& tft, int boxSize) {
@@ -198,4 +165,13 @@ void BlockMap::drawAllBlocks(TFT_eSPI& tft, int boxSize) {
             }
         }
     }
+}
+
+bool BlockMap::checkGameOver() const {
+    for (int x = 0; x < MAP_WIDTH; ++x) {
+        if (map[x][0] != nullptr) { // If there's a block in the top row
+            return true;
+        }
+    }
+    return false;
 }

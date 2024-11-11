@@ -19,6 +19,7 @@ public:
 
     void addBlock(Block* block);
     void addBlocks(Block blockList[], int size);
+    bool checkGameOver() const;
     bool isFieldEmpty(int x, int y) const;
     Block* getBlock(int x, int y) const;
     void removeBlock(Block* block);
@@ -33,6 +34,7 @@ public:
     int getFirstNotEmptyLine(int lineIndex) const;
     void moveAllNotEmptyLinesDown(TFT_eSPI& tft, int clearedLines, int boxSize, uint16_t backgroundColor);
     void drawAllBlocks(TFT_eSPI& tft, int boxSize);
+    int clearAndMoveAllFullLines(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor);
 
 };
 
