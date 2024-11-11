@@ -7,7 +7,7 @@
 Shape::Shape() {
     
     // Generate the random value
-    rotatePos = rand() % 4;
+    rotatePos = random(0, 4);
     std::cout << "Initialized rotatePos to: " << rotatePos << std::endl;
 }
 
