@@ -274,14 +274,13 @@ bool promptPlayerForName() {
                 // Prompt to confirm or redefine name
                 bool confirmChoice = false;
                 while (!confirmChoice) {
-                    tft.fillRect(0, 180, SCREEN_WIDTH, 80, TFT_BLACK); // Clear lower screen section
                     
                     int backX = 20; // Small margin from the left border
                     int backY = SCREEN_HEIGHT - 30; // Near the bottom of the screen, adjusting for text size
 
                     tft.setTextSize(1);
                     tft.setCursor(backX, backY);
-                    tft.print("Back");
+                    tft.print("Change");
 
                     // Set the cursor for "Enter" at the lower right corner
                     int enterX = SCREEN_WIDTH - tft.textWidth("Enter") - 20; // Small margin from the right border
