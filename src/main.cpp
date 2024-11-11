@@ -21,13 +21,13 @@ TFT_eSPI tft = TFT_eSPI();  // Initialize TFT display
 Shape* shape = nullptr;
 BlockMap blockMap;
 Preferences preferences;
-// highscore variables
+// Highscore variables
 struct HighScore {
-    char name[4]; // 3 characters for name + null terminator
+    char name[7]; // 3 characters for name + null terminator
     int score;
 };
 
-const int maxHighScores = 5;
+const int maxHighScores = 15;
 HighScore highScores[maxHighScores];
 
 uint16_t backgroundColor;
@@ -39,7 +39,6 @@ unsigned long lastRotateRightTime = 0;
 const unsigned long initialMoveDelay = 120;
 const unsigned long rotationHoldThreshold = 300;
 const unsigned long rotationDebounceInterval = 250;
-
 
 const int MAX_NAME_LENGTH = 6;
 char playerName[MAX_NAME_LENGTH] = {'A', 'A', 'A', 'A', 'A', 'A'};
@@ -55,9 +54,8 @@ ButtonState leftButtonState = IDLE;
 ButtonState rightButtonState = IDLE;
 unsigned long buttonPressStart = 0;
 
-
 // Level speed table (values in milliseconds)
-const int levelSpeeds[] = {  30, 25, 20, 15 };
+const int levelSpeeds[] = { 100 };
 
 int getMoveDownSpeed() {
     return (level < sizeof(levelSpeeds) / sizeof(levelSpeeds[0])) ? levelSpeeds[level - 1] : levelSpeeds[sizeof(levelSpeeds) / sizeof(levelSpeeds[0]) - 1];
@@ -78,6 +76,25 @@ Shape* createRandomShape() {
     }
 }
 
+void waitForButtonRelease(int buttonPin) {
+    while (digitalRead(buttonPin) == LOW) {
+        // Do nothing and wait for the button to be released
+    }
+}
+
+void waitForButtonClick(int buttonPin) {
+    // Wait for the button to be pressed
+    while (digitalRead(buttonPin) == HIGH) {
+        // Do nothing, just wait for the button press
+    }
+    
+    // Wait for the button to be released
+    while (digitalRead(buttonPin) == LOW) {
+        // Do nothing, just wait for the button release
+    }
+}
+
+
 void drawGrid() {
     tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundColor);
     tft.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, TFT_BLACK);
@@ -88,7 +105,6 @@ void drawGrid() {
         tft.drawLine(0, row * BOX_SIZE, SCREEN_WIDTH, row * BOX_SIZE, TFT_BLACK);
     }
 }
-
 
 void loadHighScores(HighScore scores[], int maxScores) {
     preferences.begin("highScores", true); // Open in read-only mode
@@ -136,21 +152,36 @@ void updateHighScores(int newScore, const char* playerName) {
 }
 
 void displayHighScores() {
-    HighScore highScores[maxHighScores];
-    loadHighScores(highScores, maxHighScores);
-
-    tft.setTextSize(2);
+    tft.setTextSize(2); // Smaller text size to fit better within the screen
     tft.setTextColor(TFT_WHITE);
-    tft.setCursor(10, 60);
-    tft.println("High Scores:");
 
+    const char* titleText = "High Scores";
+    int titleWidth = tft.textWidth(titleText);
+    int titleX = (SCREEN_WIDTH - titleWidth) / 2; // Center the title
+    tft.setCursor(titleX, 40); // Position title near the top
+    tft.println(titleText);
+    tft.setTextSize(1);
+
+    // Determine the maximum text width for consistent alignment
+    char sampleEntry[32];
+    snprintf(sampleEntry, sizeof(sampleEntry), "%d. %s - %d", maxHighScores, "ABCDEF", 99999); // Sample longest entry
+    int maxTextWidth = tft.textWidth(sampleEntry);
+    int alignedLeftX = (SCREEN_WIDTH - maxTextWidth) / 2; // Calculate alignment point for consistency
+
+    // Display each high score entry
     for (int i = 0; i < maxHighScores; ++i) {
-        tft.setCursor(10, 80 + i * 20);
-        tft.printf("%d. %s - %d\n", i + 1, highScores[i].name, highScores[i].score);
+        // Format the text to be displayed
+        char scoreEntry[32];
+        snprintf(scoreEntry, sizeof(scoreEntry), "%d. %s - %d", i + 1, highScores[i].name, highScores[i].score);
+
+        // Display the text, aligned to the calculated left position
+        int y = 70 + i * 15; // Adjust vertical spacing as needed
+        tft.setCursor(alignedLeftX, y);
+        tft.println(scoreEntry);
     }
 }
 
-void promptPlayerForName() {
+bool promptPlayerForName() {
     bool nameConfirmed = false;
     bool blinkState = true;
     unsigned long lastBlinkTime = 0;
@@ -159,7 +190,7 @@ void promptPlayerForName() {
     // Initial screen setup (draw static elements)
     tft.fillScreen(TFT_BLACK);
     tft.setTextSize(2);
-    
+
     const char* highscoreText = "New Highscore";
     int textWidth = tft.textWidth(highscoreText);
     int centeredX = (SCREEN_WIDTH - textWidth) / 2; // Calculate the x-coordinate for centering
@@ -183,18 +214,20 @@ void promptPlayerForName() {
             blinkState = !blinkState;
             lastBlinkTime = millis();
 
-            // Only update the current character being defined
+            // Always reset the current character color to white
             int x = 10 + currentCharIndex * 20; // Horizontal position
-            // Clear the background of the character
             tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK); // Clear area before drawing
             tft.setCursor(x, nameEntryY);
-            tft.setTextColor(blinkState ? TFT_YELLOW : TFT_WHITE); // Toggle between visible and invisible
+            tft.setTextColor(blinkState ? TFT_YELLOW : TFT_WHITE); // Toggle between yellow and white
             tft.print(playerName[currentCharIndex]);
-            tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, blinkState ? TFT_YELLOW : TFT_BLACK); // Underline the character
+            // Always remove underline if blinkState is false
+            tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, blinkState ? TFT_YELLOW : TFT_BLACK);
         }
 
         // Check button presses
         if (digitalRead(BUTTON_LEFT) == LOW) {
+            waitForButtonClick(BUTTON_LEFT); // Wait for button release
+
             // Cycle through characters (A-Z, space)
             if (currentChar == ' ') {
                 currentChar = 'A';
@@ -208,17 +241,26 @@ void promptPlayerForName() {
 
             // Update the displayed character immediately
             int x = 10 + currentCharIndex * 20;
-            // Clear the background of the character before drawing
-            tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK);
+            tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK); // Clear area before drawing
             tft.setCursor(x, nameEntryY);
-            tft.setTextColor(TFT_YELLOW);
+            tft.setTextColor(TFT_YELLOW); // Show current character as yellow immediately
             tft.print(playerName[currentCharIndex]);
+            tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, TFT_BLACK); // Clear underline after updating
             delay(200); // Debounce delay
         }
 
         if (digitalRead(BUTTON_RIGHT) == LOW) {
+            waitForButtonClick(BUTTON_RIGHT); // Wait for button release
+
             // Confirm the current character and move to next
             playerName[currentCharIndex] = currentChar;
+            int x = 10 + currentCharIndex * 20;
+            tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK); // Clear area before moving on
+            tft.setCursor(x, nameEntryY);
+            tft.setTextColor(TFT_WHITE); // Set confirmed character to white
+            tft.print(playerName[currentCharIndex]);
+            tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, TFT_BLACK); // Ensure underline is cleared
+
             currentCharIndex++;
 
             if (currentCharIndex >= MAX_NAME_LENGTH) {
@@ -229,12 +271,15 @@ void promptPlayerForName() {
                     tft.setCursor(10, 50);
                     tft.printf("Name: %s", playerName);
                     tft.setCursor(10, 80);
-                    tft.println("OK: Left  Redefine: Right");
+                    tft.println("OK: Right  Redefine: Left");
 
-                    if (digitalRead(BUTTON_LEFT) == LOW) {
+                    if (digitalRead(BUTTON_RIGHT) == LOW) {
+                        waitForButtonClick(BUTTON_RIGHT); // Wait for button release
                         nameConfirmed = true;
                         confirmChoice = true;
-                    } else if (digitalRead(BUTTON_RIGHT) == LOW) {
+                    } else if (digitalRead(BUTTON_LEFT) == LOW) {
+                        waitForButtonClick(BUTTON_LEFT); // Wait for button release
+
                         // Reset for redefinition
                         currentCharIndex = 0;
                         for (int i = 0; i < MAX_NAME_LENGTH; ++i) {
@@ -245,10 +290,7 @@ void promptPlayerForName() {
 
                         // Redraw initial state for re-entry
                         tft.fillScreen(TFT_BLACK);
-                        
-                        const char* highscoreText = "New Highscore";
-                        int textWidth = tft.textWidth(highscoreText);
-                        int centeredX = (SCREEN_WIDTH - textWidth) / 2; // Calculate the x-coordinate for centering
+
                         tft.setTextColor(TFT_WHITE);
                         tft.setCursor(centeredX, 30);
                         tft.println(highscoreText);
@@ -262,9 +304,7 @@ void promptPlayerForName() {
                     delay(300); // Debounce delay
                 }
 
-                // Display the high scores after name confirmation
-                updateHighScores(score, playerName); // Save the score
-                displayHighScores(); // Display the updated high scores
+                return nameConfirmed; // Return name confirmed status
             } else {
                 // Move to next character position and reset
                 currentChar = 'A'; // Start with 'A' for the next position
@@ -272,26 +312,17 @@ void promptPlayerForName() {
             }
         }
     }
-
-    // Name entry completed, display it
-    tft.fillScreen(TFT_BLACK);
-    tft.setCursor(10, 50);
-    tft.printf("Final Name: %s", playerName);
-
-    // Display the high scores one last time if desired (optional)
-    displayHighScores();
+    return nameConfirmed;
 }
 
-
-
-void updateScoreAndLevel(int clearedLines) {
-    const int pointsPerLine[4] = {40, 100, 300, 1200};
-    if (clearedLines > 0 && clearedLines <= 4) {
-        score += pointsPerLine[clearedLines - 1] * (level + 1);
-        linesCleared += clearedLines;
-        level = 1 + linesCleared / 10;
-        Serial.printf("Score: %d, Level: %d\n", score, level);
+bool isHighScore(int newScore) {
+    loadHighScores(highScores, maxHighScores); // Load current high scores
+    for (int i = 0; i < maxHighScores; ++i) {
+        if (newScore > highScores[i].score) {
+            return true;
+        }
     }
+    return false;
 }
 
 void resetGame() {
@@ -315,7 +346,6 @@ int getCenteredX(const char* text, TFT_eSPI &display) {
     return (SCREEN_WIDTH - textWidth) / 2;
 }
 
-// Usage example for centering text in your main code
 void drawCenteredText(bool isGameOver, int score) {
     if (isGameOver) {
         // Display "Game Over"
@@ -400,7 +430,7 @@ void drawCenteredText(bool isGameOver, int score) {
     }
 }
 
-void drawScreen(bool isGameOver) {
+void drawScreen() {
     tft.fillScreen(TFT_BLACK);
 
     int blockSize = BOX_SIZE;
@@ -421,6 +451,33 @@ void drawScreen(bool isGameOver) {
     }
 }
 
+void handleGameOver() {
+    drawScreen();
+    drawCenteredText(true, score); // Display "Game Over" and score
+
+    // Wait for button press to return to the start screen
+    waitForButtonClick(BUTTON_RIGHT);
+
+    if (isHighScore(score)) {
+        // Prompt player for name entry
+        if (promptPlayerForName()) {
+            updateHighScores(score, playerName); // Update the high scores
+        }
+    } 
+    drawScreen();
+    displayHighScores();
+    
+
+    // Wait for button press to return to the start screen
+    waitForButtonClick(BUTTON_RIGHT);
+    tft.fillScreen(TFT_BLACK);
+    drawScreen();
+    drawCenteredText(false, score);
+    waitForButtonClick(BUTTON_RIGHT);
+
+    resetGame(); // Reset game state
+}
+
 void setup() {
     randomSeed(analogRead(0));
 
@@ -430,9 +487,9 @@ void setup() {
     analogWrite(BACKLIGHT_PIN, 100);
     tft.setRotation(0);
     backgroundColor = tft.color565(30, 30, 30);
-    drawScreen(false);
+    drawScreen();
     drawCenteredText(false, score);
-    while (digitalRead(BUTTON_LEFT) == HIGH && digitalRead(BUTTON_RIGHT) == HIGH) {}
+    waitForButtonClick(BUTTON_RIGHT);
     resetGame();
 }
 
@@ -477,35 +534,21 @@ void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentT
     }
 }
 
-bool isHighScore(int newScore) {
-    loadHighScores(highScores, maxHighScores); // Load current high scores
-    for (int i = 0; i < maxHighScores; ++i) {
-        if (newScore > highScores[i].score) {
-            return true;
-        }
+void updateScoreAndLevel(int clearedLines) {
+    const int pointsPerLine[4] = {40, 100, 300, 1200};
+    if (clearedLines > 0 && clearedLines <= 4) {
+        score += pointsPerLine[clearedLines - 1] * (level + 1);
+        linesCleared += clearedLines;
+        level = 1 + linesCleared / 10;
+        Serial.printf("Score: %d, Level: %d\n", score, level);
     }
-    return false;
 }
 
-void handleGameOver() {
-    drawScreen(true); // Draw game-over screen
-    drawCenteredText(true, score); // Display "Game Over" and score
-
-    // Prompt player for name if new high score
-    if (true) {
-        promptPlayerForName(); // Player enters their name
-        updateHighScores(score, playerName); // Update high scores list
-    }
-
-    displayHighScores(); // Display the updated high scores
-}
 
 void loop() {
     unsigned long currentTime = millis();
     if (blockMap.checkGameOver()) {
         handleGameOver(); // Handle the game-over logic
-        while (digitalRead(BUTTON_LEFT) == HIGH && digitalRead(BUTTON_RIGHT) == HIGH) {} // Wait for player input to restart
-        resetGame(); // Reset game state
         return;
     }
 
@@ -540,3 +583,4 @@ void loop() {
     }
     blockMap.drawAllBlocks(tft, BOX_SIZE);
 }
+
