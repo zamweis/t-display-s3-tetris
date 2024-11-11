@@ -33,22 +33,35 @@ This project implements a classic Tetris game on the LilyGO T-Display S3 device.
 - [TFT_eSPI Library](https://github.com/Bodmer/TFT_eSPI)
 - [LilyGO T-Display S3](https://www.lilygo.cc/products/t-display-s3)
 
+### Note on ESP Compatibility
+
+This project is compatible with any ESP device that supports the TFT_eSPI library, making it flexible for other displays and ESP boards.
+
 ## Installation
 
 1. Clone the repository:
 
-   \`\`\`bash
+   ```bash
    git clone https://github.com/zamweis/t-display-s3-tetris.git
    cd t-display-s3-tetris
-   \`\`\`
+   ```
 
 2. Install the necessary dependencies using PlatformIO:
 
-   \`\`\`bash
+   ```bash
    pio lib install
-   \`\`\`
+   ```
 
-3. Ensure that your board is correctly configured in \`platformio.ini\`.
+3. Ensure that your board is correctly configured in `platformio.ini`.
+
+### Configuring the TFT_eSPI Library
+
+To use the TFT display correctly, you need to configure the `User_Setup.h` file in the TFT_eSPI library:
+
+- Uncomment the appropriate lines that correspond to your display model and connection setup in `User_Setup.h`.
+- For example, if using a parallel connection or a specific display model, make sure that the configuration matches your hardware setup.
+
+Refer to the [TFT_eSPI documentation](https://github.com/Bodmer/TFT_eSPI) for more details on configuring the display settings.
 
 ## Building and Uploading
 
@@ -56,13 +69,13 @@ This project implements a classic Tetris game on the LilyGO T-Display S3 device.
 2. Connect your T-Display S3 device via USB.
 3. To build and upload the firmware to your device:
 
-   \`\`\`bash
+   ```bash
    pio run --target upload
-   \`\`\`
+   ```
 
 ## Folder Structure
 
-\`\`\`
+```bash
 ├── include             # Header files
 ├── lib                 # External libraries
 ├── src                 # Source files
@@ -72,7 +85,7 @@ This project implements a classic Tetris game on the LilyGO T-Display S3 device.
 │   └── BlockMap.cpp    # Block map handling
 ├── platformio.ini      # PlatformIO project configuration
 └── README.md           # Project documentation
-\`\`\`
+```
 
 ## Contributing
 
