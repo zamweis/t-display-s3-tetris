@@ -13,115 +13,81 @@
 #define BOX_SIZE 17
 
 #define BACKLIGHT_PIN 38 // Use the TFT_BL pin specified in your configuration
+#define BUTTON_LEFT 0    // BOOT button pin (GPIO0)
+#define BUTTON_RIGHT 14  // IO14 button pin
 
-#define BUTTON_LEFT 0 // BOOT button pin (GPIO0)
-#define BUTTON_RIGHT 14 // IO14 button pin
-
-uint16_t backgroundColor;
 TFT_eSPI tft = TFT_eSPI();  // Initialize TFT display
 Shape* shape = nullptr;
 BlockMap blockMap;
 
+uint16_t backgroundColor;
+
 // Game variables
 unsigned long lastMoveDownTime = 0;
-unsigned long lastMoveLeftTime = 0;
-unsigned long lastMoveRightTime = 0;
+unsigned long lastRotateLeftTime = 0;
+unsigned long lastRotateRightTime = 0;
+const unsigned long initialMoveDelay = 120;
+const unsigned long rotationHoldThreshold = 300;
+const unsigned long rotationDebounceInterval = 250;
+
+int score = 0;
+int level = 1;
+int linesCleared = 0;
 
 enum ButtonState { IDLE, PRESSED, SHORT_PRESS, LONG_PRESS };
 ButtonState leftButtonState = IDLE;
 ButtonState rightButtonState = IDLE;
 unsigned long buttonPressStart = 0;
 
-const unsigned long initialMoveDelay = 120; // Initial delay for single move
+// Level speed table (values in milliseconds)
+const int levelSpeeds[] = { 300, 250, 200, 150, 100, 80, 70, 60, 50, 45, 40, 35, 30, 25, 20, 15 };
 
-const unsigned long rotationHoldThreshold = 300; // Time threshold to differentiate between move and rotate (in milliseconds)
-const unsigned long rotationDebounceInterval = 250; // Debounce interval for rotation when holding down (in milliseconds)
-
-unsigned long lastRotateLeftTime = 0;
-unsigned long lastRotateRightTime = 0;
-
-int score = 0;
-int level = 9;
-int linesCleared = 0;
-
-bool leftButtonPressed = false;
-bool rightButtonPressed = false;
-bool leftButtonHeld = false;
-bool rightButtonHeld = false;
-
-// Expanded table for speeds at different levels (values in milliseconds)
-const int levelSpeeds[] = { 300, 250, 200, 150, 100, 80, 70, 60, 50, 45, 40, 35, 30, 25, 20, 15};
-
-// Function to calculate the speed of shape movement based on the level
 int getMoveDownSpeed() {
     return (level < sizeof(levelSpeeds) / sizeof(levelSpeeds[0])) ? levelSpeeds[level - 1] : levelSpeeds[sizeof(levelSpeeds) / sizeof(levelSpeeds[0]) - 1];
 }
 
-// Function to create a shape based on a random index
 Shape* createRandomShape() {
-    Shape* newShape = nullptr;
-
-    // Generate a random number
     int index = rand() % 7;
     switch (index) {
-        case 0: newShape = new ShapeI(); break;
-        case 1: newShape = new ShapeJ(); break;
-        case 2: newShape = new ShapeL(); break;
-        case 3: newShape = new ShapeO(); break;
-        case 4: newShape = new ShapeS(); break;
-        case 5: newShape = new ShapeT(); break;
-        case 6: newShape = new ShapeZ(); break;
-        default: break;
+        case 0: return new ShapeI();
+        case 1: return new ShapeJ();
+        case 2: return new ShapeL();
+        case 3: return new ShapeO();
+        case 4: return new ShapeS();
+        case 5: return new ShapeT();
+        case 6: return new ShapeZ();
+        default: return nullptr;
     }
-
-    if (!newShape) {
-        Serial.println("Failed to create shape. Returning nullptr.");
-    }
-    return newShape;
 }
 
 void drawGrid() {
-    tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundColor); // Background color
-    tft.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, TFT_BLACK); // Outer border
-
+    tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundColor);
+    tft.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, TFT_BLACK);
     for (int col = 0; col <= SCREEN_WIDTH / BOX_SIZE; ++col) {
         tft.drawLine(col * BOX_SIZE, 0, col * BOX_SIZE, SCREEN_HEIGHT, TFT_BLACK);
     }
     for (int row = 0; row <= SCREEN_HEIGHT / BOX_SIZE; ++row) {
         tft.drawLine(0, row * BOX_SIZE, SCREEN_WIDTH, row * BOX_SIZE, TFT_BLACK);
     }
-
-    Serial.println("Grid drawn successfully.");
 }
 
-// Function to update the score and level
 void updateScoreAndLevel(int clearedLines) {
-    const int pointsPerLine[4] = {40, 100, 300, 1200}; // Scoring based on number of lines cleared at once
+    const int pointsPerLine[4] = {40, 100, 300, 1200};
     if (clearedLines > 0 && clearedLines <= 4) {
-        score += pointsPerLine[clearedLines - 1] * (level + 1); // Use (level + 1) multiplier for classic Tetris scoring
+        score += pointsPerLine[clearedLines - 1] * (level + 1);
         linesCleared += clearedLines;
-
-        // Increase the level for every 10 lines cleared
         level = 1 + linesCleared / 10;
-        Serial.print("Score: ");
-        Serial.println(score);
-        Serial.print("Level: ");
-        Serial.println(level);
+        Serial.printf("Score: %d, Level: %d\n", score, level);
     }
 }
 
 void resetGame() {
-    // Reset game variables
     score = 0;
     level = 1;
     linesCleared = 0;
-
-    // Clear the block map
     delete shape;
     shape = nullptr;
-    blockMap = BlockMap(); // Reinitialize block map
-
-    // Redraw grid and start new game
+    blockMap = BlockMap();
     drawGrid();
     shape = createRandomShape();
     if (shape) {
@@ -130,69 +96,118 @@ void resetGame() {
     }
 }
 
-void drawScreen(bool isGameOver) {
-    tft.fillScreen(TFT_BLACK); // Black background for a classic Tetris look
+// Function to calculate the x-coordinate to center text on the screen
+int getCenteredX(const char* text, TFT_eSPI &display) {
+    int textWidth = display.textWidth(text);
+    return (SCREEN_WIDTH - textWidth) / 2;
+}
 
-    // Set up text properties
-    tft.setTextColor(isGameOver ? TFT_RED : TFT_GREEN, TFT_BLACK);
-    tft.setTextSize(3);
-
-    // Display appropriate message based on the screen type
+// Usage example for centering text in your main code
+void drawCenteredText(bool isGameOver, int score) {
     if (isGameOver) {
-        tft.setCursor(5, 50);
-        tft.println("GAME OVER");
+        // Display "Game Over"
+        tft.setTextColor(TFT_RED);
+        tft.setTextSize(2);
+        const char* gameOverText = "GAME OVER";
+        int gameOverTextX = getCenteredX(gameOverText, tft);
+        tft.setCursor(gameOverTextX, 50);
+        tft.println(gameOverText);
+
+        // Center and display "Score:"
+        tft.setTextColor(TFT_WHITE);
+        tft.setTextSize(2);
+        const char* scoreTitle = "Score:";
+        int scoreTitleX = getCenteredX(scoreTitle, tft);
+        tft.setCursor(scoreTitleX, 140);
+        tft.println(scoreTitle);
+
+        // Center and display the score value
+        String scoreStr = String(score); // Convert score to string for width calculation
+        int scoreX = getCenteredX(scoreStr.c_str(), tft);
+        tft.setCursor(scoreX, 160);
+        tft.printf("%d\n", score);
+
+        // Center and display "Press" and "a button"
+        const char* pressText = "Press";
+        int pressTextX = getCenteredX(pressText, tft);
+        tft.setCursor(pressTextX, 200);
+        tft.println(pressText);
+
+        const char* buttonText = "a button";
+        int buttonTextX = getCenteredX(buttonText, tft);
+        tft.setCursor(buttonTextX, 220);
+        tft.println(buttonText);
     } else {
-        tft.setCursor(25, 50);
-        tft.println("WELCOME");
-    }
+        // Display "Welcome"
+        tft.setTextColor(TFT_GREEN);
+        tft.setTextSize(3);
+        const char* tetrisText = "Tetris";
+        const uint16_t colors[] = {TFT_RED, TFT_BLUE, TFT_GREEN, TFT_YELLOW, TFT_ORANGE, TFT_CYAN, TFT_PURPLE};
+        int numColors = sizeof(colors) / sizeof(colors[0]);
+        int textLength = strlen(tetrisText);
 
-    // Draw a blocky border like Tetris pieces
+        // Calculate starting X position for centering
+        int totalWidth = 0;
+        for (int i = 0; i < textLength; i++) {
+            totalWidth += tft.textWidth(String(tetrisText[i]).c_str());
+        }
+        int startX = (SCREEN_WIDTH - totalWidth) / 2;
+
+        // Display each letter with a different color
+        int currentX = startX;
+        for (int i = 0; i < textLength; i++) {
+            tft.setTextColor(colors[i % numColors]);  // Cycle through colors
+            tft.setCursor(currentX, 50);
+            tft.print(tetrisText[i]);
+            currentX += tft.textWidth(String(tetrisText[i]).c_str());  // Move X position for next character
+        }
+
+        // Center a random shape under "WELCOME"
+        Shape* tempShape = createRandomShape();
+        if (tempShape) {
+            int shapeWidth = (tempShape->getWidth() - 1)* BOX_SIZE; // Ensure getWidth() returns correct number of blocks
+            int shapeX = (SCREEN_WIDTH - shapeWidth) / 2; // Calculate x-coordinate to center shape
+            tempShape->setPosition(shapeX / BOX_SIZE, 7); // Adjust y-position below "WELCOME"
+            tempShape->drawShape(tft, BOX_SIZE);
+            delete tempShape; // Clean up the temporary shape
+        }
+
+        // Display controls
+        tft.setTextSize(1);
+        tft.setTextColor(TFT_WHITE);
+        const char* pressText = "Press left or right";
+        int pressTextX = getCenteredX(pressText, tft);
+        tft.setCursor(pressTextX, 200);
+        tft.println(pressText);
+
+        const char* rotateText = "Hold to rotate";
+        int rotateTextX = getCenteredX(rotateText, tft);
+        tft.setCursor(rotateTextX, 220);
+        tft.println(rotateText);
+    }
+}
+
+void drawScreen(bool isGameOver) {
+    tft.fillScreen(TFT_BLACK);
+
     int blockSize = BOX_SIZE;
-    uint16_t colors[] = {TFT_BLUE, TFT_GREEN, TFT_YELLOW, TFT_RED}; // Array of colors for blocks
-    int numColors = sizeof(colors) / sizeof(colors[0]); // Calculate the number of colors
+    uint16_t colors[] = {TFT_GREEN, TFT_YELLOW, TFT_RED, TFT_BLUE};
+    int numColors = sizeof(colors) / sizeof(colors[0]);
 
-    // Top border
     for (int i = 0; i < SCREEN_WIDTH; i += blockSize) {
-        Block borderBlock(i / blockSize, 0, colors[i / blockSize % numColors]); // Create a block with x, y, and color
-        borderBlock.draw(tft, blockSize); // Use the block's draw method
-    }
-
-    // Bottom border
-    for (int i = 0; i < SCREEN_WIDTH; i += blockSize) {
-        Block borderBlock(i / blockSize, (SCREEN_HEIGHT) / blockSize, colors[i / blockSize % numColors]);
+        Block borderBlock(i / blockSize, 0, colors[i / blockSize % numColors]);
+        borderBlock.draw(tft, blockSize);
+        borderBlock = Block(i / blockSize, SCREEN_HEIGHT / blockSize, colors[i / blockSize % numColors]);
         borderBlock.draw(tft, blockSize);
     }
-
-    // Left border
     for (int j = 0; j < SCREEN_HEIGHT; j += blockSize) {
         Block borderBlock(0, j / blockSize, colors[j / blockSize % numColors]);
         borderBlock.draw(tft, blockSize);
-    }
-
-    // Right border
-    for (int j = 0; j < SCREEN_HEIGHT; j += blockSize) {
-        Block borderBlock((SCREEN_WIDTH - blockSize) / blockSize, j / blockSize, colors[j / blockSize % numColors]);
+        borderBlock = Block((SCREEN_WIDTH - blockSize) / blockSize, j / blockSize, colors[j / blockSize % numColors]);
         borderBlock.draw(tft, blockSize);
     }
 
-    // Display appropriate instructions or score based on the screen type
-    tft.setTextSize(2); // Smaller text for instructions/score
-    tft.setTextColor(TFT_WHITE);
-
-    if (isGameOver) {
-        tft.setCursor(30, 120);
-        tft.print("Score: ");
-        tft.println(score);
-        tft.setCursor(0, 150);
-        tft.println("Press a button");
-        tft.setCursor(27, 170);
-        tft.println("to restart");
-    } else {
-        tft.setCursor(0, 120);
-        tft.println("Press a button");
-        tft.setCursor(38, 150);
-        tft.println("to start");
-    }
+    drawCenteredText(isGameOver, score);
 }
 
 void setup() {
@@ -207,7 +222,6 @@ void setup() {
     resetGame();
 }
 
-
 void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentTime, void (Shape::*moveFunc)(BlockMap &), void (Shape::*rotateFunc)(BlockMap &)) {
     switch (state) {
         case IDLE:
@@ -218,11 +232,7 @@ void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentT
             break;
         case PRESSED:
             if (digitalRead(buttonPin) == HIGH) {
-                if (currentTime - buttonPressStart < rotationHoldThreshold) {
-                    state = SHORT_PRESS;
-                } else {
-                    state = IDLE; // Long press but button released early
-                }
+                state = (currentTime - buttonPressStart < rotationHoldThreshold) ? SHORT_PRESS : IDLE;
             } else if (currentTime - buttonPressStart >= rotationHoldThreshold) {
                 state = LONG_PRESS;
             }
@@ -239,7 +249,6 @@ void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentT
             if (digitalRead(buttonPin) == HIGH) {
                 state = IDLE;
             } else {
-                // Handle continuous rotation with debounce
                 static unsigned long lastRotateTime = 0;
                 if (currentTime - lastRotateTime >= rotationDebounceInterval) {
                     if (shape) {
@@ -254,20 +263,14 @@ void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentT
     }
 }
 
-
 void loop() {
     unsigned long currentTime = millis();
     if (blockMap.checkGameOver()) {
         drawScreen(true);
-        while (true) {
-            if (digitalRead(BUTTON_LEFT) == LOW || digitalRead(BUTTON_RIGHT) == LOW) {
-                resetGame();
-                break;
-            }
-        }
+        while (digitalRead(BUTTON_LEFT) == HIGH && digitalRead(BUTTON_RIGHT) == HIGH) {}
+        resetGame();
         return;
     }
-
     handleButtonState(leftButtonState, BUTTON_LEFT, currentTime, &Shape::moveLeft, &Shape::rotateAntiClockwise);
     handleButtonState(rightButtonState, BUTTON_RIGHT, currentTime, &Shape::moveRight, &Shape::rotateClockwise);
 
@@ -279,13 +282,9 @@ void loop() {
                 shape->moveDown(blockMap);
                 shape->drawShape(tft, BOX_SIZE);
             } else {
-                if (shape->getBlockList() != nullptr) {
-                    blockMap.addBlocks(shape->getBlockList(), 4);
-                }
-                int clearedLines = blockMap.clearAndMoveAllFullLines(tft, BOX_SIZE, backgroundColor); 
-                if (clearedLines > 0) {
-                    updateScoreAndLevel(clearedLines);
-                }
+                blockMap.addBlocks(shape->getBlockList(), 4);
+                int clearedLines = blockMap.clearAndMoveAllFullLines(tft, BOX_SIZE, backgroundColor);
+                if (clearedLines > 0) updateScoreAndLevel(clearedLines);
                 shape->eraseShape(tft, BOX_SIZE, backgroundColor);
                 blockMap.drawAllBlocks(tft, BOX_SIZE);
                 delete shape;

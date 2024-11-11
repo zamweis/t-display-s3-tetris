@@ -64,6 +64,8 @@ public:
     void drawShapeBorderOnly(TFT_eSPI& tft, int boxSize, int offset) const;
     void eraseShape(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) const;
     void moveToLowestBlockkAtMinusOne();
+    int getWidth();
+    void setPosition(int x, int y);
 
 private:
     bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap);

@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <set> // For using std::set
 
 Shape::Shape() {
     
@@ -273,3 +274,23 @@ void Shape::moveToLowestBlockkAtMinusOne() {
     }
 }
 
+// In Shape.cpp or relevant source file
+int Shape::getWidth() {
+   std::set<int> uniqueXCoordinates;
+
+    // Collect unique x-coordinates of all blocks
+    for (const Block& block : blockList) {
+        uniqueXCoordinates.insert(block.getX());
+    }
+
+    // The width is the number of unique x-coordinates
+    return uniqueXCoordinates.size();
+}
+
+void Shape::setPosition(int x, int y) {
+    // Update all blocks' positions relative to the new top-left corner
+   blockList[0].setCoordinates(x,y);
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
+        blockList[i] = Block(getXPosition(i - 1), getYPosition(i - 1),  blockList[0].getColor());
+    }
+}
