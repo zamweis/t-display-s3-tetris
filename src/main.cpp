@@ -55,7 +55,8 @@ ButtonState rightButtonState = IDLE;
 unsigned long buttonPressStart = 0;
 
 // Level speed table (values in milliseconds)
-const int levelSpeeds[] = { 700, 600, 500, 450, 400, 350, 300, 250, 200, 150, 100, 50, 25 };
+//const int levelSpeeds[] = { 500, 450, 400, 350, 300, 250, 200, 190, 180, 170, 160, 150, 140, 130, 120, 110, 100};
+const int levelSpeeds[] = { 10};
 
 
 int getMoveDownSpeed() {
@@ -64,6 +65,7 @@ int getMoveDownSpeed() {
 
 Shape* createRandomShape() {
     int index = random(0, 7);
+    index =3;
     switch (index) {
         case 0: return new ShapeI();
         case 1: return new ShapeJ();
@@ -180,150 +182,175 @@ void displayHighScores() {
     }
 }
 
+void drawHeader() {
+    tft.setTextColor(TFT_WHITE);
+    const char* newText = "New";
+    int newTextWidth = tft.textWidth(newText);
+    int centeredNewX = (SCREEN_WIDTH - newTextWidth) / 2;
+    tft.setCursor(centeredNewX, 30);
+    tft.setTextColor(TFT_WHITE);
+    tft.println(newText);
+
+    const char* highscoreText = "Highscore";
+    int highscoreTextWidth = tft.textWidth(highscoreText);
+    int centeredHighscoreX = (SCREEN_WIDTH - highscoreTextWidth) / 2;
+    tft.setCursor(centeredHighscoreX, 50);
+    tft.println(highscoreText);
+}
+
+void drawName() {
+    tft.setTextColor(TFT_WHITE);
+    int nameEntryY = 120;
+    for (int i = 0; i < MAX_NAME_LENGTH; ++i) {
+        int x = 29 + i * 20;
+        tft.setCursor(x, nameEntryY);
+        tft.print(playerName[i]);
+    }
+}
+
+void drawCurrentChar(bool highlight, int nameEntryY) {
+    int x = 29 + currentCharIndex * 20;
+    tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK);
+    tft.setCursor(x, nameEntryY);
+    tft.setTextColor(highlight ? TFT_YELLOW : TFT_WHITE);
+    tft.print(playerName[currentCharIndex]);
+    tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, highlight ? TFT_YELLOW : TFT_BLACK);
+}
+
+void cycleCharacter() {
+    if (currentChar == ' ') {
+        currentChar = 'A';
+    } else {
+        currentChar++;
+        if (currentChar > 'Z') {
+            currentChar = ' ';
+        }
+    }
+    playerName[currentCharIndex] = currentChar;
+}
+
+void confirmCurrentCharacter() {
+    playerName[currentCharIndex] = currentChar;
+}
+
+void drawConfirmedChar(int nameEntryY) {
+    int x = 29 + currentCharIndex * 20;
+    tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK);
+    tft.setCursor(x, nameEntryY);
+    tft.setTextColor(TFT_WHITE);
+    tft.print(playerName[currentCharIndex]);
+    tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, TFT_BLACK);
+}
+
+
+void drawScreen() {
+    tft.fillScreen(TFT_BLACK);
+
+    int blockSize = BOX_SIZE;
+    uint16_t colors[] = {TFT_GREEN, TFT_YELLOW, TFT_RED, TFT_BLUE};
+    int numColors = sizeof(colors) / sizeof(colors[0]);
+
+    for (int i = 0; i < SCREEN_WIDTH; i += blockSize) {
+        Block borderBlock(i / blockSize, 0, colors[i / blockSize % numColors]);
+        borderBlock.draw(tft, blockSize);
+        borderBlock = Block(i / blockSize, SCREEN_HEIGHT / blockSize, colors[i / blockSize % numColors]);
+        borderBlock.draw(tft, blockSize);
+    }
+    for (int j = 0; j < SCREEN_HEIGHT; j += blockSize) {
+        Block borderBlock(0, j / blockSize, colors[j / blockSize % numColors]);
+        borderBlock.draw(tft, blockSize);
+        borderBlock = Block((SCREEN_WIDTH - blockSize) / blockSize, j / blockSize, colors[j / blockSize % numColors]);
+        borderBlock.draw(tft, blockSize);
+    }
+}
+
+void resetNameEntry() {
+    tft.setTextSize(2);
+    tft.setTextColor(TFT_WHITE);
+    // Reset character entry variables
+    currentCharIndex = 0;
+    for (int i = 0; i < MAX_NAME_LENGTH; ++i) {
+        playerName[i] = ' ';
+    }
+    currentChar = 'A';
+    
+    // Redraw header and name entry to restore screen visibility
+    drawScreen();
+    tft.setTextSize(2);
+    drawHeader();
+    drawName();  
+}
+
+bool promptNameConfirmation() {
+    bool confirmChoice = false;
+    while (!confirmChoice) {
+        // Clear and display options
+        tft.fillRect(0, SCREEN_HEIGHT - 40, SCREEN_WIDTH, 40, TFT_BLACK);
+        int backX = 20; 
+        int backY = SCREEN_HEIGHT - 30; 
+        tft.setTextSize(1);
+        tft.setCursor(backX, backY);
+        tft.print("Back");
+        int enterX = SCREEN_WIDTH - tft.textWidth("Enter") - 20; 
+        int enterY = SCREEN_HEIGHT - 30; 
+        tft.setCursor(enterX, enterY);
+        tft.print("Enter");
+
+        // Wait for button input
+        if (digitalRead(BUTTON_RIGHT) == LOW) {
+            waitForButtonClick(BUTTON_RIGHT);
+            delay(100); // Debounce delay
+            return true;
+        } else if (digitalRead(BUTTON_LEFT) == LOW) {
+            waitForButtonClick(BUTTON_LEFT);
+            resetNameEntry();
+            delay(100); // Debounce delay
+            return false;
+        }
+        delay(300); // Debounce delay to avoid rapid checks
+    }
+    return false;
+}
+
 bool promptPlayerForName() {
     bool nameConfirmed = false;
     bool blinkState = true;
     unsigned long lastBlinkTime = 0;
-    const unsigned long blinkInterval = 500; // 500ms blink interval
+    const unsigned long blinkInterval = 500;
 
-    // Initial setup for drawing
     tft.setTextSize(2);
+    drawHeader(); // Draw the "New Highscore" header initially
 
-    // Display "New" on the first line
-    const char* newText = "New";
-    int newTextWidth = tft.textWidth(newText);
-    int centeredNewX = (SCREEN_WIDTH - newTextWidth) / 2; // Center the text horizontally
-    tft.setTextColor(TFT_WHITE);
-    tft.setCursor(centeredNewX, 30); // Set position below border
-    tft.println(newText);
-
-    // Display "Highscore" on the next line
-    const char* highscoreText = "Highscore";
-    int highscoreTextWidth = tft.textWidth(highscoreText);
-    int centeredHighscoreX = (SCREEN_WIDTH - highscoreTextWidth) / 2; // Center the text horizontally
-    tft.setCursor(centeredHighscoreX, 50); // Adjust vertical position as needed
-    tft.println(highscoreText);
-
-    // Set vertical position for name entry below title
-    int nameEntryY = 120; // Adjusted for centered vertical positioning
-
-    // Display initial name characters
-    for (int i = 0; i < MAX_NAME_LENGTH; ++i) {
-        int x = 29 + i * 20; // Horizontal spacing between characters, shifted by an additional 2 pixels
-        tft.setCursor(x, nameEntryY);
-        tft.print(playerName[i]);
-    }
+    int nameEntryY = 120;
+    drawName(); // Initial rendering of the name
 
     while (!nameConfirmed) {
-        // Handle blinking logic
+        // Handle blinking
         if (millis() - lastBlinkTime >= blinkInterval) {
             blinkState = !blinkState;
             lastBlinkTime = millis();
-
-            // Reset character display
-            int x = 29 + currentCharIndex * 20; // Apply the additional 2-pixel shift here as well
-            tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK); // Clear character area
-            tft.setCursor(x, nameEntryY);
-            tft.setTextColor(blinkState ? TFT_YELLOW : TFT_WHITE); // Toggle color
-            tft.print(playerName[currentCharIndex]);
-            // Handle underline removal
-            tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, blinkState ? TFT_YELLOW : TFT_BLACK);
+            drawCurrentChar(blinkState, nameEntryY);
         }
 
-        // Handle button input
+        // Handle button input for cycling characters
         if (digitalRead(BUTTON_LEFT) == LOW) {
             waitForButtonClick(BUTTON_LEFT);
-
-            // Cycle through characters (A-Z, space)
-            if (currentChar == ' ') {
-                currentChar = 'A';
-            } else {
-                currentChar++;
-                if (currentChar > 'Z') {
-                    currentChar = ' '; // Allow space character
-                }
-            }
-            playerName[currentCharIndex] = currentChar;
-
-            // Update character display
-            int x = 29 + currentCharIndex * 20; // Apply the additional 2-pixel shift here too
-            tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK); // Clear character area
-            tft.setCursor(x, nameEntryY);
-            tft.setTextColor(TFT_YELLOW); // Highlight current character
-            tft.print(playerName[currentCharIndex]);
-            tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, TFT_BLACK); // Remove underline
-            delay(200); // Debounce delay
+            cycleCharacter();
+            drawCurrentChar(true, nameEntryY); 
+            delay(200); // Debounce
         }
 
+        // Handle button input for confirming character
         if (digitalRead(BUTTON_RIGHT) == LOW) {
             waitForButtonClick(BUTTON_RIGHT);
-
-            // Confirm current character and move to next
-            playerName[currentCharIndex] = currentChar;
-            int x = 29 + currentCharIndex * 20; // Apply the additional 2-pixel shift here as well
-            tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK); // Clear character area
-            tft.setCursor(x, nameEntryY);
-            tft.setTextColor(TFT_WHITE); // Confirmed character color
-            tft.print(playerName[currentCharIndex]);
-            tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, TFT_BLACK); // Clear underline
-
+            confirmCurrentCharacter();
+            drawConfirmedChar(nameEntryY);
             currentCharIndex++;
-
             if (currentCharIndex >= MAX_NAME_LENGTH) {
-                // Prompt to confirm or redefine name
-                bool confirmChoice = false;
-                while (!confirmChoice) {
-                    
-                    int backX = 20; // Small margin from the left border
-                    int backY = SCREEN_HEIGHT - 30; // Near the bottom of the screen, adjusting for text size
-
-                    tft.setTextSize(1);
-                    tft.setCursor(backX, backY);
-                    tft.print("Change");
-
-                    // Set the cursor for "Enter" at the lower right corner
-                    int enterX = SCREEN_WIDTH - tft.textWidth("Enter") - 20; // Small margin from the right border
-                    int enterY = SCREEN_HEIGHT - 30; // Same vertical position as "Back"
-                    tft.setCursor(enterX, enterY);
-                    tft.print("Enter");
-
-                    if (digitalRead(BUTTON_RIGHT) == LOW) {
-                        waitForButtonClick(BUTTON_RIGHT);
-                        nameConfirmed = true;
-                        confirmChoice = true;
-                    } else if (digitalRead(BUTTON_LEFT) == LOW) {
-                        waitForButtonClick(BUTTON_LEFT);
-
-                        // Reset for name redefinition
-                        currentCharIndex = 0;
-                        for (int i = 0; i < MAX_NAME_LENGTH; ++i) {
-                            playerName[i] = ' ';
-                        }
-                        currentChar = 'A'; // Reset character
-                        confirmChoice = true;
-
-                        // Redraw initial state for re-entry
-                        tft.fillRect(0, 40, SCREEN_WIDTH, SCREEN_HEIGHT - 40, TFT_BLACK);
-                        tft.setTextColor(TFT_WHITE);
-                        tft.setCursor(centeredNewX, 20);
-                        tft.println(newText);
-                        tft.setCursor(centeredHighscoreX, 40);
-                        tft.println(highscoreText);
-
-                        for (int i = 0; i < MAX_NAME_LENGTH; ++i) {
-                            int x = 29 + i * 20; // Apply the additional 2-pixel shift here as well
-                            tft.setCursor(x, nameEntryY);
-                            tft.print(playerName[i]);
-                        }
-                    }
-                    delay(300); // Debounce delay
-                }
-
-                return nameConfirmed;
+                nameConfirmed = promptNameConfirmation();
             } else {
-                // Move to next character
                 currentChar = 'A';
-                delay(300); // Debounce delay
+                delay(300);
             }
         }
     }
@@ -337,7 +364,7 @@ bool isHighScore(int newScore) {
             return true;
         }
     }
-    return false;
+    return true;
 }
 
 void resetGame() {
@@ -442,27 +469,6 @@ void drawCenteredText(bool isGameOver, int score) {
         int rotateTextX = getCenteredX(rotateText, tft);
         tft.setCursor(rotateTextX, 220);
         tft.println(rotateText);
-    }
-}
-
-void drawScreen() {
-    tft.fillScreen(TFT_BLACK);
-
-    int blockSize = BOX_SIZE;
-    uint16_t colors[] = {TFT_GREEN, TFT_YELLOW, TFT_RED, TFT_BLUE};
-    int numColors = sizeof(colors) / sizeof(colors[0]);
-
-    for (int i = 0; i < SCREEN_WIDTH; i += blockSize) {
-        Block borderBlock(i / blockSize, 0, colors[i / blockSize % numColors]);
-        borderBlock.draw(tft, blockSize);
-        borderBlock = Block(i / blockSize, SCREEN_HEIGHT / blockSize, colors[i / blockSize % numColors]);
-        borderBlock.draw(tft, blockSize);
-    }
-    for (int j = 0; j < SCREEN_HEIGHT; j += blockSize) {
-        Block borderBlock(0, j / blockSize, colors[j / blockSize % numColors]);
-        borderBlock.draw(tft, blockSize);
-        borderBlock = Block((SCREEN_WIDTH - blockSize) / blockSize, j / blockSize, colors[j / blockSize % numColors]);
-        borderBlock.draw(tft, blockSize);
     }
 }
 
