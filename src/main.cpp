@@ -22,9 +22,20 @@ BlockMap blockMap;
 
 // Game variables
 unsigned long lastMoveDownTime = 0;
+unsigned long lastMoveLeftTime = 0;
+unsigned long lastMoveRightTime = 0;
+
+const unsigned long initialMoveDelay = 120; // Initial delay for single move
+const unsigned long continuousMoveInterval = 0; // Interval for continuous movement
+
 int score = 0;
 int level = 1;
 int linesCleared = 0;
+
+bool leftButtonPressed = false;
+bool rightButtonPressed = false;
+bool leftButtonHeld = false;
+bool rightButtonHeld = false;
 
 // Table for speeds at different levels (values in milliseconds)
 const int levelSpeeds[] = {1000, 800, 700, 600, 500, 400, 300, 200, 100, 80}; // Minimum speed set to 80ms
@@ -116,26 +127,63 @@ void setup() {
     lastMoveDownTime = millis(); // Initialize move-down timing
 }
 
+void handleButtonMovement(unsigned long currentTime) {
+    // Handle left button
+    if (digitalRead(BUTTON_LEFT) == LOW) {
+        if (!leftButtonHeld) {
+            lastMoveLeftTime = currentTime; // Initial press, set timing
+            leftButtonHeld = true;
+            if (shape && shape->isMovableToTheLeft(blockMap)) {
+                shape->eraseShape(tft, BOX_SIZE, backgroundColor);
+                shape->moveLeft(blockMap);
+                shape->drawShape(tft, BOX_SIZE);
+            }
+        } else if (currentTime - lastMoveLeftTime >= initialMoveDelay) {
+            // Continuous movement after initial delay
+            if (currentTime - lastMoveLeftTime >= continuousMoveInterval) {
+                lastMoveLeftTime = currentTime; // Reset timing for continuous movement
+                if (shape && shape->isMovableToTheLeft(blockMap)) {
+                    shape->eraseShape(tft, BOX_SIZE, backgroundColor);
+                    shape->moveLeft(blockMap);
+                    shape->drawShape(tft, BOX_SIZE);
+                }
+            }
+        }
+    } else {
+        leftButtonHeld = false; // Reset button state when released
+    }
+
+    // Handle right button
+    if (digitalRead(BUTTON_RIGHT) == LOW) {
+        if (!rightButtonHeld) {
+            lastMoveRightTime = currentTime; // Initial press, set timing
+            rightButtonHeld = true;
+            if (shape && shape->isMovableToTheRight(blockMap)) {
+                shape->eraseShape(tft, BOX_SIZE, backgroundColor);
+                shape->moveRight(blockMap);
+                shape->drawShape(tft, BOX_SIZE);
+            }
+        } else if (currentTime - lastMoveRightTime >= initialMoveDelay) {
+            // Continuous movement after initial delay
+            if (currentTime - lastMoveRightTime >= continuousMoveInterval) {
+                lastMoveRightTime = currentTime; // Reset timing for continuous movement
+                if (shape && shape->isMovableToTheRight(blockMap)) {
+                    shape->eraseShape(tft, BOX_SIZE, backgroundColor);
+                    shape->moveRight(blockMap);
+                    shape->drawShape(tft, BOX_SIZE);
+                }
+            }
+        }
+    } else {
+        rightButtonHeld = false; // Reset button state when released
+    }
+}
+
 void loop() {
     unsigned long currentTime = millis();
     
-    // Handle button input for moving the shape
-    if (digitalRead(BUTTON_LEFT) == LOW) {
-        // Move shape left
-        if (shape && shape->isMovableToTheLeft(blockMap)) {
-            shape->eraseShape(tft, BOX_SIZE, backgroundColor);
-            shape->moveLeft(blockMap);
-            shape->drawShape(tft, BOX_SIZE);
-        }
-    }
-    if (digitalRead(BUTTON_RIGHT) == LOW) {
-        // Move shape right
-        if (shape && shape->isMovableToTheRight(blockMap)) {
-            shape->eraseShape(tft, BOX_SIZE, backgroundColor);
-            shape->moveRight(blockMap);
-            shape->drawShape(tft, BOX_SIZE);
-        }
-    }
+    // Handle button inputs with refined logic
+    handleButtonMovement(currentTime);
 
     // Handle shape movement downwards based on timing
     if (shape) {

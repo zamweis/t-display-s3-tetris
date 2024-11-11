@@ -147,7 +147,7 @@ Block Shape::getRightBlock() {
 
 bool Shape::isMovableToTheRight(BlockMap& blockMap) {
     bool result = true;
-    if (getRightBlock().getX() == MAP_WIDTH) {
+    if (getRightBlock().getX() == MAP_WIDTH-1) {
         result = false;
     } else {
         for (int i = 0; i <= 3; i++) {
@@ -199,13 +199,11 @@ Block Shape::getHighestBlock() {
 
 bool Shape::isMovableDownWards(BlockMap& blockMap) {
     bool result = true;
-    if (getLowestBlock().getY() >= MAP_HEIGHT) {
+    if (getLowestBlock().getY() == MAP_HEIGHT-1) {
         result = false;
     } else {
-        for (int i = 0; i <= 3; i++) {
-            if (result == true) {
-                result = !isInCollisionWithLowerBlock(getBlock(i), blockMap);
-            }
+        for (int i = 0; i <= 3 && result == true; i++) {
+            result = !isInCollisionWithLowerBlock(getBlock(i), blockMap);
         }
     }
     return result;
