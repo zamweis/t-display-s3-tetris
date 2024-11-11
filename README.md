@@ -35,7 +35,7 @@ This project implements a classic Tetris game on the LilyGO T-Display S3 device.
 
 ### Note on ESP Compatibility
 
-This project is compatible with any ESP device that supports the TFT_eSPI library, making it flexible for other displays and ESP boards.
+This project is compatible with any ESP device that supports the TFT_eSPI library, making it flexible for other displays and ESP boards. Simply adjust the display's dimensions.
 
 ## Installation
 
