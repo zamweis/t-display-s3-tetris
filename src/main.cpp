@@ -196,12 +196,21 @@ void loop() {
             } else {
                 Serial.println("Shape cannot move down. Adding to block map.");
 
-                // Add null pointer and bounds check
+                // Add blocks to the block map
                 if (shape->getBlockList() != nullptr) {
                     blockMap.addBlocks(shape->getBlockList(), 4); // Ensure size matches number of blocks
                 } else {
                     Serial.println("Error: Block list is null.");
                 }
+
+                // Clear full lines and update score/level
+                int clearedLines = blockMap.clearFullLines(*shape, tft, BOX_SIZE, backgroundColor); // Clear lines occupied by the shape
+                if (clearedLines > 0) {
+                    updateScoreAndLevel(clearedLines); // Update score and level based on cleared lines
+                    blockMap.moveAllNotEmptyLinesDown(tft, clearedLines, BOX_SIZE, backgroundColor); // Move lines down if necessary
+                }
+
+                shape->eraseShape(tft, BOX_SIZE, backgroundColor); // Erase old position
                 delete shape; // Free memory
                 shape = nullptr; // Reset pointer
             }
@@ -216,4 +225,7 @@ void loop() {
             Serial.println("Failed to create new shape.");
         }
     }
+
+    // Draw all blocks in the block map after updating
+    blockMap.drawAllBlocks(tft, BOX_SIZE);
 }

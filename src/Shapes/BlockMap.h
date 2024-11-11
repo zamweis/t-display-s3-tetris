@@ -23,15 +23,17 @@ public:
     Block* getBlock(int x, int y) const;
     void removeBlock(Block* block);
     void removeBlock(int x, int y);
-    void clearLine(int lineIndex);
+    void clearLine(int lineIndex, TFT_eSPI& tft, int boxSize, uint16_t backgroundColor);
     bool isLineFull(int lineIndex) const;
-    int clearFullLines(Shape& activeShape);
+    int clearFullLines(Shape& activeShape, TFT_eSPI& tft, int boxSize, uint16_t backgroundColor);
     bool isLineEmpty(int lineIndex) const;
     void moveBlockDown(int x, int y);
     bool isBlockMovableDownwards(int x, int y) const;
-    void moveLineDown(int lineIndex);
+    void moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, int boxSize, uint16_t backgroundColor);
     int getFirstNotEmptyLine(int lineIndex) const;
-    void moveAllNotEmptyLinesDown(Shape& activeShape);
+    void moveAllNotEmptyLinesDown(TFT_eSPI& tft, int clearedLines, int boxSize, uint16_t backgroundColor);
+    void drawAllBlocks(TFT_eSPI& tft, int boxSize);
+
 };
 
 #endif // BLOCKMAP_H

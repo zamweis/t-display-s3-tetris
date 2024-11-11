@@ -78,10 +78,14 @@ void BlockMap::removeBlock(int x, int y) {
 }
 
 // Clears all blocks in a given line
-void BlockMap::clearLine(int lineIndex) {
+void BlockMap::clearLine(int lineIndex, TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) {
     if (lineIndex >= 0 && lineIndex < MAP_HEIGHT) {
         for (int x = 0; x < MAP_WIDTH; ++x) {
-            removeBlock(x, lineIndex);
+            if (map[x][lineIndex] != nullptr) {
+                map[x][lineIndex]->draw(tft, boxSize, backgroundColor); // Clear block graphics
+                delete map[x][lineIndex]; // Free memory
+                map[x][lineIndex] = nullptr; // Remove block
+            }
         }
     }
 }
@@ -99,14 +103,27 @@ bool BlockMap::isLineFull(int lineIndex) const {
     return false;
 }
 
+bool BlockMap::isLineEmpty(int lineIndex) const {
+    if (lineIndex >= 0 && lineIndex < MAP_HEIGHT) {
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            if (!isFieldEmpty(x, lineIndex)) {
+                return false; // A block is found, so the line is not empty
+            }
+        }
+        return true; // No blocks found, so the line is empty
+    }
+    return true; // Return true for out-of-bounds line index
+}
+
 // Clears all full lines in a range covered by a shape
-int BlockMap::clearFullLines(Shape& activeShape) {
+int BlockMap::clearFullLines(Shape& activeShape, TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) {
     int numberOfLines = 0;
-    int startLine = activeShape.getBlock(0).getY();
-    int endLine = activeShape.getBlock(3).getY(); // Assuming blocks are sorted by Y
-    for (int i = 0; i <= startLine - endLine; ++i) {
-        if (isLineFull(startLine - i)) {
-            clearLine(startLine - i);
+    int startLine = activeShape.getLowestBlock().getY();
+    int endLine = activeShape.getHighestBlock().getY(); // Assuming blocks are sorted by Y
+
+    for (int i = startLine; i >= endLine; --i) {
+        if (isLineFull(i)) {
+            clearLine(i, tft, boxSize, backgroundColor);
             ++numberOfLines;
         }
     }
@@ -130,12 +147,15 @@ bool BlockMap::isBlockMovableDownwards(int x, int y) const {
     return false;
 }
 
-// Moves an entire line down by one
-void BlockMap::moveLineDown(int lineIndex) {
-    if (lineIndex >= 0 && lineIndex < MAX_LINE_INDEX) {
+void BlockMap::moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, int boxSize, uint16_t backgroundColor) {
+    if (lineIndex >= 0 && lineIndex + amountOfLines < MAP_HEIGHT) {
         for (int x = 0; x < MAP_WIDTH; ++x) {
             if (!isFieldEmpty(x, lineIndex)) {
-                moveBlockDown(x, lineIndex);
+                map[x][lineIndex]->draw(tft, boxSize, backgroundColor); // Clear previous position
+                map[x][lineIndex + amountOfLines] = map[x][lineIndex]; // Move block
+                map[x][lineIndex] = nullptr; // Clear old position
+                map[x][lineIndex + amountOfLines]->setY(lineIndex + amountOfLines);
+                map[x][lineIndex + amountOfLines]->draw(tft, boxSize); // Redraw at new position
             }
         }
     }
@@ -157,12 +177,25 @@ int BlockMap::getFirstNotEmptyLine(int lineIndex) const {
 }
 
 // Moves all not empty lines down as far as possible
-void BlockMap::moveAllNotEmptyLinesDown(Shape& activeShape) {
-    int startLine = activeShape.getBlock(0).getY();
-    for (int y = startLine; y > 0; --y) {
-        int firstNotEmptyLine = getFirstNotEmptyLine(y);
-        if (firstNotEmptyLine != -1) {
-            moveLineDown(firstNotEmptyLine);
+void BlockMap::moveAllNotEmptyLinesDown(TFT_eSPI& tft, int clearedLines, int boxSize, uint16_t backgroundColor) {
+    if (clearedLines <= 0) return; // No lines to move if no lines were cleared
+
+    for (int y = MAP_HEIGHT - 1; y >= 0; --y) {
+        if (!isLineEmpty(y)) {
+            moveLineDown(y, tft, clearedLines, boxSize, backgroundColor);
+        }
+    }
+}
+
+void BlockMap::drawAllBlocks(TFT_eSPI& tft, int boxSize) {
+    for (int y = 0; y < MAP_HEIGHT; ++y) {
+        if (isLineEmpty(y)) {
+            continue; // Skip drawing this line if it is empty
+        }
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            if (map[x][y] != nullptr) {
+                map[x][y]->draw(tft, boxSize); // Draw the block if present
+            }
         }
     }
 }
