@@ -12,6 +12,9 @@
 #define SCREEN_HEIGHT 320
 #define BOX_SIZE 17
 
+#define BUTTON_LEFT 0 // BOOT button pin (GPIO0)
+#define BUTTON_RIGHT 14 // IO14 button pin
+
 uint16_t backgroundColor;
 TFT_eSPI tft = TFT_eSPI();  // Initialize TFT display
 Shape* shape = nullptr;
@@ -22,11 +25,13 @@ unsigned long lastMoveDownTime = 0;
 int score = 0;
 int level = 1;
 int linesCleared = 0;
-const int initialSpeed = 1000; // Initial move-down delay in ms
+
+// Table for speeds at different levels (values in milliseconds)
+const int levelSpeeds[] = {1000, 800, 700, 600, 500, 400, 300, 200, 100, 80}; // Minimum speed set to 80ms
 
 // Function to calculate the speed of shape movement based on the level
 int getMoveDownSpeed() {
-    return initialSpeed / (1 + level / 5); // Adjust speed as level increases
+    return (level < 10) ? levelSpeeds[level - 1] : 80; // Cap minimum speed to 80ms
 }
 
 // Function to create a shape based on a random index
@@ -70,7 +75,7 @@ void drawGrid() {
 void updateScoreAndLevel(int clearedLines) {
     const int pointsPerLine[4] = {40, 100, 300, 1200}; // Scoring based on number of lines cleared at once
     if (clearedLines > 0 && clearedLines <= 4) {
-        score += pointsPerLine[clearedLines - 1] * level;
+        score += pointsPerLine[clearedLines - 1] * (level + 1); // Use (level + 1) multiplier for classic Tetris scoring
         linesCleared += clearedLines;
 
         // Increase the level for every 10 lines cleared
@@ -95,6 +100,10 @@ void setup() {
 
     srand(millis()); // Seed random generator
 
+    // Configure buttons
+    pinMode(BUTTON_LEFT, INPUT_PULLUP);
+    pinMode(BUTTON_RIGHT, INPUT_PULLUP);
+
     // Create the first shape
     shape = createRandomShape();
     if (shape) {
@@ -108,22 +117,46 @@ void setup() {
 }
 
 void loop() {
-    if (shape) {
-        if (shape->isMovableDownWards(blockMap)) {
-            shape->eraseShape(tft, BOX_SIZE, backgroundColor); // Erase old position
-            shape->moveDown(blockMap); // Move shape down
-            shape->drawShape(tft, BOX_SIZE); // Draw new position
-        } else {
-            Serial.println("Shape cannot move down. Adding to block map.");
+    unsigned long currentTime = millis();
+    
+    // Handle button input for moving the shape
+    if (digitalRead(BUTTON_LEFT) == LOW) {
+        // Move shape left
+        if (shape && shape->isMovableToTheLeft(blockMap)) {
+            shape->eraseShape(tft, BOX_SIZE, backgroundColor);
+            shape->moveLeft(blockMap);
+            shape->drawShape(tft, BOX_SIZE);
+        }
+    }
+    if (digitalRead(BUTTON_RIGHT) == LOW) {
+        // Move shape right
+        if (shape && shape->isMovableToTheRight(blockMap)) {
+            shape->eraseShape(tft, BOX_SIZE, backgroundColor);
+            shape->moveRight(blockMap);
+            shape->drawShape(tft, BOX_SIZE);
+        }
+    }
 
-            // Add null pointer and bounds check
-            if (shape->getBlockList() != nullptr) {
-                blockMap.addBlocks(shape->getBlockList(), 4); // Ensure size matches number of blocks
+    // Handle shape movement downwards based on timing
+    if (shape) {
+        if (currentTime - lastMoveDownTime >= getMoveDownSpeed()) {
+            lastMoveDownTime = currentTime; // Reset timing for next move
+            if (shape->isMovableDownWards(blockMap)) {
+                shape->eraseShape(tft, BOX_SIZE, backgroundColor); // Erase old position
+                shape->moveDown(blockMap); // Move shape down
+                shape->drawShape(tft, BOX_SIZE); // Draw new position
             } else {
-                Serial.println("Error: Block list is null.");
+                Serial.println("Shape cannot move down. Adding to block map.");
+
+                // Add null pointer and bounds check
+                if (shape->getBlockList() != nullptr) {
+                    blockMap.addBlocks(shape->getBlockList(), 4); // Ensure size matches number of blocks
+                } else {
+                    Serial.println("Error: Block list is null.");
+                }
+                delete shape; // Free memory
+                shape = nullptr; // Reset pointer
             }
-            delete shape; // Free memory
-            shape = nullptr; // Reset pointer
         }
     } else {
         Serial.println("Creating a new shape.");
@@ -135,6 +168,4 @@ void loop() {
             Serial.println("Failed to create new shape.");
         }
     }
-
-    delay(50); // Small delay to avoid excessive CPU usage
 }
