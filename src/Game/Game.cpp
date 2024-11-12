@@ -116,6 +116,12 @@ void Game::handleGameOver() {
     displayManager.drawScreen();
     highScoreManager.displayHighScores(tft);
     displayManager.displayNavigation("     ", "Next");
+    inputHandler.waitForButtonClick(BUTTON_RIGHT);
+
+    // Display startscreen
+    displayManager.drawScreen();
+    displayManager.displayStartScreen();
+    displayManager.displayNavigation("Highscores", "Start");
 
     while (true) {
         if (digitalRead(BUTTON_LEFT) == LOW) {
