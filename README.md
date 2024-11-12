@@ -5,8 +5,8 @@ A Tetris game implementation for the T-Display S3 device using the PlatformIO en
 
 ## Table of Contents
 
-- [Screenshot](#screenshot)
 - [Description](#description)
+- [Screenshot](#screenshot)
 - [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
