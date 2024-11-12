@@ -15,8 +15,15 @@ public:
     void loop();
 
 private:
+    void displayStartScreenLoop();
+    void handleHighScoreDisplay();
+    void handleHighScoreEntry();
+    void displayHighScoreAndStartScreenLoop();
     void resetGame();
     void handleGameOver();
+    void handleShapeMovement(unsigned long currentTime);
+    void updateShapePosition(unsigned long currentTime);
+    void createNewShape();
     void updateScoreAndLevel(int clearedLines);
     void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentTime, void (Shape::*moveFunc)(BlockMap &), void (Shape::*rotateFunc)(BlockMap &));
 

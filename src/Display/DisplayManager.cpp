@@ -193,6 +193,7 @@ bool DisplayManager::promptPlayerForName() {
             tft.setTextSize(2);
             drawCurrentChar(true, nameEntryY); 
             inputHandler.waitForButtonRelease(BUTTON_LEFT);
+            delay(50);
         }
 
         // Handle button input for confirming character

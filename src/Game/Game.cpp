@@ -6,75 +6,87 @@ Game::Game(TFT_eSPI& tft, DisplayManager& displayManager, HighScoreManager& high
       lastMoveDownTime(0), shape(nullptr), score(0), level(1), linesCleared(0), leftButtonState(IDLE), rightButtonState(IDLE) {}
 
 void Game::setup() {
+    displayStartScreenLoop();
+    resetGame(); // Only reset and start the game after button press
+}
+
+void Game::displayStartScreenLoop() {
     tft.fillScreen(TFT_BLACK);
     displayManager.drawScreen();
     displayManager.displayStartScreen();
     displayManager.displayNavigation("Highscores", "Start");
     highScoreManager.loadHighScores();
 
-    // Wait for the player to press either left or right button
     while (true) {
         if (digitalRead(BUTTON_LEFT) == LOW) {
-            inputHandler.waitForButtonRelease(BUTTON_LEFT);
-            // Display high scores when the left button is pressed
-            displayManager.clearScreen();
-            displayManager.drawScreen();
-            highScoreManager.displayHighScores(tft);
-            displayManager.displayNavigation("     ", "Back");
-            inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for a button click to return to start screen
-            displayManager.clearScreen();
-            displayManager.drawScreen();
-            displayManager.displayStartScreen();
-            displayManager.displayNavigation("Highscores", "Start");
+            handleHighScoreDisplay();
         } else if (digitalRead(BUTTON_RIGHT) == LOW) {
             inputHandler.waitForButtonRelease(BUTTON_RIGHT);
-            // Start the game when the right button is pressed
-            break;
+            break; // Start the game
         }
     }
+}
 
-    resetGame(); // Only reset and start the game after button press
+void Game::handleHighScoreDisplay() {
+    inputHandler.waitForButtonRelease(BUTTON_LEFT);
+    displayManager.clearScreen();
+    displayManager.drawScreen();
+    highScoreManager.displayHighScores(tft);
+    displayManager.displayNavigation("     ", "Back");
+    inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for a button click to return to start screen
+    displayManager.clearScreen();
+    displayManager.drawScreen();
+    displayManager.displayStartScreen();
+    displayManager.displayNavigation("Highscores", "Start");
 }
 
 void Game::loop() {
     unsigned long currentTime = millis();
     
-    // Check if game is over
     if (blockMap.checkGameOver()) {
         handleGameOver();
         return;
     }
 
-    // Handle shape movement and button state
-    handleButtonState(leftButtonState, BUTTON_LEFT, currentTime, &Shape::moveLeft, &Shape::rotateAntiClockwise);
-    handleButtonState(rightButtonState, BUTTON_RIGHT, currentTime, &Shape::moveRight, &Shape::rotateClockwise);
+    handleShapeMovement(currentTime);
 
-    // Handle shape falling logic
     if (shape) {
-        if (currentTime - lastMoveDownTime >= displayManager.getMoveDownSpeed(level)) {
-            lastMoveDownTime = currentTime;
-            if (shape->isMovableDownWards(blockMap)) {
-                shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
-                shape->moveDown(blockMap);
-                shape->drawShape(tft, BOX_SIZE);
-            } else {
-                blockMap.addBlocks(shape->getBlockList(), 4);
-                int clearedLines = blockMap.clearAndMoveAllFullLines(tft, BOX_SIZE, displayManager.getBackgroundColor());
-                if (clearedLines > 0) updateScoreAndLevel(clearedLines);
-                delete shape;
-                shape = nullptr;
-            }
-        }
+        updateShapePosition(currentTime);
     } else {
-        shape = ShapeFactory::createRandomShape();
-        if (shape) {
-            shape->moveToLowestBlockkAtMinusOne();
-            shape->drawShape(tft, BOX_SIZE);
-        }
+        createNewShape();
     }
 
-    // Draw all blocks on the screen
     blockMap.drawAllBlocks(tft, BOX_SIZE);
+}
+
+void Game::handleShapeMovement(unsigned long currentTime) {
+    handleButtonState(leftButtonState, BUTTON_LEFT, currentTime, &Shape::moveLeft, &Shape::rotateAntiClockwise);
+    handleButtonState(rightButtonState, BUTTON_RIGHT, currentTime, &Shape::moveRight, &Shape::rotateClockwise);
+}
+
+void Game::updateShapePosition(unsigned long currentTime) {
+    if (currentTime - lastMoveDownTime >= displayManager.getMoveDownSpeed(level)) {
+        lastMoveDownTime = currentTime;
+        if (shape->isMovableDownWards(blockMap)) {
+            shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+            shape->moveDown(blockMap);
+            shape->drawShape(tft, BOX_SIZE);
+        } else {
+            blockMap.addBlocks(shape->getBlockList(), 4);
+            int clearedLines = blockMap.clearAndMoveAllFullLines(tft, BOX_SIZE, displayManager.getBackgroundColor());
+            if (clearedLines > 0) updateScoreAndLevel(clearedLines);
+            delete shape;
+            shape = nullptr;
+        }
+    }
+}
+
+void Game::createNewShape() {
+    shape = ShapeFactory::createRandomShape();
+    if (shape) {
+        shape->moveToLowestBlockkAtMinusOne();
+        shape->drawShape(tft, BOX_SIZE);
+    }
 }
 
 void Game::resetGame() {
@@ -85,61 +97,51 @@ void Game::resetGame() {
     shape = nullptr;
     blockMap = BlockMap();
     displayManager.drawGrid();
-    shape = ShapeFactory::createRandomShape();
-    if (shape) {
-        shape->moveToLowestBlockkAtMinusOne();
-        shape->drawShape(tft, BOX_SIZE);
-    }
+    createNewShape();
 }
 
 void Game::handleGameOver() {
     displayManager.drawScreen();
-    displayManager.displayGameOverScreen(score); // Display "Game Over" screen
+    displayManager.displayGameOverScreen(score);
     highScoreManager.loadHighScores();
 
-    // Wait for button click to go back to the start screen
     inputHandler.waitForButtonRelease(BUTTON_RIGHT);
     inputHandler.waitForButtonClick(BUTTON_RIGHT);
 
-    // If highscore prompt player for name
     if (highScoreManager.isHighScore(score)) {
-        displayManager.clearScreen();
-        displayManager.drawScreen();
-        if (displayManager.promptPlayerForName()) {
-            highScoreManager.updateHighScores(score, displayManager.getPlayerName());
-            displayManager.resetNameEntry();
-            inputHandler.waitForButtonRelease(BUTTON_RIGHT);
-        }
+        handleHighScoreEntry();
     }
 
-    // Display HighScores
-    displayManager.drawScreen();
-    highScoreManager.displayHighScores(tft);
-    displayManager.displayNavigation("     ", "Next");
-    inputHandler.waitForButtonClick(BUTTON_RIGHT);
+    displayHighScoreAndStartScreenLoop();
+}
 
-    // Display startscreen
+void Game::handleHighScoreEntry() {
+    displayManager.clearScreen();
     displayManager.drawScreen();
-    displayManager.displayStartScreen();
-    displayManager.displayNavigation("Highscores", "Start");
+    if (displayManager.promptPlayerForName()) {
+        highScoreManager.updateHighScores(score, displayManager.getPlayerName());
+        displayManager.resetNameEntry();
+        inputHandler.waitForButtonRelease(BUTTON_RIGHT);
+    }
+}
 
+void Game::displayHighScoreAndStartScreenLoop() {
     while (true) {
+        displayManager.drawScreen();
+        highScoreManager.displayHighScores(tft);
+        displayManager.displayNavigation("     ", "Next");
+        inputHandler.waitForButtonClick(BUTTON_RIGHT);
+
+        displayManager.clearScreen();
+        displayManager.drawScreen();
+        displayManager.displayStartScreen();
+        displayManager.displayNavigation("Highscores", "Start");
+
         if (digitalRead(BUTTON_LEFT) == LOW) {
-            inputHandler.waitForButtonRelease(BUTTON_LEFT);
-            // Display high scores when the left button is pressed
-            displayManager.clearScreen();
-            displayManager.drawScreen();
-            highScoreManager.displayHighScores(tft);
-            displayManager.displayNavigation("     ", "Back");
-            inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for a button click to return to start screen
-            displayManager.clearScreen();
-            displayManager.drawScreen();
-            displayManager.displayStartScreen();
-            displayManager.displayNavigation("Highscores", "Start");
+            handleHighScoreDisplay();
         } else if (digitalRead(BUTTON_RIGHT) == LOW) {
             inputHandler.waitForButtonRelease(BUTTON_RIGHT);
-            // Start the game when the right button is pressed
-            break;
+            break; // Start the game
         }
     }
     resetGame(); // Only reset and start the game after button press
