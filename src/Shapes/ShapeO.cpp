@@ -1,6 +1,4 @@
 #include "ShapeO.h"
-#include "Block.h"
-#include "Point.h"
 
 ShapeO::ShapeO() : Shape() {
     uint16_t color = TFT_YELLOW;

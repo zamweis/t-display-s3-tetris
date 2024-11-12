@@ -1,7 +1,7 @@
 #ifndef BLOCKMAP_H
 #define BLOCKMAP_H
 
-#include "Block.h"
+#include "Model/Block.h"
 
 // Forward declaration of Shape
 class Shape;

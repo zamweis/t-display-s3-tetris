@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include <set> // For using std::set
+#include <set>
 
 Shape::Shape() {
     

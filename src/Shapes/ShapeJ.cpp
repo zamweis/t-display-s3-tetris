@@ -1,6 +1,4 @@
 #include "ShapeJ.h"
-#include "Block.h"
-#include "Point.h"
 #include <iostream>
 
 ShapeJ::ShapeJ() : Shape() {

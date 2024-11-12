@@ -2,11 +2,11 @@
 #define GAME_H
 
 #include "TFT_eSPI.h"
-#include "Shapes/BlockMap.h"
-#include "ShapeFactory.h"
-#include "DisplayManager.h"
-#include "HighScoreManager.h"
-#include "InputHandler.h"
+#include "Game/BlockMap.h"
+#include "Shapes/ShapeFactory.h"
+#include "Display/DisplayManager.h"
+#include "HighScore/HighScoreManager.h"
+#include "Input/InputHandler.h"
 
 class Game {
 public:

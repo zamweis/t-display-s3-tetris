@@ -1,7 +1,4 @@
 #include "ShapeZ.h"
-#include "Block.h"
-#include "Point.h"
-
 ShapeZ::ShapeZ() : Shape() {
     uint16_t color = TFT_RED;
 

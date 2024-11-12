@@ -1,5 +1,5 @@
 #include "DisplayManager.h"
-#include "ShapeFactory.h"
+#include "Shapes/ShapeFactory.h"
 
 DisplayManager::DisplayManager(TFT_eSPI& tft) : tft(tft) {
     backgroundColor = tft.color565(30, 30, 30); // Set default background color

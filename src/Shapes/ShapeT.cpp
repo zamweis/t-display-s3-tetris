@@ -1,6 +1,4 @@
 #include "ShapeT.h"
-#include "Block.h"
-#include "Point.h"
 
 ShapeT::ShapeT() : Shape() {
     uint16_t color = TFT_MAGENTA;

@@ -1,6 +1,4 @@
 #include "ShapeL.h"
-#include "Block.h"
-#include "Point.h"
 
 ShapeL::ShapeL() : Shape() {
     uint16_t color = TFT_ORANGE;

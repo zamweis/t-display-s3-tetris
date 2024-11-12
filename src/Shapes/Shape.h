@@ -1,9 +1,9 @@
 #ifndef SHAPE_H
 #define SHAPE_H
 
-#include "Block.h"
-#include "BlockMap.h"
-#include "Point.h"
+#include "Model/Block.h"
+#include "Game/BlockMap.h"
+#include "Model/Point.h"
 #include "TFT_eSPI.h"
 #include <stdexcept>
 

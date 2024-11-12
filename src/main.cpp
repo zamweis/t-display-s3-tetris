@@ -1,10 +1,10 @@
 #include <Arduino.h>
 #include "Config.h"
-#include "DisplayManager.h"
-#include "Game.h"
-#include "HighScoreManager.h"
-#include "InputHandler.h"
-#include "ShapeFactory.h"
+#include "Display/DisplayManager.h"
+#include "Game/Game.h"
+#include "HighScore/HighScoreManager.h"
+#include "Input/InputHandler.h"
+#include "Shapes/ShapeFactory.h"
 
 // TFT and display setup (specific to your hardware)
 TFT_eSPI tft = TFT_eSPI(); 

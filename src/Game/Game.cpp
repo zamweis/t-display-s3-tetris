@@ -1,4 +1,4 @@
-#include "Game.h"
+#include "Game/Game.h"
 #include "Config.h"
 
 Game::Game(TFT_eSPI& tft, DisplayManager& displayManager, HighScoreManager& highScoreManager, InputHandler& inputHandler)

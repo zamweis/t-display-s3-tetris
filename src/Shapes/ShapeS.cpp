@@ -1,6 +1,4 @@
 #include "ShapeS.h"
-#include "Block.h"
-#include "Point.h"
 
 ShapeS::ShapeS() : Shape() {
     uint16_t color = TFT_GREEN;

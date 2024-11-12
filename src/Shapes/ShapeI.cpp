@@ -1,6 +1,4 @@
 #include "ShapeI.h"
-#include "Block.h"
-#include "Point.h"
 #include <iostream>
 
 // Constructor implementation for ShapeI
