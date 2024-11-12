@@ -25,6 +25,8 @@ This project implements a classic Tetris game on the LilyGO T-Display S3 device.
 - Multiple Tetris shapes and their rotation mechanisms
 - Collision detection and line clearing logic
 - User input handling (buttons or touch interactions)
+- Highscores
+- Navigationbar
 
 ## Prerequisites
 
@@ -75,16 +77,50 @@ Refer to the [TFT_eSPI documentation](https://github.com/Bodmer/TFT_eSPI) for mo
 
 ## Folder Structure
 
-```bash
-├── include             # Header files
-├── lib                 # External libraries
-├── src                 # Source files
-│   ├── main.cpp        # Main entry point
-│   ├── Shapes          # Shape-related classes
-│   ├── Block.cpp       # Block logic
-│   └── BlockMap.cpp    # Block map handling
-├── platformio.ini      # PlatformIO project configuration
-└── README.md           # Project documentation
+```
+.
+├── src/
+│   ├── Config.cpp              # Configuration source file.
+│   ├── Config.h                # Configuration constants and macros.
+│   ├── main.cpp                # Entry point for the application.
+│   ├── Display/
+│   │   ├── DisplayManager.cpp  # Implementation of display management.
+│   │   └── DisplayManager.h    # Header for display-related functionalities.
+│   ├── Game/
+│   │   ├── BlockMap.cpp        # Game grid management implementation.
+│   │   ├── BlockMap.h          # Game grid management header.
+│   │   ├── Game.cpp            # Main game logic implementation.
+│   │   ├── Game.h              # Header for core game logic.
+│   │   ├── ShapeFactory.cpp    # Shape creation implementation.
+│   │   └── ShapeFactory.h      # Header for shape creation.
+│   ├── HighScore/
+│   │   ├── HighScoreManager.cpp # High score management implementation.
+│   │   └── HighScoreManager.h   # Header for high score management.
+│   ├── Input/
+│   │   ├── InputHandler.cpp    # Implementation of input handling.
+│   │   └── InputHandler.h      # Header for input handling.
+│   └── Model/
+│       ├── Block.cpp           # Block model implementation.
+│       ├── Block.h             # Header for block model.
+│       ├── Point.cpp           # Point model implementation.
+│       ├── Point.h             # Header for point model.
+│       └── Shapes/
+│           ├── Shape.cpp       # Base shape implementation.
+│           ├── Shape.h         # Header for base shape.
+│           ├── ShapeI.cpp      # Specific shape implementation (I).
+│           ├── ShapeI.h        # Header for shape (I).
+│           ├── ShapeJ.cpp      # Specific shape implementation (J).
+│           ├── ShapeJ.h        # Header for shape (J).
+│           ├── ShapeL.cpp      # Specific shape implementation (L).
+│           ├── ShapeL.h        # Header for shape (L).
+│           ├── ShapeO.cpp      # Specific shape implementation (O).
+│           ├── ShapeO.h        # Header for shape (O).
+│           ├── ShapeS.cpp      # Specific shape implementation (S).
+│           ├── ShapeS.h        # Header for shape (S).
+│           ├── ShapeT.cpp      # Specific shape implementation (T).
+│           ├── ShapeT.h        # Header for shape (T).
+│           ├── ShapeZ.cpp      # Specific shape implementation (Z).
+│           └── ShapeZ.h        # Header for shape (Z).
 ```
 
 ## Contributing
