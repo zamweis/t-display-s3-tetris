@@ -8,10 +8,29 @@ Game::Game(TFT_eSPI& tft, DisplayManager& displayManager, HighScoreManager& high
 void Game::setup() {
     tft.fillScreen(TFT_BLACK);
     displayManager.drawScreen();
-    displayManager.drawCenteredText(false, score); // Display the start screen text
-    
-    // Wait for the player to press the button before starting
-    inputHandler.waitForButtonClick(BUTTON_RIGHT); 
+    displayManager.displayStartScreen();
+    displayManager.displayNavigation("Highscores", "Start");
+
+    // Wait for the player to press either left or right button
+    while (true) {
+        if (digitalRead(BUTTON_LEFT) == LOW) {
+            inputHandler.waitForButtonRelease(BUTTON_LEFT);
+            // Display high scores when the left button is pressed
+            displayManager.clearScreen();
+            displayManager.drawScreen();
+            highScoreManager.displayHighScores(tft);
+            displayManager.displayNavigation("", "Back");
+            inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for a button click to return to start screen
+            displayManager.clearScreen();
+            displayManager.drawScreen();
+            displayManager.displayStartScreen();
+        } else if (digitalRead(BUTTON_RIGHT) == LOW) {
+            inputHandler.waitForButtonRelease(BUTTON_RIGHT);
+            // Start the game when the right button is pressed
+            break;
+        }
+    }
+
     resetGame(); // Only reset and start the game after button press
 }
 
@@ -19,7 +38,7 @@ void Game::loop() {
     unsigned long currentTime = millis();
     
     // Check if game is over
-    if (blockMap.checkGameOver() || true) {
+    if (blockMap.checkGameOver()) {
         handleGameOver();
         return;
     }
@@ -73,29 +92,38 @@ void Game::resetGame() {
 
 void Game::handleGameOver() {
     displayManager.drawScreen();
-    displayManager.drawCenteredText(true, score); // Display "Game Over" screen
+    displayManager.displayGameOverScreen(score); // Display "Game Over" screen
     highScoreManager.loadHighScores();
 
-    // Wait for button press to go back to the start screen
+    // Wait for button click to go back to the start screen
+    inputHandler.waitForButtonRelease(BUTTON_RIGHT);
     inputHandler.waitForButtonClick(BUTTON_RIGHT);
 
-    if (highScoreManager.isHighScore(score) || true) {
+    // If highscore prompt player for name
+    if (highScoreManager.isHighScore(score)) {
         displayManager.clearScreen();
         displayManager.drawScreen();
         if (displayManager.promptPlayerForName()) {
             highScoreManager.updateHighScores(score, displayManager.getPlayerName());
+            displayManager.resetNameEntry();
+            inputHandler.waitForButtonRelease(BUTTON_RIGHT);
         }
     }
 
+    // Display HighScores
     displayManager.drawScreen();
     highScoreManager.displayHighScores(tft);
 
-    // Wait for button press to return to the start screen
+    // Wait for button click to return to the start screen
     inputHandler.waitForButtonClick(BUTTON_RIGHT);
     displayManager.clearScreen();
     displayManager.drawScreen();
-    displayManager.drawCenteredText(false, score); // Show start screen again
-    inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for button press to start a new game
+    displayManager.displayStartScreen(); // Show start screen again
+    displayManager.displayNavigation("Highscores", "Start");
+
+    inputHandler.waitForButtonRelease(BUTTON_RIGHT);
+    
+    inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for button click to start a new game
 
     resetGame(); // Reset game state after returning to start screen
 }

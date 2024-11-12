@@ -7,10 +7,11 @@ public:
     bool isButtonPressed(int buttonPin);
     bool isButtonReleased(int buttonPin);
     void waitForButtonClick(int buttonPin);
+    void waitForButtonRelease(int buttonPin);
     void startButtonPressTimer(unsigned long currentTime);
     unsigned long getButtonPressStart() const;
     unsigned long getLastRotateTime() const;
-    void updateLastRotateTime(unsigned long time);
+    void updateLastRotateTime(unsigned long time);;
 
 private:
     int leftPin;

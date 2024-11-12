@@ -17,9 +17,9 @@ extern ButtonState rightButtonState;
 extern unsigned long buttonPressStart;
 
 // Button pins
-extern const int BACKLIGHT_PIN;
-extern const int BUTTON_LEFT;
-extern const int BUTTON_RIGHT;
+constexpr int BACKLIGHT_PIN = 38;
+constexpr int BUTTON_LEFT = 0;
+constexpr int BUTTON_RIGHT = 14;
 
 // Game-related timing constants
 extern const unsigned long initialMoveDelay;

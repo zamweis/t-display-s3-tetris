@@ -17,16 +17,15 @@ void HighScoreManager::loadHighScores() {
         int score = preferences.getInt(keyScore.c_str(), -1);
         if (score != -1) {
             highScores[i].score = score;
-            String storedName = preferences.getString(keyName.c_str(), "---");
+            String storedName = preferences.getString(keyName.c_str(), "------");
             storedName.toCharArray(highScores[i].name, sizeof(highScores[i].name));
             isEmpty = false; // Found at least one score
         } else {
             // Assign default values if preferences are not set
             highScores[i].score = 0;
-            strncpy(highScores[i].name, "---", sizeof(highScores[i].name));
+            strncpy(highScores[i].name, "------", sizeof(highScores[i].name));
         }
     }
-
     preferences.end();
 }
 

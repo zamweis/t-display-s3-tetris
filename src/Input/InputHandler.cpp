@@ -14,6 +14,11 @@ bool InputHandler::isButtonReleased(int buttonPin) {
 void InputHandler::waitForButtonClick(int buttonPin) {
     while (digitalRead(buttonPin) == HIGH) {}
     while (digitalRead(buttonPin) == LOW) {}
+    while (digitalRead(buttonPin) == HIGH) {}
+}
+
+void InputHandler::waitForButtonRelease(int buttonPin) {
+    while (digitalRead(buttonPin) == LOW) {}
 }
 
 void InputHandler::startButtonPressTimer(unsigned long currentTime) {
