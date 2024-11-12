@@ -93,46 +93,50 @@ void Game::resetGame() {
 }
 
 void Game::handleGameOver() {
-    while (true) {
-        displayManager.drawScreen();
-        displayManager.displayGameOverScreen(score); // Display "Game Over" screen
-        highScoreManager.loadHighScores();
+    displayManager.drawScreen();
+    displayManager.displayGameOverScreen(score); // Display "Game Over" screen
+    highScoreManager.loadHighScores();
 
-        // If the player achieved a high score, prompt for name
-        if (highScoreManager.isHighScore(score)) {
+    // Wait for button click to go back to the start screen
+    inputHandler.waitForButtonRelease(BUTTON_RIGHT);
+    inputHandler.waitForButtonClick(BUTTON_RIGHT);
+
+    // If highscore prompt player for name
+    if (highScoreManager.isHighScore(score)) {
+        displayManager.clearScreen();
+        displayManager.drawScreen();
+        if (displayManager.promptPlayerForName()) {
+            highScoreManager.updateHighScores(score, displayManager.getPlayerName());
+            displayManager.resetNameEntry();
             inputHandler.waitForButtonRelease(BUTTON_RIGHT);
-            displayManager.clearScreen();
-            displayManager.drawScreen();
-            if (displayManager.promptPlayerForName()) {
-                highScoreManager.updateHighScores(score, displayManager.getPlayerName());
-                displayManager.resetNameEntry();
-                inputHandler.waitForButtonRelease(BUTTON_RIGHT);
-            }
-        }
-
-        // Display high scores
-        displayManager.drawScreen();
-        highScoreManager.displayHighScores(tft);
-        displayManager.displayNavigation("     ", "Next");
-
-        // Wait for user input to navigate between screens
-        while (true) {
-            if (digitalRead(BUTTON_LEFT) == LOW) {
-                inputHandler.waitForButtonRelease(BUTTON_LEFT);
-                // Go back to start screen
-                displayManager.clearScreen();
-                displayManager.drawScreen();
-                displayManager.displayStartScreen();
-                displayManager.displayNavigation("Highscores", "Start");
-                break; // Exit the inner loop to restart the navigation
-            } else if (digitalRead(BUTTON_RIGHT) == LOW) {
-                inputHandler.waitForButtonRelease(BUTTON_RIGHT);
-                // Start a new game
-                resetGame();
-                return; // Exit both loops and start a new game
-            }
         }
     }
+
+    // Display HighScores
+    displayManager.drawScreen();
+    highScoreManager.displayHighScores(tft);
+    displayManager.displayNavigation("     ", "Next");
+
+    while (true) {
+        if (digitalRead(BUTTON_LEFT) == LOW) {
+            inputHandler.waitForButtonRelease(BUTTON_LEFT);
+            // Display high scores when the left button is pressed
+            displayManager.clearScreen();
+            displayManager.drawScreen();
+            highScoreManager.displayHighScores(tft);
+            displayManager.displayNavigation("     ", "Back");
+            inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for a button click to return to start screen
+            displayManager.clearScreen();
+            displayManager.drawScreen();
+            displayManager.displayStartScreen();
+            displayManager.displayNavigation("Highscores", "Start");
+        } else if (digitalRead(BUTTON_RIGHT) == LOW) {
+            inputHandler.waitForButtonRelease(BUTTON_RIGHT);
+            // Start the game when the right button is pressed
+            break;
+        }
+    }
+    resetGame(); // Only reset and start the game after button press
 }
 
 void Game::updateScoreAndLevel(int clearedLines) {
