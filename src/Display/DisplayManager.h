@@ -21,6 +21,7 @@ public:
     void confirmCurrentCharacter();
     void cycleCharacter();
     void waitForButtonClick(int buttonPin);
+    void waitForButtonRelease(int buttonPin);
     void drawConfirmedChar(int nameEntryY);
     bool promptNameConfirmation();
     void drawCurrentChar(bool highlight, int nameEntryY);
@@ -29,7 +30,7 @@ public:
 private:
     TFT_eSPI& tft;
     uint16_t backgroundColor;
-    char playerName[MAX_NAME_LENGTH];
+    char playerName[MAX_NAME_LENGTH + 1] = {'A', 'A', 'A', 'A', 'A', 'A', '\0'};
     int currentCharIndex;
     char currentChar;
     void resetNameEntry();

@@ -34,8 +34,9 @@ void DisplayManager::resetNameEntry() {
     // Reset character entry variables
     currentCharIndex = 0;
     for (int i = 0; i < MAX_NAME_LENGTH; ++i) {
-        playerName[i] = ' ';
+        playerName[i] = 'A';
     }
+    playerName[MAX_NAME_LENGTH] = '\0'; // Null-terminate for safety if needed
     currentChar = 'A';
     
     // Optionally, redraw the screen (make sure this doesn't interfere with text rendering)
@@ -161,49 +162,11 @@ void DisplayManager::clearScreen() {
     tft.fillScreen(TFT_BLACK);
 }
 
-bool DisplayManager::promptPlayerForName() {
-    bool nameConfirmed = false;
-    bool blinkState = true;
-    unsigned long lastBlinkTime = 0;
-    const unsigned long blinkInterval = 500;
-
-    tft.setTextSize(2);
-    drawHeader(); // Draw the "New Highscore" header initially
-
-    int nameEntryY = 120;
-    drawName(); // Initial rendering of the name
-
-    while (!nameConfirmed) {
-        // Handle blinking
-        if (millis() - lastBlinkTime >= blinkInterval) {
-            blinkState = !blinkState;
-            lastBlinkTime = millis();
-            drawCurrentChar(blinkState, nameEntryY);
-        }
-
-        // Handle button input for cycling characters
-        if (digitalRead(BUTTON_LEFT) == LOW) {
-            waitForButtonClick(BUTTON_LEFT);
-            cycleCharacter();
-            drawCurrentChar(true, nameEntryY); 
-            delay(200); // Debounce
-        }
-
-        // Handle button input for confirming character
-        if (digitalRead(BUTTON_RIGHT) == LOW) {
-            waitForButtonClick(BUTTON_RIGHT);
-            confirmCurrentCharacter();
-            drawConfirmedChar(nameEntryY);
-            currentCharIndex++;
-            if (currentCharIndex >= MAX_NAME_LENGTH) {
-                nameConfirmed = promptNameConfirmation();
-            } else {
-                currentChar = 'A';
-                delay(300);
-            }
-        }
+void DisplayManager::waitForButtonRelease(int buttonPin) {
+    // Wait for the button to be pressed (logic assumes active-low button)
+    while (digitalRead(buttonPin) == HIGH) {
+        // Wait for the button press
     }
-    return nameConfirmed;
 }
 
 void DisplayManager::waitForButtonClick(int buttonPin) {
@@ -218,8 +181,52 @@ void DisplayManager::waitForButtonClick(int buttonPin) {
     }
 }
 
+bool DisplayManager::promptPlayerForName() {
+    bool nameConfirmed = false;
+    bool blinkState = true;
+    unsigned long lastBlinkTime = 0;
+    const unsigned long blinkInterval = 500;
+
+    tft.setTextSize(2);
+    drawHeader(); // Draw the "New Highscore" header initially
+    drawName();
+
+    int nameEntryY = 120;
+
+    while (!nameConfirmed) {
+        // Handle blinking
+        if (millis() - lastBlinkTime >= blinkInterval) {
+            blinkState = !blinkState;
+            lastBlinkTime = millis();
+            drawCurrentChar(blinkState, nameEntryY);
+        }
+
+        // Handle button input for cycling characters
+        if (digitalRead(BUTTON_LEFT) == LOW) {
+            cycleCharacter();
+            drawCurrentChar(true, nameEntryY); 
+            delay(200); // Debounce
+        }
+
+        // Handle button input for confirming character
+        if (digitalRead(BUTTON_RIGHT) == LOW) {
+            waitForButtonClick(BUTTON_RIGHT);
+            confirmCurrentCharacter();
+            drawConfirmedChar(nameEntryY);
+            currentCharIndex++;
+            if (currentCharIndex >= MAX_NAME_LENGTH) {
+                resetNameEntry();
+                nameConfirmed = promptNameConfirmation();
+            } else {
+                currentChar = 'A';
+                delay(300);
+            }
+        }
+    }
+    return nameConfirmed;
+}
+
 const char* DisplayManager::getPlayerName() const {
-    static char playerName[] = "AAA"; // Replace with your logic
     return playerName;
 }
 
@@ -277,13 +284,11 @@ bool DisplayManager::promptNameConfirmation() {
 
         // Wait for button input
         if (digitalRead(BUTTON_RIGHT) == LOW) {
-            waitForButtonClick(BUTTON_RIGHT);
             delay(100); // Debounce delay
             return true;
         } else if (digitalRead(BUTTON_LEFT) == LOW) {
-            waitForButtonClick(BUTTON_LEFT);
-            resetNameEntry();
             delay(100); // Debounce delay
+            resetNameEntry();
             return false;
         }
         delay(300); // Debounce delay to avoid rapid checks
@@ -295,9 +300,9 @@ void DisplayManager::drawCurrentChar(bool highlight, int nameEntryY) {
     int x = 29 + currentCharIndex * 20;
     tft.fillRect(x, nameEntryY, 12, 20, TFT_BLACK);
     tft.setCursor(x, nameEntryY);
-    tft.setTextColor(highlight ? TFT_YELLOW : TFT_WHITE);
+    tft.setTextColor(TFT_WHITE);
     tft.print(playerName[currentCharIndex]);
-    tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, highlight ? TFT_YELLOW : TFT_BLACK);
+    tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, highlight ? TFT_BLACK : TFT_WHITE);
 }
 
 void DisplayManager::confirmCurrentCharacter() {
