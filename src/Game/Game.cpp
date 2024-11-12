@@ -34,6 +34,7 @@ void Game::handleHighScoreDisplay() {
     highScoreManager.displayHighScores(tft);
     displayManager.displayNavigation("     ", "Back");
     inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for a button click to return to start screen
+    inputHandler.waitForButtonRelease(BUTTON_RIGHT);
     displayManager.clearScreen();
     displayManager.drawScreen();
     displayManager.displayStartScreen();
@@ -138,6 +139,7 @@ void Game::displayHighScoreAndStartScreenLoop() {
         displayManager.displayNavigation("Highscores", "Start");
 
         if (digitalRead(BUTTON_LEFT) == LOW) {
+            inputHandler.waitForButtonRelease(BUTTON_LEFT);
             handleHighScoreDisplay();
         } else if (digitalRead(BUTTON_RIGHT) == LOW) {
             inputHandler.waitForButtonRelease(BUTTON_RIGHT);

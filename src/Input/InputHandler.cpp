@@ -19,6 +19,7 @@ void InputHandler::waitForButtonClick(int buttonPin) {
 
 void InputHandler::waitForButtonRelease(int buttonPin) {
     while (digitalRead(buttonPin) == LOW) {}
+    delay(50);
 }
 
 void InputHandler::waitForButtonPressed(int buttonPin) {
