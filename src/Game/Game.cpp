@@ -24,6 +24,8 @@ void Game::setup() {
             displayManager.clearScreen();
             displayManager.drawScreen();
             displayManager.displayStartScreen();
+            displayManager.displayNavigation("Highscores", "Start");
+            inputHandler.waitForButtonPressed(BUTTON_RIGHT);
         } else if (digitalRead(BUTTON_RIGHT) == LOW) {
             inputHandler.waitForButtonRelease(BUTTON_RIGHT);
             // Start the game when the right button is pressed
@@ -113,6 +115,7 @@ void Game::handleGameOver() {
     // Display HighScores
     displayManager.drawScreen();
     highScoreManager.displayHighScores(tft);
+    displayManager.displayNavigation("", "Next");
 
     // Wait for button click to return to the start screen
     inputHandler.waitForButtonClick(BUTTON_RIGHT);

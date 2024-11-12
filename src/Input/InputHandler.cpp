@@ -21,6 +21,18 @@ void InputHandler::waitForButtonRelease(int buttonPin) {
     while (digitalRead(buttonPin) == LOW) {}
 }
 
+void InputHandler::waitForButtonPressed(int buttonPin) {
+     // Wait for the button to be released if it is already pressed
+    while (digitalRead(buttonPin) == LOW) {
+        delay(10); // Add a small delay to avoid busy-waiting and for debounce purposes
+    }
+
+    // Wait for the button to be pressed
+    while (digitalRead(buttonPin) == HIGH) {
+        delay(10); // Add a small delay to avoid busy-waiting and for debounce purposes
+    }
+}
+
 void InputHandler::startButtonPressTimer(unsigned long currentTime) {
     buttonPressStart = currentTime;
 }

@@ -8,6 +8,7 @@ public:
     bool isButtonReleased(int buttonPin);
     void waitForButtonClick(int buttonPin);
     void waitForButtonRelease(int buttonPin);
+    void waitForButtonPressed(int buttonPin);
     void startButtonPressTimer(unsigned long currentTime);
     unsigned long getButtonPressStart() const;
     unsigned long getLastRotateTime() const;

@@ -108,6 +108,7 @@ void DisplayManager::displayGameOverScreen(int score){
         int buttonTextX = getCenteredX(buttonText);
         tft.setCursor(buttonTextX, 220);
         tft.println(buttonText);
+        displayNavigation("", "Next");
 }
 
 void DisplayManager::displayStartScreen() {
@@ -267,16 +268,16 @@ void DisplayManager::drawConfirmedChar(int nameEntryY) {
 }
 
 void DisplayManager::displayNavigation(const char* leftText, const char* rightText) {
-    int y = SCREEN_HEIGHT - 30; 
-    int backX = 30; 
-    int enterX = SCREEN_WIDTH - tft.textWidth(rightText) - 30; 
+    int y = SCREEN_HEIGHT - 25; 
+    int leftX = 25; 
+    int rightX = SCREEN_WIDTH - tft.textWidth(rightText) - 25; 
 
-    tft.fillRect(backX, y, SCREEN_WIDTH - (enterX + tft.textWidth(rightText)), 15, TFT_BLACK);
+    tft.fillRect(leftX, y, SCREEN_WIDTH - (rightX + tft.textWidth(rightText)), 12, TFT_BLACK);
 
     tft.setTextSize(1);
-    tft.setCursor(backX, y);
+    tft.setCursor(leftX, y);
     tft.print(leftText);
-    tft.setCursor(enterX, y);
+    tft.setCursor(rightX, y);
     tft.print(rightText);
 }
 
