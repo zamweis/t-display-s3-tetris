@@ -57,6 +57,7 @@ void DisplayManager::retryNameEntry() {
     // Redraw the header and name entry
     drawHeader();
     drawName();
+    displayNavigation("Change", "Enter");
 }
 
 void DisplayManager::drawGrid() {
@@ -98,17 +99,8 @@ void DisplayManager::displayGameOverScreen(int score){
         tft.setCursor(scoreX, 160);
         tft.printf("%d\n", score);
 
-        // Center and display "Press" and "a button"
-        const char* pressText = "Press";
-        int pressTextX = getCenteredX(pressText);
-        tft.setCursor(pressTextX, 200);
-        tft.println(pressText);
-
-        const char* buttonText = "a button";
-        int buttonTextX = getCenteredX(buttonText);
-        tft.setCursor(buttonTextX, 220);
-        tft.println(buttonText);
-        displayNavigation("", "Next");
+        displayNavigation("      ", "Next");
+        tft.setTextSize(2);
 }
 
 void DisplayManager::displayStartScreen() {
@@ -173,6 +165,7 @@ void DisplayManager::clearScreen() {
 }
 
 bool DisplayManager::promptPlayerForName() {
+    displayNavigation("Change", "Enter");
     currentChar = 'A'; 
     bool nameConfirmed = false;
     bool blinkState = true;
@@ -190,12 +183,14 @@ bool DisplayManager::promptPlayerForName() {
         if (millis() - lastBlinkTime >= blinkInterval) {
             blinkState = !blinkState;
             lastBlinkTime = millis();
+            tft.setTextSize(2);
             drawCurrentChar(blinkState, nameEntryY);
         }
 
         // Handle button input for cycling characters
         if (digitalRead(BUTTON_LEFT) == LOW) {
             cycleCharacter();
+            tft.setTextSize(2);
             drawCurrentChar(true, nameEntryY); 
             inputHandler.waitForButtonRelease(BUTTON_LEFT);
         }
@@ -268,13 +263,13 @@ void DisplayManager::drawConfirmedChar(int nameEntryY) {
 }
 
 void DisplayManager::displayNavigation(const char* leftText, const char* rightText) {
+    tft.setTextSize(1);
     int y = SCREEN_HEIGHT - 25; 
     int leftX = 25; 
-    int rightX = SCREEN_WIDTH - tft.textWidth(rightText) - 25; 
+    int rightX = SCREEN_WIDTH - (tft.textWidth(rightText) + 25); 
 
-    tft.fillRect(leftX, y, SCREEN_WIDTH - (rightX + tft.textWidth(rightText)), 12, TFT_BLACK);
+    tft.fillRect(leftX, y, (SCREEN_WIDTH - 40), 12, TFT_BLACK);
 
-    tft.setTextSize(1);
     tft.setCursor(leftX, y);
     tft.print(leftText);
     tft.setCursor(rightX, y);
@@ -284,6 +279,12 @@ void DisplayManager::displayNavigation(const char* leftText, const char* rightTe
 bool DisplayManager::promptNameConfirmation() {
     displayNavigation("Reset", "Enter");
 
+    // Center and display "Press" and "a button"
+    tft.setTextSize(2);
+    const char* pressText = "Submit Name";
+    int pressTextX = getCenteredX(pressText);
+    tft.setCursor(pressTextX, 200);
+    tft.println(pressText);
     while (true) {
         // Wait for button input
         if (digitalRead(BUTTON_RIGHT) == LOW) {

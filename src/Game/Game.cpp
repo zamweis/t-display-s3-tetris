@@ -19,7 +19,7 @@ void Game::setup() {
             displayManager.clearScreen();
             displayManager.drawScreen();
             highScoreManager.displayHighScores(tft);
-            displayManager.displayNavigation("", "Back");
+            displayManager.displayNavigation("     ", "Back");
             inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for a button click to return to start screen
             displayManager.clearScreen();
             displayManager.drawScreen();
@@ -39,7 +39,7 @@ void Game::loop() {
     unsigned long currentTime = millis();
     
     // Check if game is over
-    if (blockMap.checkGameOver()) {
+    if (blockMap.checkGameOver() ||true) {
         handleGameOver();
         return;
     }
@@ -101,7 +101,7 @@ void Game::handleGameOver() {
     inputHandler.waitForButtonClick(BUTTON_RIGHT);
 
     // If highscore prompt player for name
-    if (highScoreManager.isHighScore(score)) {
+    if (highScoreManager.isHighScore(score) || true) {
         displayManager.clearScreen();
         displayManager.drawScreen();
         if (displayManager.promptPlayerForName()) {
@@ -114,7 +114,7 @@ void Game::handleGameOver() {
     // Display HighScores
     displayManager.drawScreen();
     highScoreManager.displayHighScores(tft);
-    displayManager.displayNavigation("", "Next");
+    displayManager.displayNavigation("     ", "Next");
 
     // Wait for button click to return to the start screen
     inputHandler.waitForButtonClick(BUTTON_RIGHT);
