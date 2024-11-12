@@ -25,7 +25,6 @@ void Game::setup() {
             displayManager.drawScreen();
             displayManager.displayStartScreen();
             displayManager.displayNavigation("Highscores", "Start");
-            inputHandler.waitForButtonPressed(BUTTON_RIGHT);
         } else if (digitalRead(BUTTON_RIGHT) == LOW) {
             inputHandler.waitForButtonRelease(BUTTON_RIGHT);
             // Start the game when the right button is pressed
