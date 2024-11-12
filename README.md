@@ -5,6 +5,7 @@ A Tetris game implementation for the T-Display S3 device using the PlatformIO en
 
 ## Table of Contents
 
+- [Screenshot](#screenshot)
 - [Description](#description)
 - [Features](#features)
 - [Prerequisites](#prerequisites)
@@ -17,6 +18,8 @@ A Tetris game implementation for the T-Display S3 device using the PlatformIO en
 ## Description
 
 This project implements a classic Tetris game on the LilyGO T-Display S3 device. It leverages the ESP32-S3's processing capabilities and the TFT_eSPI library for graphics display. This is a hobby project aimed at demonstrating game development and graphics rendering capabilities for embedded devices, with the main goal being to have fun and spark interest in creating engaging projects on microcontrollers.
+
+## Screenshot
 
 ![Screenshot of the Project](screenshot.png)
 
