@@ -3,7 +3,7 @@
 
 #include "TFT_eSPI.h"
 #include "Game/BlockMap.h"
-#include "Shapes/ShapeFactory.h"
+#include "Game/ShapeFactory.h"
 #include "Display/DisplayManager.h"
 #include "HighScore/HighScoreManager.h"
 #include "Input/InputHandler.h"

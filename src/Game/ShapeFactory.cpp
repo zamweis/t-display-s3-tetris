@@ -1,11 +1,11 @@
 #include "ShapeFactory.h"
-#include "Shapes/ShapeI.h"
-#include "Shapes/ShapeJ.h"
-#include "Shapes/ShapeL.h"
-#include "Shapes/ShapeO.h"
-#include "Shapes/ShapeS.h"
-#include "Shapes/ShapeT.h"
-#include "Shapes/ShapeZ.h"
+#include "Model/Shapes/ShapeI.h"
+#include "Model/Shapes/ShapeJ.h"
+#include "Model/Shapes/ShapeL.h"
+#include "Model/Shapes/ShapeO.h"
+#include "Model/Shapes/ShapeS.h"
+#include "Model/Shapes/ShapeT.h"
+#include "Model/Shapes/ShapeZ.h"
 #include <cstdlib> // for random number generation if needed
 
 Shape* ShapeFactory::createRandomShape() {

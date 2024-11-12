@@ -1,5 +1,5 @@
 #include "DisplayManager.h"
-#include "Shapes/ShapeFactory.h"
+#include "Game/ShapeFactory.h"
 
 DisplayManager::DisplayManager(TFT_eSPI& tft) : tft(tft) {
     backgroundColor = tft.color565(30, 30, 30); // Set default background color
@@ -27,16 +27,24 @@ void DisplayManager::drawScreen() {
 }
 
 void DisplayManager::resetNameEntry() {
-    // Add your logic for resetting the name entry
+    // Set the text size and color explicitly for name entry
     tft.setTextSize(2);
     tft.setTextColor(TFT_WHITE);
+    
+    // Reset character entry variables
     currentCharIndex = 0;
     for (int i = 0; i < MAX_NAME_LENGTH; ++i) {
         playerName[i] = ' ';
     }
     currentChar = 'A';
-    drawScreen();
-    tft.setTextSize(2);
+    
+    // Optionally, redraw the screen (make sure this doesn't interfere with text rendering)
+    drawScreen();  // If this is not necessary, try commenting it out
+    
+    // Explicitly set text color again if needed
+    tft.setTextColor(TFT_WHITE);
+    
+    // Redraw the header and name entry
     drawHeader();
     drawName();
 }

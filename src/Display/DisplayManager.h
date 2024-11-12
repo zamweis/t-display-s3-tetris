@@ -2,7 +2,7 @@
 #define DISPLAY_MANAGER_H
 
 #include <TFT_eSPI.h>
-#include <Shapes/Shape.h>
+#include <Model/Shapes/Shape.h>
 #include "Config.h"
 
 class DisplayManager {

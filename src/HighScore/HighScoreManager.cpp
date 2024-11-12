@@ -7,13 +7,26 @@ HighScoreManager::HighScoreManager(Preferences& preferences) : preferences(prefe
 
 void HighScoreManager::loadHighScores() {
     preferences.begin("highScores", true);
+    bool isEmpty = true;
+
     for (int i = 0; i < 15; ++i) {
         String keyName = "name" + String(i);
         String keyScore = "score" + String(i);
-        highScores[i].score = preferences.getInt(keyScore.c_str(), 0);
-        String storedName = preferences.getString(keyName.c_str(), "---");
-        storedName.toCharArray(highScores[i].name, sizeof(highScores[i].name));
+
+        // Check if the score entry exists
+        int score = preferences.getInt(keyScore.c_str(), -1);
+        if (score != -1) {
+            highScores[i].score = score;
+            String storedName = preferences.getString(keyName.c_str(), "---");
+            storedName.toCharArray(highScores[i].name, sizeof(highScores[i].name));
+            isEmpty = false; // Found at least one score
+        } else {
+            // Assign default values if preferences are not set
+            highScores[i].score = 0;
+            strncpy(highScores[i].name, "---", sizeof(highScores[i].name));
+        }
     }
+
     preferences.end();
 }
 

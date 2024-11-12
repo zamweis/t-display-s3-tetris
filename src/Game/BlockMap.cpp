@@ -1,5 +1,5 @@
 #include "Game/BlockMap.h"
-#include "Shapes/Shape.h" // Include the full definition of Shape
+#include "Model/Shapes/Shape.h" // Include the full definition of Shape
 #include <iostream>
 
 // Constructor

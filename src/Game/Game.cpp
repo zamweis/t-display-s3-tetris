@@ -19,7 +19,7 @@ void Game::loop() {
     unsigned long currentTime = millis();
     
     // Check if game is over
-    if (blockMap.checkGameOver()) {
+    if (blockMap.checkGameOver() || true) {
         handleGameOver();
         return;
     }
@@ -74,11 +74,12 @@ void Game::resetGame() {
 void Game::handleGameOver() {
     displayManager.drawScreen();
     displayManager.drawCenteredText(true, score); // Display "Game Over" screen
+    highScoreManager.loadHighScores();
 
     // Wait for button press to go back to the start screen
     inputHandler.waitForButtonClick(BUTTON_RIGHT);
 
-    if (highScoreManager.isHighScore(score)) {
+    if (highScoreManager.isHighScore(score) || true) {
         displayManager.clearScreen();
         displayManager.drawScreen();
         if (displayManager.promptPlayerForName()) {

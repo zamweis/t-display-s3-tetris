@@ -4,7 +4,7 @@
 #include "Game/Game.h"
 #include "HighScore/HighScoreManager.h"
 #include "Input/InputHandler.h"
-#include "Shapes/ShapeFactory.h"
+#include "Game/ShapeFactory.h"
 
 // TFT and display setup (specific to your hardware)
 TFT_eSPI tft = TFT_eSPI(); 
