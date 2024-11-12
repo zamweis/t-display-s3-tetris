@@ -26,11 +26,6 @@ void HighScoreManager::loadHighScores() {
                 storedName.toCharArray(highScores[i].name, sizeof(highScores[i].name));
             }
             isEmpty = false; // Found at least one score
-        } else {
-            // Assign default values if preferences are not set
-            highScores[i].score = 0;
-            memset(highScores[i].name, '-', MAX_NAME_LENGTH); // Fill name with '-'
-            highScores[i].name[MAX_NAME_LENGTH] = '\0'; // Ensure null-termination
         }
     }
     preferences.end();
