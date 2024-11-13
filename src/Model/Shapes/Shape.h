@@ -61,11 +61,14 @@ public:
     void moveDown(BlockMap& blockMap);
     void fallDown(BlockMap& blockMap);
     void drawShape(TFT_eSPI& tft, int boxSize) const;
+    void drawShapeAtLocation(TFT_eSPI& tft, int boxSize) const;
     void drawShapeBorderOnly(TFT_eSPI& tft, int boxSize, int offset) const;
     void eraseShape(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) const;
     void moveToLowestBlockkAtMinusOne();
     int getWidth();
     void setPosition(int x, int y);
+    void moveHorizontal(int offset, int boxSize);
+
 
 private:
     bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap);

@@ -241,6 +241,13 @@ void Shape::drawShape(TFT_eSPI& tft, int boxSize) const {
     }
 }
 
+void Shape::drawShapeAtLocation(TFT_eSPI& tft, int boxSize) const {
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        blockList[i].drawAtLocation(tft, boxSize);
+
+    }
+}
+
 void Shape::drawShapeBorderOnly(TFT_eSPI& tft, int boxSize, int offset) const {
     for (const auto& block : blockList) {
         block.drawBorderOnly(tft, boxSize, offset);
@@ -276,13 +283,15 @@ void Shape::moveToLowestBlockkAtMinusOne() {
 
 // In Shape.cpp or relevant source file
 int Shape::getWidth() {
+    delay(50);
    std::set<int> uniqueXCoordinates;
 
     // Collect unique x-coordinates of all blocks
     for (const Block& block : blockList) {
         uniqueXCoordinates.insert(block.getX());
     }
-
+    Serial.print("ShapeWidth: ");
+    Serial.println(uniqueXCoordinates.size());
     // The width is the number of unique x-coordinates
     return uniqueXCoordinates.size();
 }
@@ -291,5 +300,17 @@ void Shape::setPosition(int x, int y) {
     // Update the position of the first block to the new coordinates
     blockList[0].setCoordinates(x, y);
 
+    Serial.print("SetPosition: ");
+    Serial.print(blockList[0].getX());
+    Serial.print(", ");
+    Serial.println(blockList[0].getY());
     generateShape();   
+}
+
+void Shape::moveHorizontal(int offset, int boxSize) {
+    for (size_t i = 0; i < 4; ++i) {
+        blockList[i].setX(blockList[0].getX() + i*boxSize + offset);
+        Serial.print("NewX: ");
+        Serial.println(blockList[i].getX());
+    }
 }

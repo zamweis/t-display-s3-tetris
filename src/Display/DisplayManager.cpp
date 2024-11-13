@@ -61,7 +61,7 @@ void DisplayManager::retryNameEntry() {
 }
 
 void DisplayManager::drawGrid() {
-     tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundColor);
+    tft.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundColor);
     tft.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, TFT_BLACK);
     for (int col = 0; col <= SCREEN_WIDTH / BOX_SIZE; ++col) {
         tft.drawLine(col * BOX_SIZE, 0, col * BOX_SIZE, SCREEN_HEIGHT, TFT_BLACK);
@@ -127,12 +127,52 @@ void DisplayManager::displayStartScreen() {
         tft.print(tetrisText[i]);
         currentX += tft.textWidth(String(tetrisText[i]).c_str());  // Move X position for next character
     }
-    // Center a random shape under "WELCOME"
+
+    // Center a random shape under "Tetris"
     Shape* tempShape = ShapeFactory::createRandomShape();
     if (tempShape) {
-        int shapeWidth = (tempShape->getWidth() - 1)* BOX_SIZE; // Ensure getWidth() returns correct number of blocks
-        int shapeX = (SCREEN_WIDTH - shapeWidth) / 2; // Calculate x-coordinate to center shape
-        tempShape->setPosition(shapeX / BOX_SIZE, 7); // Adjust y-position below "WELCOME"
+        int shapeWidth = (tempShape->getWidth()) * BOX_SIZE; // Calculate total width of the shape in pixels
+
+        // Debugging: Print the calculated shapeWidth
+        Serial.print("shapeWidth = ");
+        Serial.println(shapeWidth);
+
+        // Calculate the center of the screen
+        double screenCenterX = SCREEN_WIDTH / 2.0; // Division as double for precision
+        Serial.print("center of screen = ");
+        Serial.println(screenCenterX);
+
+        // Get the x-coordinate of the main block (assumed to be in pixels)
+        int mainBlockX = tempShape->blockList[0].getX()*BOX_SIZE; // Convert to pixels if necessary
+        Serial.print("mainBlockX = ");
+        Serial.println(mainBlockX);
+
+        // Calculate the x-coordinate where the shape starts (assumed to be in pixels)
+        int leftBlockX = mainBlockX+tempShape->getLeftBlock().getX()*BOX_SIZE; // Convert to pixels if needed
+        Serial.print("leftBlockX = ");
+        Serial.println(leftBlockX);
+
+        // Calculate the x-coordinate where the shape starts (assumed to be in pixels)
+        int rightBlockX = mainBlockX+tempShape->getRightBlock().getX()*BOX_SIZE; // Convert to pixels if needed
+        Serial.print("rightBlockX = ");
+        Serial.println(rightBlockX);
+
+        // Calculate the x-coordinate of the center of the shape
+        double shapeCenterX = (leftBlockX+rightBlockX)/2; // Center of the shape in pixels
+        Serial.print("center of shape = ");
+        Serial.println(shapeCenterX);
+
+        // Calculate the offset needed to align the shape's center with the screen center
+        int offset = (screenCenterX - shapeCenterX); // Convert to int for positioning
+        Serial.print("offset = ");
+        Serial.println(offset);
+
+        tempShape->setBlock(Block(mainBlockX-offset, 60), 0); // Convert back to blocks if necessary and set new position
+        tempShape->generateShape();
+        Serial.print("new mainBlockX = ");
+        Serial.println(mainBlockX-offset);
+
+        // Draw the shape at the new position
         tempShape->drawShape(tft, BOX_SIZE);
         delete tempShape; // Clean up the temporary shape
     }

@@ -30,6 +30,8 @@ public:
     void draw(TFT_eSPI &tft, int boxSize, uint16_t color = 0) const;
     void drawWithOffset(TFT_eSPI &tft, int boxSize, int xOffset, int yOffset) const;
     void drawBorderOnly(TFT_eSPI &tft, int boxSize, int offset) const;
+    void drawAtLocation(TFT_eSPI &tft, int boxSize) const;
+
 };
 
 #endif // BLOCK_H

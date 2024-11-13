@@ -67,3 +67,13 @@ void Block::drawBorderOnly(TFT_eSPI &tft, int boxSize, int offset) const {
     int padding = (boxSize - (boxSize - 4)) / 2; // Centering adjustment
     tft.drawRect(x * boxSize + padding, (y + offset) * boxSize + padding, boxSize - 3, boxSize - 3, color);
 }
+
+void Block::drawAtLocation(TFT_eSPI &tft, int boxSize) const {
+    // Calculate padding for consistency with other draw methods
+    int padding = 2; // Same padding value as used in the `draw` method
+
+    // Draw the rectangle at the specified x, y coordinates with padding
+    tft.fillRect(x + padding, y + padding, boxSize - 3, boxSize - 3, color);
+}
+
+
