@@ -113,7 +113,8 @@ void Game::handleGameOver() {
         handleHighScoreEntry();
     }
 
-    displayHighScoreAndStartScreenLoop();
+    displayStartScreenLoop();
+    resetGame(); // Only reset and start the game after button press
 }
 
 void Game::handleHighScoreEntry() {
@@ -124,29 +125,6 @@ void Game::handleHighScoreEntry() {
         displayManager.resetNameEntry();
         inputHandler.waitForButtonRelease(BUTTON_RIGHT);
     }
-}
-
-void Game::displayHighScoreAndStartScreenLoop() {
-    while (true) {
-        displayManager.drawScreen();
-        highScoreManager.displayHighScores(tft);
-        displayManager.displayNavigation("     ", "Next");
-        inputHandler.waitForButtonClick(BUTTON_RIGHT);
-
-        displayManager.clearScreen();
-        displayManager.drawScreen();
-        displayManager.displayStartScreen();
-        displayManager.displayNavigation("Highscores", "Start");
-
-        if (digitalRead(BUTTON_LEFT) == LOW) {
-            inputHandler.waitForButtonRelease(BUTTON_LEFT);
-            handleHighScoreDisplay();
-        } else if (digitalRead(BUTTON_RIGHT) == LOW) {
-            inputHandler.waitForButtonRelease(BUTTON_RIGHT);
-            break; // Start the game
-        }
-    }
-    resetGame(); // Only reset and start the game after button press
 }
 
 void Game::updateScoreAndLevel(int clearedLines) {
