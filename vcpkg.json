@@ -1,0 +1,10 @@
+{
+  "name": "t-display-s3-tetris",
+  "version-string": "1.0.0",
+  "dependencies": [
+    {
+      "name": "tft_espi",
+      "version>=": "2.5.43"
+    }
+  ]
+}
