@@ -20,16 +20,24 @@ void HighScoreManager::loadHighScores() {
             String storedName = preferences.getString(keyName.c_str(), "");
             if (storedName.length() == 0) {
                 // Fill with dashes if name is empty
-                memset(highScores[i].name, '-', MAX_NAME_LENGTH);
-                highScores[i].name[MAX_NAME_LENGTH] = '\0'; // Ensure null-termination
+                memset(highScores[i].name, '-', MAX_NAME_LENGTH - 1); // Fill with '-' and leave space for null-terminator
+                highScores[i].name[MAX_NAME_LENGTH - 1] = '\0';       // Ensure null-termination
             } else {
-                storedName.toCharArray(highScores[i].name, sizeof(highScores[i].name));
+                storedName.toCharArray(highScores[i].name, MAX_NAME_LENGTH);
+                highScores[i].name[MAX_NAME_LENGTH - 1] = '\0';      // Ensure null-termination
             }
             isEmpty = false; // Found at least one score
+        } else {
+            // Set default values for empty entries
+            highScores[i].score = 0;
+            strncpy(highScores[i].name, "------", MAX_NAME_LENGTH - 1);
+            highScores[i].name[MAX_NAME_LENGTH - 1] = '\0'; // Ensure null-termination
         }
     }
+
     preferences.end();
 }
+
 
 void HighScoreManager::saveHighScores() {
     preferences.begin("highScores", false);
