@@ -1,4 +1,3 @@
-
 # T-Display S3 Tetris
 
 A Tetris game implementation for the T-Display S3 device using the PlatformIO environment and the ESP32-S3 microcontroller. This project utilizes the TFT_eSPI library to handle display rendering and features an interactive Tetris experience.
@@ -13,6 +12,7 @@ A Tetris game implementation for the T-Display S3 device using the PlatformIO en
 - [Building and Uploading](#building-and-uploading)
 - [Folder Structure](#folder-structure)
 - [Contributing](#contributing)
+- [Security](#security)
 - [License](#license)
 
 ## Description
@@ -31,7 +31,7 @@ This project implements a classic Tetris game on the LilyGO T-Display S3 device.
 - Collision detection and line clearing logic
 - User input handling (buttons or touch interactions)
 - Highscores
-- Navigationbar
+- Navigation bar
 
 ## Prerequisites
 
@@ -48,24 +48,24 @@ This project is compatible with any ESP device that supports the TFT_eSPI librar
 
 1. Clone the repository:
 
-   ```bash
+   \`\`\`bash
    git clone https://github.com/zamweis/t-display-s3-tetris.git
    cd t-display-s3-tetris
-   ```
+   \`\`\`
 
 2. Install the necessary dependencies using PlatformIO:
 
-   ```bash
+   \`\`\`bash
    pio lib install
-   ```
+   \`\`\`
 
-3. Ensure that your board is correctly configured in `platformio.ini`.
+3. Ensure that your board is correctly configured in \`platformio.ini\`.
 
 ### Configuring the TFT_eSPI Library
 
-To use the TFT display correctly, you need to configure the `User_Setup.h` file in the TFT_eSPI library:
+To use the TFT display correctly, you need to configure the \`User_Setup.h\` file in the TFT_eSPI library:
 
-- Uncomment the appropriate lines that correspond to your display model and connection setup in `User_Setup.h`.
+- Uncomment the appropriate lines that correspond to your display model and connection setup in \`User_Setup.h\`.
 - For example, if using a parallel connection or a specific display model, make sure that the configuration matches your hardware setup.
 
 Refer to the [TFT_eSPI documentation](https://github.com/Bodmer/TFT_eSPI) for more details on configuring the display settings.
@@ -76,61 +76,67 @@ Refer to the [TFT_eSPI documentation](https://github.com/Bodmer/TFT_eSPI) for mo
 2. Connect your T-Display S3 device via USB.
 3. To build and upload the firmware to your device:
 
-   ```bash
+   \`\`\`bash
    pio run --target upload
-   ```
+   \`\`\`
 
 ## Folder Structure
 
-```
+\`\`\`
 .
-├── src/
-│   ├── Config.cpp              # Configuration source file.
-│   ├── Config.h                # Configuration constants and macros.
-│   ├── main.cpp                # Entry point for the application.
-│   ├── Display/
-│   │   ├── DisplayManager.cpp  # Implementation of display management.
-│   │   └── DisplayManager.h    # Header for display-related functionalities.
-│   ├── Game/
-│   │   ├── BlockMap.cpp        # Game grid management implementation.
-│   │   ├── BlockMap.h          # Game grid management header.
-│   │   ├── Game.cpp            # Main game logic implementation.
-│   │   ├── Game.h              # Header for core game logic.
-│   │   ├── ShapeFactory.cpp    # Shape creation implementation.
-│   │   └── ShapeFactory.h      # Header for shape creation.
-│   ├── HighScore/
-│   │   ├── HighScoreManager.cpp # High score management implementation.
-│   │   └── HighScoreManager.h   # Header for high score management.
-│   ├── Input/
-│   │   ├── InputHandler.cpp    # Implementation of input handling.
-│   │   └── InputHandler.h      # Header for input handling.
-│   └── Model/
-│       ├── Block.cpp           # Block model implementation.
-│       ├── Block.h             # Header for block model.
-│       ├── Point.cpp           # Point model implementation.
-│       ├── Point.h             # Header for point model.
-│       └── Shapes/
-│           ├── Shape.cpp       # Base shape implementation.
-│           ├── Shape.h         # Header for base shape.
-│           ├── ShapeI.cpp      # Specific shape implementation (I).
-│           ├── ShapeI.h        # Header for shape (I).
-│           ├── ShapeJ.cpp      # Specific shape implementation (J).
-│           ├── ShapeJ.h        # Header for shape (J).
-│           ├── ShapeL.cpp      # Specific shape implementation (L).
-│           ├── ShapeL.h        # Header for shape (L).
-│           ├── ShapeO.cpp      # Specific shape implementation (O).
-│           ├── ShapeO.h        # Header for shape (O).
-│           ├── ShapeS.cpp      # Specific shape implementation (S).
-│           ├── ShapeS.h        # Header for shape (S).
-│           ├── ShapeT.cpp      # Specific shape implementation (T).
-│           ├── ShapeT.h        # Header for shape (T).
-│           ├── ShapeZ.cpp      # Specific shape implementation (Z).
-│           └── ShapeZ.h        # Header for shape (Z).
-```
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ Config.cpp              # Configuration source file.
+â”‚   â”œâ”€â”€ Config.h                # Configuration constants and macros.
+â”‚   â”œâ”€â”€ main.cpp                # Entry point for the application.
+â”‚   â”œâ”€â”€ Display/
+â”‚   â”‚   â”œâ”€â”€ DisplayManager.cpp  # Implementation of display management.
+â”‚   â”‚   â””â”€â”€ DisplayManager.h    # Header for display-related functionalities.
+â”‚   â”œâ”€â”€ Game/
+â”‚   â”‚   â”œâ”€â”€ BlockMap.cpp        # Game grid management implementation.
+â”‚   â”‚   â”œâ”€â”€ BlockMap.h          # Game grid management header.
+â”‚   â”‚   â”œâ”€â”€ Game.cpp            # Main game logic implementation.
+â”‚   â”‚   â”œâ”€â”€ Game.h              # Header for core game logic.
+â”‚   â”‚   â”œâ”€â”€ ShapeFactory.cpp    # Shape creation implementation.
+â”‚   â”‚   â””â”€â”€ ShapeFactory.h      # Header for shape creation.
+â”‚   â”œâ”€â”€ HighScore/
+â”‚   â”‚   â”œâ”€â”€ HighScoreManager.cpp # High score management implementation.
+â”‚   â”‚   â””â”€â”€ HighScoreManager.h   # Header for high score management.
+â”‚   â”œâ”€â”€ Input/
+â”‚   â”‚   â”œâ”€â”€ InputHandler.cpp    # Implementation of input handling.
+â”‚   â”‚   â””â”€â”€ InputHandler.h      # Header for input handling.
+â”‚   â””â”€â”€ Model/
+â”‚       â”œâ”€â”€ Block.cpp           # Block model implementation.
+â”‚       â”œâ”€â”€ Block.h             # Header for block model.
+â”‚       â”œâ”€â”€ Point.cpp           # Point model implementation.
+â”‚       â”œâ”€â”€ Point.h             # Header for point model.
+â”‚       â””â”€â”€ Shapes/
+â”‚           â”œâ”€â”€ Shape.cpp       # Base shape implementation.
+â”‚           â”œâ”€â”€ Shape.h         # Header for base shape.
+â”‚           â”œâ”€â”€ ShapeI.cpp      # Specific shape implementation (I).
+â”‚           â”œâ”€â”€ ShapeI.h        # Header for shape (I).
+â”‚           â”œâ”€â”€ ShapeJ.cpp      # Specific shape implementation (J).
+â”‚           â”œâ”€â”€ ShapeJ.h        # Header for shape (J).
+â”‚           â”œâ”€â”€ ShapeL.cpp      # Specific shape implementation (L).
+â”‚           â”œâ”€â”€ ShapeL.h        # Header for shape (L).
+â”‚           â”œâ”€â”€ ShapeO.cpp      # Specific shape implementation (O).
+â”‚           â”œâ”€â”€ ShapeO.h        # Header for shape (O).
+â”‚           â”œâ”€â”€ ShapeS.cpp      # Specific shape implementation (S).
+â”‚           â”œâ”€â”€ ShapeS.h        # Header for shape (S).
+â”‚           â”œâ”€â”€ ShapeT.cpp      # Specific shape implementation (T).
+â”‚           â”œâ”€â”€ ShapeT.h        # Header for shape (T).
+â”‚           â”œâ”€â”€ ShapeZ.cpp      # Specific shape implementation (Z).
+â”‚           â””â”€â”€ ShapeZ.h        # Header for shape (Z).
+â”œâ”€â”€ CONTRIBUTING.md             # Contribution guidelines
+â”œâ”€â”€ SECURITY.md                 # Security policy and reporting guidelines
+\`\`\`
 
 ## Contributing
 
-Contributions are welcome! Please fork the repository and create a pull request with your changes. Make sure to follow coding best practices and add comments where applicable.
+Contributions are welcome! Please see the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines on how to get started.
+
+## Security
+
+For information on reporting security vulnerabilities, please see the [SECURITY.md](./SECURITY.md) file.
 
 ## License
 
