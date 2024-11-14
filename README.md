@@ -14,7 +14,7 @@ A Tetris game implementation for the T-Display S3 device using the PlatformIO en
 - [Folder Structure](#folder-structure)
 - [Contributing](#contributing)
 - [Security](#security)
-- [License](#license)´
+- [License](#license)
 
 ## Description
 
