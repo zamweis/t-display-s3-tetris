@@ -131,11 +131,11 @@ Refer to the [TFT_eSPI documentation](https://github.com/Bodmer/TFT_eSPI) for mo
 
 ## Contributing
 
-Contributions are welcome! Please see the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines on how to get started.
+Contributions are welcome! Please see the [CONTRIBUTING](./CONTRIBUTING.md) file for guidelines on how to get started.
 
 ## Security
 
-For information on reporting security vulnerabilities, please see the [SECURITY.md](./SECURITY.md) file.
+For information on reporting security vulnerabilities, please see the [SECURITY](./SECURITY.md) file.
 
 ## License
 
