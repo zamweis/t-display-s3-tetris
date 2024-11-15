@@ -251,15 +251,6 @@ void DisplayManager::drawConfirmedChar(int nameEntryY) {
     tft.setTextColor(TFT_WHITE);
     tft.print(playerName[currentCharIndex]);
 
-    // Debug output
-    Serial.print("Drawing confirmed character: ");
-    Serial.print(playerName[currentCharIndex]);
-    Serial.print(" at position (x, y): (");
-    Serial.print(x);
-    Serial.print(", ");
-    Serial.print(nameEntryY);
-    Serial.println(")");
-
     tft.drawLine(x, nameEntryY + 20, x + 12, nameEntryY + 20, TFT_BLACK);
 }
 
@@ -310,14 +301,6 @@ void DisplayManager::drawCurrentChar(bool highlight, int nameEntryY) {
 
 void DisplayManager::confirmCurrentCharacter() {
     playerName[currentCharIndex] = currentChar;
-
-    // Debug output
-    Serial.print("Confirmed Character: ");
-    Serial.println(currentChar);
-    Serial.print("Stored in playerName at index ");
-    Serial.print(currentCharIndex);
-    Serial.print(": ");
-    Serial.println(playerName[currentCharIndex]);
 }
 
 void DisplayManager::drawName() {

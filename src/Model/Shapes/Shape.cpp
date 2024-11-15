@@ -8,7 +8,7 @@ Shape::Shape() {
     
     // Generate the random value
     rotatePos = random(0, 4);
-    std::cout << "Initialized rotatePos to: " << rotatePos << std::endl;
+    //std::cout << "Initialized rotatePos to: " << rotatePos << std::endl;
 }
 
 Shape::~Shape() {}
@@ -130,8 +130,12 @@ bool Shape::isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap) {
 
 void Shape::moveLeft(BlockMap& blockMap) {
     if (isMovableToTheLeft(blockMap)) {
-        for (int i = 0; i <= 3; i++) {
-            blockList[i].moveLeft();
+        for (int i = 0; i < NUM_BLOCKS; ++i) {
+            if (isValidPosition(blockList[i].getX() - 1, blockList[i].getY())) {
+                blockList[i].moveLeft();
+            } else {
+                return; // Prevent moving if any block would go out of bounds
+            }
         }
     }
 }
@@ -170,10 +174,18 @@ bool Shape::isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap) 
     return result;
 }
 
+bool Shape::isValidPosition(int x, int y) {
+    return (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT);
+}
+
 void Shape::moveRight(BlockMap& blockMap) {
     if (isMovableToTheRight(blockMap)) {
-        for (auto& block : blockList) {
-            block.moveRight();
+        for (int i = 0; i < NUM_BLOCKS; ++i) {
+            if (isValidPosition(blockList[i].getX() + 1, blockList[i].getY())) {
+                blockList[i].moveRight();
+            } else {
+                return; // Prevent moving if any block would go out of bounds
+            }
         }
     }
 }

@@ -24,5 +24,5 @@ void Point::setY(float y) {
 
 // Print method
 void Point::printPoint() const {
-    std::cout << "Point{x=" << x << ", y=" << y << "}" << std::endl;
+   // std::cout << "Point{x=" << x << ", y=" << y << "}" << std::endl;
 }

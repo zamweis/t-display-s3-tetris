@@ -1,9 +1,13 @@
 #include "Game/Game.h"
 #include "Config.h"
+#include "ShapeFactory.h"
+#include "TetrisAI/TetrisAI.h"
 
 Game::Game(TFT_eSPI& tft, DisplayManager& displayManager, HighScoreManager& highScoreManager, InputHandler& inputHandler)
     : tft(tft), displayManager(displayManager), highScoreManager(highScoreManager), inputHandler(inputHandler),
-      lastMoveDownTime(0), shape(nullptr), score(0), level(1), linesCleared(0), leftButtonState(IDLE), rightButtonState(IDLE) {}
+      lastMoveDownTime(0), lastAIMoveTime(0), shape(nullptr), score(0), level(1), linesCleared(0), leftButtonState(IDLE), rightButtonState(IDLE),
+      targetMoveSet(false), ai() // Initialize AI and move tracking
+{}
 
 void Game::setup() {
     displayStartScreenLoop();
@@ -33,7 +37,7 @@ void Game::handleHighScoreDisplay() {
     displayManager.drawScreen();
     highScoreManager.displayHighScores(tft);
     displayManager.displayNavigation("     ", "Back");
-    inputHandler.waitForButtonClick(BUTTON_RIGHT); // Wait for a button click to return to start screen
+    inputHandler.waitForButtonClick(BUTTON_RIGHT);
     inputHandler.waitForButtonRelease(BUTTON_RIGHT);
     displayManager.clearScreen();
     displayManager.drawScreen();
@@ -43,7 +47,7 @@ void Game::handleHighScoreDisplay() {
 
 void Game::loop() {
     unsigned long currentTime = millis();
-    
+
     if (blockMap.checkGameOver()) {
         handleGameOver();
         return;
@@ -61,8 +65,57 @@ void Game::loop() {
 }
 
 void Game::handleShapeMovement(unsigned long currentTime) {
-    handleButtonState(leftButtonState, BUTTON_LEFT, currentTime, &Shape::moveLeft, &Shape::rotateAntiClockwise);
-    handleButtonState(rightButtonState, BUTTON_RIGHT, currentTime, &Shape::moveRight, &Shape::rotateClockwise);
+    // Ensure the shape exists before moving it
+    if (!shape) {
+        return;
+    }
+
+    // Use AI to find the best move when a new shape is created or target move needs to be set
+    if (!targetMoveSet) {
+        bestMove = ai.findBestMove(blockMap, *shape);
+        targetMoveSet = true; // Mark target as set to prevent repeated calculations
+    }
+
+    // Move towards the bestMove decision by AI at regular intervals
+    if (currentTime - lastAIMoveTime >= aiMoveInterval) {
+        lastAIMoveTime = currentTime;
+
+        // Ensure the shape still exists and is valid before moving
+        if (!shape) {
+            return;
+        }
+
+        // Rotate shape to match the target rotation, if valid
+        if (shape->getRotatePosition() != bestMove.rotation) {
+            shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+
+            // Determine the shortest path for rotation
+            if ((shape->getRotatePosition() - bestMove.rotation + 4) % 4 == 1) {
+                if (shape->isRotatableClockwise(blockMap)) {
+                    shape->rotateClockwise(blockMap);
+                }
+            } else if ((bestMove.rotation - shape->getRotatePosition() + 4) % 4 == 1) {
+                if (shape->isRotatableAntiClockwise(blockMap)) {
+                    shape->rotateAntiClockwise(blockMap);
+                }
+            }
+            shape->drawShape(tft, BOX_SIZE);
+        } 
+        // Move shape horizontally towards target x position, if valid
+        else if (shape->getXPosition(0) < bestMove.x) {
+            if (shape->isMovableToTheRight(blockMap)) {  // Ensure the shape can move right
+                shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+                shape->moveRight(blockMap);
+                shape->drawShape(tft, BOX_SIZE);
+            }
+        } else if (shape->getXPosition(0) > bestMove.x) {
+            if (shape->isMovableToTheLeft(blockMap)) {  // Ensure the shape can move left
+                shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+                shape->moveLeft(blockMap);
+                shape->drawShape(tft, BOX_SIZE);
+            }
+        }
+    }
 }
 
 void Game::updateShapePosition(unsigned long currentTime) {
@@ -78,6 +131,7 @@ void Game::updateShapePosition(unsigned long currentTime) {
             if (clearedLines > 0) updateScoreAndLevel(clearedLines);
             delete shape;
             shape = nullptr;
+            targetMoveSet = false;  // Reset target for the new shape
         }
     }
 }
@@ -87,8 +141,10 @@ void Game::createNewShape() {
     if (shape) {
         shape->moveToLowestBlockkAtMinusOne();
         shape->drawShape(tft, BOX_SIZE);
+        targetMoveSet = false;  // AI will calculate moves for the new shape
     }
 }
+
 
 void Game::resetGame() {
     score = 0;

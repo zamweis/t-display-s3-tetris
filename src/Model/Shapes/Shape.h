@@ -65,6 +65,7 @@ public:
     void eraseShape(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) const;
     void moveToLowestBlockkAtMinusOne();
     int getWidth();
+    bool isValidPosition(int x, int y);
     void setPosition(int x, int y);
 
 private:
