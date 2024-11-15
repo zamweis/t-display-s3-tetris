@@ -7,9 +7,8 @@ HighScoreManager::HighScoreManager(Preferences& preferences) : preferences(prefe
 
 void HighScoreManager::loadHighScores() {
     preferences.begin("highScores", true);
-    bool isEmpty = true;
 
-    for (int i = 0; i < 15; ++i) {
+    for (int i = 0; i < maxHighScores; ++i) {
         String keyName = "name" + String(i);
         String keyScore = "score" + String(i);
 
@@ -20,28 +19,26 @@ void HighScoreManager::loadHighScores() {
             String storedName = preferences.getString(keyName.c_str(), "");
             if (storedName.length() == 0) {
                 // Fill with dashes if name is empty
-                memset(highScores[i].name, '-', MAX_NAME_LENGTH - 1); // Fill with '-' and leave space for null-terminator
-                highScores[i].name[MAX_NAME_LENGTH - 1] = '\0';       // Ensure null-termination
+                memset(highScores[i].name, '-', MAX_NAME_LENGTH);
+                highScores[i].name[MAX_NAME_LENGTH] = '\0'; // Ensure null-termination
             } else {
-                storedName.toCharArray(highScores[i].name, MAX_NAME_LENGTH);
-                highScores[i].name[MAX_NAME_LENGTH - 1] = '\0';      // Ensure null-termination
+                storedName.toCharArray(highScores[i].name, MAX_NAME_LENGTH + 1); // Copy up to MAX_NAME_LENGTH characters + null-terminator
+                highScores[i].name[MAX_NAME_LENGTH] = '\0'; // Ensure null-termination
             }
-            isEmpty = false; // Found at least one score
         } else {
             // Set default values for empty entries
             highScores[i].score = 0;
-            strncpy(highScores[i].name, "------", MAX_NAME_LENGTH - 1);
-            highScores[i].name[MAX_NAME_LENGTH - 1] = '\0'; // Ensure null-termination
+            strncpy(highScores[i].name, "------", MAX_NAME_LENGTH);
+            highScores[i].name[MAX_NAME_LENGTH] = '\0'; // Ensure null-termination
         }
     }
 
     preferences.end();
 }
 
-
 void HighScoreManager::saveHighScores() {
     preferences.begin("highScores", false);
-    for (int i = 0; i < 15; ++i) {
+    for (int i = 0; i < maxHighScores; ++i) {
         String keyName = "name" + String(i);
         String keyScore = "score" + String(i);
         preferences.putInt(keyScore.c_str(), highScores[i].score);
@@ -61,8 +58,8 @@ void HighScoreManager::updateHighScores(int newScore, const char* playerName) {
                 highScores[j] = highScores[j - 1];
             }
             // Insert the new score
-            strncpy(highScores[i].name, playerName, sizeof(highScores[i].name) - 1);
-            highScores[i].name[sizeof(highScores[i].name) - 1] = '\0'; // Ensure null-terminated
+            strncpy(highScores[i].name, playerName, MAX_NAME_LENGTH);
+            highScores[i].name[MAX_NAME_LENGTH] = '\0'; // Ensure null-termination
             highScores[i].score = newScore;
             break;
         }
@@ -103,7 +100,7 @@ void HighScoreManager::displayHighScores(TFT_eSPI& tft) {
 }
 
 bool HighScoreManager::isHighScore(int score) {
-    for (int i = 0; i < 15; ++i) {
+    for (int i = 0; i < maxHighScores; ++i) {
         if (score > highScores[i].score) {
             return true;
         }

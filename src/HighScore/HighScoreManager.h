@@ -3,9 +3,10 @@
 
 #include <Preferences.h>
 #include <TFT_eSPI.h>
+#include "Config.h"
 
 struct HighScore {
-    char name[7];
+    char name[MAX_NAME_LENGTH + 1];
     int score;
 };
 
@@ -20,7 +21,7 @@ public:
 
 private:
     Preferences& preferences;
-    HighScore highScores[15];
+    HighScore highScores[maxHighScores];
 };
 
 #endif
