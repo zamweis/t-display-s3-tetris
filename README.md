@@ -13,6 +13,7 @@ A Tetris game implementation for the T-Display S3 device using the PlatformIO en
 - [Building and Uploading](#building-and-uploading)
 - [Folder Structure](#folder-structure)
 - [Contributing](#contributing)
+- [Security](#security)
 - [License](#license)
 
 ## Description
@@ -130,7 +131,11 @@ Refer to the [TFT_eSPI documentation](https://github.com/Bodmer/TFT_eSPI) for mo
 
 ## Contributing
 
-Contributions are welcome! Please fork the repository and create a pull request with your changes. Make sure to follow coding best practices and add comments where applicable.
+Contributions are welcome! Please see the [CONTRIBUTING](./CONTRIBUTING.md) file for guidelines on how to get started.
+
+## Security
+
+For information on reporting security vulnerabilities, please see the [SECURITY](./SECURITY.md) file.
 
 ## License
 
