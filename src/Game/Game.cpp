@@ -65,54 +65,58 @@ void Game::loop() {
 }
 
 void Game::handleShapeMovement(unsigned long currentTime) {
-    // Ensure the shape exists before moving it
+    // Ensure shape is valid before proceeding
     if (!shape) {
+        Serial.println("Warning: handleShapeMovement called with a null shape.");
         return;
     }
 
-    // Use AI to find the best move when a new shape is created or target move needs to be set
+    // AI determines best move when a new shape is created
     if (!targetMoveSet) {
+        Serial.println("AI calculating best move...");
         bestMove = ai.findBestMove(blockMap, *shape);
         targetMoveSet = true; // Mark target as set to prevent repeated calculations
+        Serial.printf("AI Best Move - X: %d, Rotation: %d\n", bestMove.x, bestMove.rotation);
     }
 
-    // Move towards the bestMove decision by AI at regular intervals
+    // Move towards the AI's best move at regular intervals
     if (currentTime - lastAIMoveTime >= aiMoveInterval) {
         lastAIMoveTime = currentTime;
 
-        // Ensure the shape still exists and is valid before moving
+        // Check for valid shape state before making moves
         if (!shape) {
-            return;
+            Serial.println("Warning: Shape became null unexpectedly.");
+            return; // Shape might have been deleted by another part of the code
         }
 
-        // Rotate shape to match the target rotation, if valid
+        // Handle AI rotations
         if (shape->getRotatePosition() != bestMove.rotation) {
+            Serial.println("Rotating shape...");
             shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
-
-            // Determine the shortest path for rotation
-            if ((shape->getRotatePosition() - bestMove.rotation + 4) % 4 == 1) {
-                if (shape->isRotatableClockwise(blockMap)) {
-                    shape->rotateClockwise(blockMap);
-                }
-            } else if ((bestMove.rotation - shape->getRotatePosition() + 4) % 4 == 1) {
-                if (shape->isRotatableAntiClockwise(blockMap)) {
-                    shape->rotateAntiClockwise(blockMap);
-                }
-            }
+            shape->rotateClockwise(blockMap);
             shape->drawShape(tft, BOX_SIZE);
+            Serial.println("Shape rotated.");
         } 
-        // Move shape horizontally towards target x position, if valid
+        // Handle horizontal movement
         else if (shape->getXPosition(0) < bestMove.x) {
-            if (shape->isMovableToTheRight(blockMap)) {  // Ensure the shape can move right
+            if (shape->isMovableToTheRight(blockMap)) { // Ensure movement is valid
+                Serial.println("Moving shape right...");
                 shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
                 shape->moveRight(blockMap);
                 shape->drawShape(tft, BOX_SIZE);
+                Serial.println("Shape moved right.");
+            } else {
+                Serial.println("Shape cannot move right (blocked or boundary).");
             }
         } else if (shape->getXPosition(0) > bestMove.x) {
-            if (shape->isMovableToTheLeft(blockMap)) {  // Ensure the shape can move left
+            if (shape->isMovableToTheLeft(blockMap)) { // Ensure movement is valid
+                Serial.println("Moving shape left...");
                 shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
                 shape->moveLeft(blockMap);
                 shape->drawShape(tft, BOX_SIZE);
+                Serial.println("Shape moved left.");
+            } else {
+                Serial.println("Shape cannot move left (blocked or boundary).");
             }
         }
     }
@@ -122,26 +126,37 @@ void Game::updateShapePosition(unsigned long currentTime) {
     if (currentTime - lastMoveDownTime >= displayManager.getMoveDownSpeed(level)) {
         lastMoveDownTime = currentTime;
         if (shape->isMovableDownWards(blockMap)) {
+            Serial.println("Moving shape down...");
             shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
             shape->moveDown(blockMap);
             shape->drawShape(tft, BOX_SIZE);
+            Serial.println("Shape moved down.");
         } else {
+            Serial.println("Shape reached bottom or obstacle, adding to blockMap...");
             blockMap.addBlocks(shape->getBlockList(), 4);
             int clearedLines = blockMap.clearAndMoveAllFullLines(tft, BOX_SIZE, displayManager.getBackgroundColor());
-            if (clearedLines > 0) updateScoreAndLevel(clearedLines);
+            if (clearedLines > 0) {
+                Serial.printf("Lines cleared: %d\n", clearedLines);
+                updateScoreAndLevel(clearedLines);
+            }
             delete shape;
             shape = nullptr;
             targetMoveSet = false;  // Reset target for the new shape
+            Serial.println("Shape added to blockMap and deleted.");
         }
     }
 }
 
 void Game::createNewShape() {
+    Serial.println("Creating new shape...");
     shape = ShapeFactory::createRandomShape();
     if (shape) {
         shape->moveToLowestBlockkAtMinusOne();
         shape->drawShape(tft, BOX_SIZE);
         targetMoveSet = false;  // AI will calculate moves for the new shape
+        Serial.println("New shape created and positioned.");
+    } else {
+        Serial.println("Error: Failed to create new shape.");
     }
 }
 

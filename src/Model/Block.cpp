@@ -42,8 +42,6 @@ void Block::moveRight() {
 
 void Block::moveDown() {
     y += 1;
-    //Serial.print("Block moved down to y: ");
-    Serial.println(y);
 }
 
 void Block::draw(TFT_eSPI &tft, int boxSize,  uint16_t colorOverride) const {

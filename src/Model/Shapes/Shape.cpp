@@ -131,11 +131,7 @@ bool Shape::isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap) {
 void Shape::moveLeft(BlockMap& blockMap) {
     if (isMovableToTheLeft(blockMap)) {
         for (int i = 0; i < NUM_BLOCKS; ++i) {
-            if (isValidPosition(blockList[i].getX() - 1, blockList[i].getY())) {
-                blockList[i].moveLeft();
-            } else {
-                return; // Prevent moving if any block would go out of bounds
-            }
+            blockList[i].moveLeft();
         }
     }
 }
@@ -181,11 +177,7 @@ bool Shape::isValidPosition(int x, int y) {
 void Shape::moveRight(BlockMap& blockMap) {
     if (isMovableToTheRight(blockMap)) {
         for (int i = 0; i < NUM_BLOCKS; ++i) {
-            if (isValidPosition(blockList[i].getX() + 1, blockList[i].getY())) {
-                blockList[i].moveRight();
-            } else {
-                return; // Prevent moving if any block would go out of bounds
-            }
+            blockList[i].moveRight();
         }
     }
 }
