@@ -34,7 +34,7 @@ private:
     bool targetMoveSet;           // Flag to track if AI has set the target move
     TetrisAI::Move bestMove;      // Store the AI's best move for the current shape
 
-    TetrisAI ai; // Add this line to define the AI member variable
+    TetrisAI tetrisAI; // Add this line to define the AI member variable
 
     void displayStartScreenLoop();
     void handleHighScoreDisplay();
@@ -46,9 +46,7 @@ private:
     void updateScoreAndLevel(int clearedLines);
     void handleShapeMovement(unsigned long currentTime);
     void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentTime, void (Shape::*moveFunc)(BlockMap &), void (Shape::*rotateFunc)(BlockMap &));
-    void handleAIMovement(unsigned long currentTime);    
-    
-    bool aiInProgress; // New flag to track AI operations
+    void executeAIMove();
 };
 
 #endif // GAME_H

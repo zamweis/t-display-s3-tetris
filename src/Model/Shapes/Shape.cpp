@@ -297,3 +297,4 @@ void Shape::setPosition(int x, int y) {
 
     generateShape();   
 }
+

@@ -3,35 +3,33 @@
 
 #include "Game/BlockMap.h"
 #include "Model/Shapes/Shape.h"
-#include <vector>
 
 class TetrisAI {
 public:
-    TetrisAI();
-    ~TetrisAI();
-
-    // Struct to store move evaluation results
+    // Structure to represent a move decision (x-position, rotation, and its heuristic score)
     struct Move {
         int x;
         int rotation;
         int score;
     };
 
-    // Evaluates and selects the best move for a given shape
+    // Constructor and Destructor
+    TetrisAI();
+    ~TetrisAI();
+
+    // Method to find the best move given the current state of the game
     Move findBestMove(const BlockMap& blockMap, const Shape& shape);
 
 private:
-    // Utility methods for evaluating moves
-    int evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation);
-    int calculateScore(const BlockMap& blockMap);
-
-    // Weights for scoring heuristic (you can tune these values)
+    // Heuristic weights (can be adjusted for different AI behavior)
     int heightWeight;
     int holeWeight;
     int bumpinessWeight;
+    int lineClearWeight;
 
-    // Helper function to simulate shape placement
-    BlockMap simulatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation);
+    // Helper methods for evaluating and scoring potential moves
+    int evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation);
+    int calculateScore(const BlockMap& blockMap);
 };
 
 #endif // TETRISAI_H

@@ -23,33 +23,69 @@ BlockMap::~BlockMap() {
     }
 }
 
+// Copy Constructor
+BlockMap::BlockMap(const BlockMap& other) {
+    for (int x = 0; x < MAP_WIDTH; ++x) {
+        for (int y = 0; y < MAP_HEIGHT; ++y) {
+            if (other.map[x][y] != nullptr) {
+                map[x][y] = new Block(*other.map[x][y]); // Deep copy
+            } else {
+                map[x][y] = nullptr;
+            }
+        }
+    }
+}
+
+// Assignment Operator
+BlockMap& BlockMap::operator=(const BlockMap& other) {
+    if (this != &other) {
+        // Free existing blocks
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            for (int y = 0; y < MAP_HEIGHT; ++y) {
+                delete map[x][y];
+                map[x][y] = nullptr;
+            }
+        }
+        // Copy new blocks
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            for (int y = 0; y < MAP_HEIGHT; ++y) {
+                if (other.map[x][y] != nullptr) {
+                    map[x][y] = new Block(*other.map[x][y]); // Deep copy
+                } else {
+                    map[x][y] = nullptr;
+                }
+            }
+        }
+    }
+    return *this;
+}
+
 void BlockMap::addBlock(Block* block) {
     if (block != nullptr && block->getX() >= 0 && block->getX() < MAP_WIDTH &&
         block->getY() >= 0 && block->getY() < MAP_HEIGHT) {
+        // Free existing block memory (if any)
         if (map[block->getX()][block->getY()] != nullptr) {
-            // Avoid double deletion by not deleting the old block pointer twice
-            delete map[block->getX()][block->getY()]; 
+            delete map[block->getX()][block->getY()]; // Prevent memory leaks
         }
-        map[block->getX()][block->getY()] = block; // Assign new block
+        // Assign new block pointer
+        map[block->getX()][block->getY()] = block;
     } else {
-        delete block; // Clean up the block if out of bounds
+        delete block; // Clean up the block if it's out of bounds
     }
 }
 
 void BlockMap::addBlocks(Block blockList[], int size) {
     for (int i = 0; i < size; ++i) {
-        int x = blockList[i].getX();
-        int y = blockList[i].getY();
-        if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
-            addBlock(new Block(blockList[i])); // Only add block if within bounds
-        } else {
-            Serial.printf("Warning: Attempted to add block out of bounds at (%d, %d)\n", x, y);
-        }
+        // Creating a copy using new is fine, but you must ensure ownership and proper cleanup
+        addBlock(new Block(blockList[i])); // Copy constructor should create a deep copy
     }
 }
 
 bool BlockMap::isFieldEmpty(int x, int y) const {
-    return (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) ? (map[x][y] == nullptr) : true;
+    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
+        return map[x][y] == nullptr;
+    } 
+    return true;
 }
 
 // Gets the block at given coordinates
@@ -155,6 +191,20 @@ int BlockMap::clearAndMoveAllFullLines(TFT_eSPI& tft, int boxSize, uint16_t back
     return totalClearedLines;
 }
 
+// Clears all full lines and moves all lines above down by the number of cleared lines
+int BlockMap::getAmoutOfFullLines() const {
+    int totalClearedLines = 0;
+
+    // Traverse from bottom to top to avoid index shifting issues
+    for (int y = MAP_HEIGHT - 1; y >= 0; --y) {
+        if (isLineFull(y)) {
+            ++totalClearedLines;
+        }
+    }
+    return totalClearedLines;
+}
+
+
 void BlockMap::drawAllBlocks(TFT_eSPI& tft, int boxSize) {
     for (int y = 0; y < MAP_HEIGHT; ++y) {
         if (isLineEmpty(y)) {
@@ -177,73 +227,37 @@ bool BlockMap::checkGameOver() const {
     return false;
 }
 
-int BlockMap::calculateHeight() const {
+int BlockMap::getColumnHeight(int x) const {
     for (int y = 0; y < MAP_HEIGHT; ++y) {
-        for (int x = 0; x < MAP_WIDTH; ++x) {
-            if (map[x][y] != nullptr) {
-                return MAP_HEIGHT - y; // Return height from the top
-            }
+        if (map[x][y] != nullptr) {
+            return MAP_HEIGHT - y;
         }
     }
-    return 0;
+    return 0; // Column is empty
 }
 
-std::vector<int> BlockMap::calculateColumnHeights() const {
-    std::vector<int> columnHeights(MAP_WIDTH, 0);
+int BlockMap::getTotalHoles() const {
+    int totalHoles = 0;
     for (int x = 0; x < MAP_WIDTH; ++x) {
+        bool blockFound = false;
         for (int y = 0; y < MAP_HEIGHT; ++y) {
             if (map[x][y] != nullptr) {
-                columnHeights[x] = MAP_HEIGHT - y;
-                break;
+                blockFound = true;
+            } else if (blockFound) {
+                totalHoles++;
             }
         }
     }
-    return columnHeights;
+    return totalHoles;
 }
 
-int BlockMap::calculateBumpiness() const {
-    std::vector<int> columnHeights = calculateColumnHeights();
+int BlockMap::getBumpiness() const {
     int bumpiness = 0;
-    for (int x = 0; x < MAP_WIDTH - 1; ++x) {
-        bumpiness += std::abs(columnHeights[x] - columnHeights[x + 1]);
+    int prevHeight = getColumnHeight(0);
+    for (int x = 1; x < MAP_WIDTH; ++x) {
+        int currHeight = getColumnHeight(x);
+        bumpiness += abs(currHeight - prevHeight);
+        prevHeight = currHeight;
     }
     return bumpiness;
-}
-
-int BlockMap::countHoles() const {
-    int holeCount = 0;
-    for (int x = 0; x < MAP_WIDTH; ++x) {
-        bool blockEncountered = false;
-        for (int y = 0; y < MAP_HEIGHT; ++y) {
-            if (map[x][y] != nullptr) {
-                blockEncountered = true;
-            } else if (blockEncountered) {
-                ++holeCount; // Count holes only after encountering a block in the column
-            }
-        }
-    }
-    return holeCount;
-}
-
-int BlockMap::getHighestColumn() const {
-    int maxHeight = 0;
-    for (int x = 0; x < MAP_WIDTH; ++x) {
-        for (int y = 0; y < MAP_HEIGHT; ++y) {
-            if (map[x][y] != nullptr) {
-                maxHeight = std::max(maxHeight, MAP_HEIGHT - y);
-                break;
-            }
-        }
-    }
-    return maxHeight;
-}
-
-int BlockMap::countClearedLines() const {
-    int clearedLines = 0;
-    for (int y = 0; y < MAP_HEIGHT; ++y) {
-        if (isLineFull(y)) {
-            ++clearedLines;
-        }
-    }
-    return clearedLines;
 }

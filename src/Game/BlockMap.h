@@ -1,7 +1,6 @@
 #ifndef BLOCKMAP_H
 #define BLOCKMAP_H
 #include <vector>
-
 #include "Model/Block.h"
 
 // Forward declaration of Shape
@@ -11,37 +10,47 @@ class BlockMap {
 public:
     BlockMap();
     ~BlockMap();
+    BlockMap(const BlockMap& other); // Copy constructor
+    BlockMap& operator=(const BlockMap& other); // Assignment operator
 
     static constexpr int MAP_WIDTH = 10;
     static constexpr int MAP_HEIGHT = 19;
-    static constexpr int MAX_LINE_INDEX = MAP_HEIGHT - 1; // Define MAX_LINE_INDEX here
-    Block* map[MAP_WIDTH][MAP_HEIGHT]; // Corrected dimensions
+    static constexpr int MAX_LINE_INDEX = MAP_HEIGHT - 1;
 
+    Block* map[MAP_WIDTH][MAP_HEIGHT];
+
+    // Block management
     void addBlock(Block* block);
     void addBlocks(Block blockList[], int size);
-    bool checkGameOver() const;
-    bool isFieldEmpty(int x, int y) const;
-    Block* getBlock(int x, int y) const;
     void removeBlock(Block* block);
     void removeBlock(int x, int y);
+    bool isFieldEmpty(int x, int y) const;
+    Block* getBlock(int x, int y) const;
+    bool checkGameOver() const;
+
+    // Line operations
     void clearLine(int lineIndex, TFT_eSPI& tft, int boxSize, uint16_t backgroundColor);
     bool isLineFull(int lineIndex) const;
-    int clearFullLines(Shape& activeShape, TFT_eSPI& tft, int boxSize, uint16_t backgroundColor);
     bool isLineEmpty(int lineIndex) const;
+    void moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, int boxSize, uint16_t backgroundColor);
+    int clearAndMoveAllFullLines(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor);
+    
+    // AI-specific utility methods
+    int getColumnHeight(int x) const; // Returns the height of a specified column
+    int getTotalHoles() const; // Counts the number of holes in the block map
+    int getBumpiness() const; // Calculates the bumpiness of the board
+    int countClearedLines() const; // Returns the number of cleared lines (if applicable)
+    int getAmoutOfFullLines() const;
+
+    // Movement and block positioning
     void moveBlockDown(int x, int y);
     bool isBlockMovableDownwards(int x, int y) const;
-    void moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, int boxSize, uint16_t backgroundColor);
+    void drawAllBlocks(TFT_eSPI& tft, int boxSize);
+
+private:
+    // Helper methods for internal operations
     int getFirstNotEmptyLine(int lineIndex) const;
     void moveAllNotEmptyLinesDown(TFT_eSPI& tft, int clearedLines, int boxSize, uint16_t backgroundColor);
-    void drawAllBlocks(TFT_eSPI& tft, int boxSize);
-    int clearAndMoveAllFullLines(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor);
-    int calculateHeight() const;
-    std::vector<int> calculateColumnHeights() const;
-    int calculateBumpiness() const;
-    int countHoles() const;
-    int getHighestColumn() const;
-    int countClearedLines() const;
-
 };
 
 #endif // BLOCKMAP_H
