@@ -14,43 +14,40 @@ TetrisAI::~TetrisAI() {}
 
 TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& shape) {
     Move bestMove = {0, 0, std::numeric_limits<int>::min()};
+    Serial.println("AI: Beginne Berechnung des besten Zugs");
 
-    // Erstelle eine Kopie der BlockMap
     BlockMap simulatedMap = blockMap;
 
-    // Iteriere über alle möglichen Rotationen
     for (int rotation = 0; rotation < 4; ++rotation) {
         Shape simulatedShape = shape;
 
-        // Simuliere die Rotation
         for (int i = 0; i < rotation; ++i) {
             if (!simulatedShape.canRotateToPosition(simulatedShape.getRotatePosition() + 1, simulatedMap)) {
-                break; // Ungültige Rotation
+                break;
             }
             simulatedShape.rotateClockwise(simulatedMap);
         }
 
-        // Iteriere über alle möglichen x-Positionen
         for (int x = 0; x < BlockMap::MAP_WIDTH; ++x) {
-            // Prüfe, ob die Form an die Position bewegt werden kann
             if (!simulatedShape.canMoveToPosition(x, 0, simulatedMap)) {
-                continue; // Ungültige Position
+                continue;
             }
 
-            // Simuliere die Bewegung
             simulatedShape.setPosition(x, 0);
             simulatedShape.fallDown(simulatedMap);
 
-            // Berechne den Score
             int score = evaluatePlacement(simulatedMap, simulatedShape, x, rotation);
+            Serial.printf("AI: Position (%d, %d) mit Score %d getestet\n", x, rotation, score);
 
-            // Aktualisiere den besten Zug
             if (score > bestMove.score) {
                 bestMove = {x, rotation, score};
+                Serial.printf("AI: Neuer bester Zug gefunden: X=%d, Rotation=%d, Score=%d\n",
+                              bestMove.x, bestMove.rotation, bestMove.score);
             }
         }
     }
 
+    Serial.printf("AI: Bester Zug: X=%d, Rotation=%d, Score=%d\n", bestMove.x, bestMove.rotation, bestMove.score);
     return bestMove;
 }
 
@@ -75,20 +72,14 @@ int TetrisAI::evaluatePlacement(const BlockMap& blockMap, const Shape& shape, in
 }
 
 int TetrisAI::calculateScore(const BlockMap& blockMap) {
-    // Höhe
     int totalHeight = 0;
     for (int x = 0; x < BlockMap::MAP_WIDTH; ++x) {
         totalHeight += blockMap.getColumnHeight(x);
     }
     int avgHeight = totalHeight / BlockMap::MAP_WIDTH;
 
-    // Löcher
     int totalHoles = blockMap.getTotalHoles();
-
-    // Unebenheit
     int bumpiness = blockMap.getBumpiness();
-
-    // Gelöschte Reihen
     int clearedLines = blockMap.getAmoutOfFullLines();
 
     // Heuristik
