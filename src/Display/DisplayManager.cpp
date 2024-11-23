@@ -13,21 +13,20 @@ DisplayManager::DisplayManager(TFT_eSPI& tft)
 void DisplayManager::drawScreen() {
     tft.fillScreen(TFT_BLACK);
 
-    int blockSize = BOX_SIZE;
     uint16_t colors[] = {TFT_GREEN, TFT_YELLOW, TFT_RED, TFT_BLUE};
     int numColors = sizeof(colors) / sizeof(colors[0]);
 
-    for (int i = 0; i < SCREEN_WIDTH; i += blockSize) {
-        Block borderBlock(i / blockSize, 0, colors[i / blockSize % numColors]);
-        borderBlock.draw(tft, blockSize);
-        borderBlock = Block(i / blockSize, SCREEN_HEIGHT / blockSize, colors[i / blockSize % numColors]);
-        borderBlock.draw(tft, blockSize);
+    for (int i = 0; i < SCREEN_WIDTH; i += BOX_SIZE) {
+        Block borderBlock(i / BOX_SIZE, 0, colors[i / BOX_SIZE % numColors]);
+        borderBlock.draw(tft);
+        borderBlock = Block(i / BOX_SIZE, SCREEN_HEIGHT / BOX_SIZE, colors[i / BOX_SIZE % numColors]);
+        borderBlock.draw(tft);
     }
-    for (int j = 0; j < SCREEN_HEIGHT; j += blockSize) {
-        Block borderBlock(0, j / blockSize, colors[j / blockSize % numColors]);
-        borderBlock.draw(tft, blockSize);
-        borderBlock = Block((SCREEN_WIDTH - blockSize) / blockSize, j / blockSize, colors[j / blockSize % numColors]);
-        borderBlock.draw(tft, blockSize);
+    for (int j = 0; j < SCREEN_HEIGHT; j += BOX_SIZE) {
+        Block borderBlock(0, j / BOX_SIZE, colors[j / BOX_SIZE % numColors]);
+        borderBlock.draw(tft);
+        borderBlock = Block((SCREEN_WIDTH - BOX_SIZE) / BOX_SIZE, j / BOX_SIZE, colors[j / BOX_SIZE % numColors]);
+        borderBlock.draw(tft);
     }
 }
 
@@ -133,7 +132,7 @@ void DisplayManager::displayStartScreen() {
         int shapeWidth = (tempShape->getWidth() - 1)* BOX_SIZE; // Ensure getWidth() returns correct number of blocks
         int shapeX = (SCREEN_WIDTH - shapeWidth) / 2; // Calculate x-coordinate to center shape
         tempShape->setPosition(shapeX / BOX_SIZE, 7); // Adjust y-position below "WELCOME"
-        tempShape->drawShape(tft, BOX_SIZE);
+        tempShape->drawShape(tft);
         delete tempShape; // Clean up the temporary shape
     }
 

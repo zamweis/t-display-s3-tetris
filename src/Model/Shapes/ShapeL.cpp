@@ -3,14 +3,13 @@
 ShapeL::ShapeL() : Shape() {
     uint16_t color = TFT_ORANGE;
 
-    if (rotatePos == getROTATEPOSITION1()) {
-        setBlock(Block(4, -30, color), 0);
-    } else if (rotatePos == getROTATEPOSITION2()) {
-        setBlock(Block(5, -30, color), 0);
-    } else {
-        setBlock(Block(4, -30, color), 0);
-    }
+    // Initialisierung der Blöcke
+    blockList[0] = Block(4, 0, color);
+    blockList[1] = Block(5, 0, color);
+    blockList[2] = Block(5, -1, color);
+    blockList[3] = Block(5, -2, color);
 
+    // Rotationspunkte
     setPoint(0, 0, Point(1, 1));
     setPoint(0, 1, Point(0, 1));
     setPoint(0, 2, Point(0, -1));
@@ -26,6 +25,7 @@ ShapeL::ShapeL() : Shape() {
     setPoint(3, 0, Point(-1, 1));
     setPoint(3, 1, Point(-1, 0));
     setPoint(3, 2, Point(1, 0));
-    
+
     generateShape();
+    Serial.println("ShapeL: created");
 }

@@ -14,7 +14,7 @@ TetrisAI::~TetrisAI() {}
 
 TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& shape) {
     Move bestMove = {0, 0, std::numeric_limits<int>::min()};
-    Serial.println("AI: Beginne Berechnung des besten Zugs");
+    //Serial.println("AI: Beginne Berechnung des besten Zugs");
 
     BlockMap simulatedMap = blockMap;
 
@@ -37,17 +37,17 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
             simulatedShape.fallDown(simulatedMap);
 
             int score = evaluatePlacement(simulatedMap, simulatedShape, x, rotation);
-            Serial.printf("AI: Position (%d, %d) mit Score %d getestet\n", x, rotation, score);
+            //Serial.printf("AI: Position (%d, %d) mit Score %d getestet\n", x, rotation, score);
 
             if (score > bestMove.score) {
                 bestMove = {x, rotation, score};
-                Serial.printf("AI: Neuer bester Zug gefunden: X=%d, Rotation=%d, Score=%d\n",
-                              bestMove.x, bestMove.rotation, bestMove.score);
+                //Serial.printf("AI: Neuer bester Zug gefunden: X=%d, Rotation=%d, Score=%d\n",
+                              //bestMove.x, bestMove.rotation, bestMove.score);
             }
         }
     }
 
-    Serial.printf("AI: Bester Zug: X=%d, Rotation=%d, Score=%d\n", bestMove.x, bestMove.rotation, bestMove.score);
+    //Serial.printf("AI: Bester Zug: X=%d, Rotation=%d, Score=%d\n", bestMove.x, bestMove.rotation, bestMove.score);
     return bestMove;
 }
 
@@ -86,3 +86,4 @@ int TetrisAI::calculateScore(const BlockMap& blockMap) {
     return (clearedLines * lineClearWeight) -
            (avgHeight * heightWeight + totalHoles * holeWeight + bumpiness * bumpinessWeight);
 }
+

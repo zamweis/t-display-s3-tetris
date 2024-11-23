@@ -1,17 +1,15 @@
 #include "ShapeJ.h"
-#include <iostream>
 
 ShapeJ::ShapeJ() : Shape() {
-    uint16_t color = TFT_BLUE; // Example 16-bit color (adjust as needed)
+    uint16_t color = TFT_BLUE;
 
-    // Initialize blocks based on rotation position
-    if (rotatePos == ROTATEPOSITION3) {
-        blockList[0] = Block(5, -30, color);
-    } else {
-        blockList[0] = Block(5, -30, color);
-    }
+    // Initialisierung der Blöcke
+    blockList[0] = Block(4, 0, color);
+    blockList[1] = Block(5, 0, color);
+    blockList[2] = Block(5, -1, color);
+    blockList[3] = Block(5, -2, color);
 
-    // Setting points for rotations
+    // Rotationspunkte
     setPoint(0, 0, Point(0, -1));
     setPoint(0, 1, Point(0, 1));
     setPoint(0, 2, Point(-1, 1));
@@ -29,4 +27,5 @@ ShapeJ::ShapeJ() : Shape() {
     setPoint(3, 2, Point(-1, -1));
 
     generateShape();
+    Serial.println("ShapeJ: created");
 }

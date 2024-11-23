@@ -20,6 +20,7 @@ public:
     // Method to find the best move given the current state of the game
     Move findBestMove(const BlockMap& blockMap, const Shape& shape);
 
+
 private:
     // Heuristic weights (can be adjusted for different AI behavior)
     int heightWeight;

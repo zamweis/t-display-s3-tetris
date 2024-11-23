@@ -7,6 +7,9 @@ extern const int SCREEN_WIDTH;
 extern const int SCREEN_HEIGHT;
 extern const int BOX_SIZE;
 
+static constexpr int MAP_WIDTH = 10;
+static constexpr int MAP_HEIGHT = 19;
+
 // Background color
 extern const uint16_t backgroundColor;
 

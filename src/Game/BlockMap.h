@@ -15,7 +15,6 @@ public:
 
     static constexpr int MAP_WIDTH = 10;
     static constexpr int MAP_HEIGHT = 19;
-    static constexpr int MAX_LINE_INDEX = MAP_HEIGHT - 1;
 
     Block* map[MAP_WIDTH][MAP_HEIGHT];
 
@@ -29,11 +28,11 @@ public:
     bool checkGameOver() const;
 
     // Line operations
-    void clearLine(int lineIndex, TFT_eSPI& tft, int boxSize, uint16_t backgroundColor);
+    void clearLine(int lineIndex, TFT_eSPI& tft, uint16_t backgroundColor);
     bool isLineFull(int lineIndex) const;
     bool isLineEmpty(int lineIndex) const;
-    void moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, int boxSize, uint16_t backgroundColor);
-    int clearAndMoveAllFullLines(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor);
+    void moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, uint16_t backgroundColor);
+    int clearAndMoveAllFullLines(TFT_eSPI& tft, uint16_t backgroundColor);
     
     // AI-specific utility methods
     int getColumnHeight(int x) const; // Returns the height of a specified column
@@ -45,12 +44,12 @@ public:
     // Movement and block positioning
     void moveBlockDown(int x, int y);
     bool isBlockMovableDownwards(int x, int y) const;
-    void drawAllBlocks(TFT_eSPI& tft, int boxSize);
+    void drawAllBlocks(TFT_eSPI& tft);
 
 private:
     // Helper methods for internal operations
     int getFirstNotEmptyLine(int lineIndex) const;
-    void moveAllNotEmptyLinesDown(TFT_eSPI& tft, int clearedLines, int boxSize, uint16_t backgroundColor);
+    void moveAllNotEmptyLinesDown(TFT_eSPI& tft, int clearedLines, uint16_t backgroundColor);
 };
 
 #endif // BLOCKMAP_H

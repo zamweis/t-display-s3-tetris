@@ -1,9 +1,10 @@
 #include "Game/Game.h"
 #include "Config.h"
-#include "TetrisAI/TetrisAI.h" // Include TetrisAI header
+#include "TetrisAI/TetrisAI.h"
 #include "ShapeFactory.h"
 
-TetrisAI::Move currentMove; // Globale oder Klassenvariable, um den aktuellen Zug zu speichern
+TetrisAI::Move currentMove;
+bool isGravityActive = false;
 
 Game::Game(TFT_eSPI& tft, DisplayManager& displayManager, HighScoreManager& highScoreManager, InputHandler& inputHandler)
     : tft(tft), displayManager(displayManager), highScoreManager(highScoreManager), inputHandler(inputHandler),
@@ -48,6 +49,7 @@ void Game::setup() {
 
 void Game::loop() {
     unsigned long currentTime = millis();
+    handleShapeMovement(currentTime);
 
     // Prüfe auf Game Over
     if (blockMap.checkGameOver()) {
@@ -57,6 +59,7 @@ void Game::loop() {
     }
 
     // Aktualisiere die Gravitation der Shape
+    //Serial.println("Prüfe Gravitation...");
     updateShapePosition(currentTime);
 
     // Führt die AI-Logik aus, ohne die Gravitation zu blockieren
@@ -65,8 +68,12 @@ void Game::loop() {
         unsigned long aiStepInterval = 200; // Intervall für die KI (in ms)
 
         if (currentTime - lastAIStepTime >= aiStepInterval) {
-            executeAIStep();
-            lastAIStepTime = currentTime;
+            if (!isGravityActive) {
+                executeAIStep();
+                lastAIStepTime = currentTime;
+            } else {
+                //Serial.println("KI wartet: Gravitation aktiv.");
+            }
         }
     } else {
         // Erstelle eine neue Shape, wenn keine vorhanden ist
@@ -74,7 +81,7 @@ void Game::loop() {
     }
 
     // Zeichne die aktualisierte BlockMap
-    blockMap.drawAllBlocks(tft, BOX_SIZE);
+    blockMap.drawAllBlocks(tft);
 }
 
 void Game::handleShapeMovement(unsigned long currentTime) {
@@ -84,20 +91,23 @@ void Game::handleShapeMovement(unsigned long currentTime) {
 
 void Game::updateShapePosition(unsigned long currentTime) {
     if (currentTime - lastMoveDownTime >= displayManager.getMoveDownSpeed(level)) {
+        isGravityActive = true; // Gravitation aktiv
         lastMoveDownTime = currentTime;
 
         if (shape->isMovableDownWards(blockMap)) {
-            shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+            shape->eraseShape(tft, displayManager.getBackgroundColor());
             shape->moveDown(blockMap);
-            shape->drawShape(tft, BOX_SIZE);
+            shape->drawShape(tft);
         } else {
             blockMap.addBlocks(shape->getBlockList(), 4);
-            int clearedLines = blockMap.clearAndMoveAllFullLines(tft, BOX_SIZE, displayManager.getBackgroundColor());
+            int clearedLines = blockMap.clearAndMoveAllFullLines(tft, displayManager.getBackgroundColor());
             if (clearedLines > 0) updateScoreAndLevel(clearedLines);
             delete shape;
             shape = nullptr;
             currentMove.score = std::numeric_limits<int>::min(); // AI-Zug zurücksetzen
         }
+
+        isGravityActive = false; // Gravitation abgeschlossen
     }
 }
 
@@ -105,15 +115,15 @@ void Game::createNewShape() {
     shape = ShapeFactory::createRandomShape();
     if (shape) {
         if (!shape->canMoveToPosition(shape->getBlock(0).getX(), shape->getBlock(0).getY(), blockMap)) {
-            Serial.println("Game Over: Keine gültige Startposition für neue Shape.");
+            //Serial.println("Game Over: Keine gültige Startposition für neue Shape.");
             delete shape;
             shape = nullptr;
             return;
         }
 
-        Serial.println("Neue Shape erstellt und erfolgreich positioniert.");
+        //Serial.println("Neue Shape erstellt und erfolgreich positioniert.");
         shape->moveToLowestBlockkAtMinusOne();
-        shape->drawShape(tft, BOX_SIZE);
+        shape->drawShape(tft);
     } else {
         Serial.println("Fehler: Shape konnte nicht erstellt werden.");
     }
@@ -162,7 +172,7 @@ void Game::updateScoreAndLevel(int clearedLines) {
         score += pointsPerLine[clearedLines - 1] * (level + 1);
         linesCleared += clearedLines;
         level = 1 + linesCleared / 10;
-        Serial.printf("Score: %d, Level: %d\n", score, level);
+        //Serial.printf("Score: %d, Level: %d\n", score, level);
     }
 }
 
@@ -183,9 +193,9 @@ void Game::handleButtonState(ButtonState &state, int buttonPin, unsigned long cu
             break;
         case SHORT_PRESS:
             if (shape) {
-                shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+                shape->eraseShape(tft, displayManager.getBackgroundColor());
                 (shape->*moveFunc)(blockMap);
-                shape->drawShape(tft, BOX_SIZE);
+                shape->drawShape(tft);
             }
             state = IDLE;
             break;
@@ -195,9 +205,9 @@ void Game::handleButtonState(ButtonState &state, int buttonPin, unsigned long cu
             } else {
                 if (currentTime - inputHandler.getLastRotateTime() >= rotationDebounceInterval) {
                     if (shape) {
-                        shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+                        shape->eraseShape(tft, displayManager.getBackgroundColor());
                         (shape->*rotateFunc)(blockMap);
-                        shape->drawShape(tft, BOX_SIZE);
+                        shape->drawShape(tft);
                         inputHandler.updateLastRotateTime(currentTime);
                     }
                 }
@@ -208,52 +218,83 @@ void Game::handleButtonState(ButtonState &state, int buttonPin, unsigned long cu
 
 bool Game::executeAIStep() {
     if (!shape) {
-        Serial.println("Keine Shape vorhanden. AI-Schritt abgebrochen.");
+        Serial.println("No shape available. AI step aborted.");
         return false;
     }
 
+    if (isGravityActive) {
+        Serial.println("AI paused: Gravity active.");
+        return false; // AI waits until gravity operation is complete
+    }
+
+    // If no current move, calculate the best move
     if (currentMove.score == std::numeric_limits<int>::min()) {
         currentMove = tetrisAI.findBestMove(blockMap, *shape);
+
         if (currentMove.score == std::numeric_limits<int>::min()) {
-            Serial.println("AI konnte keinen gültigen Zug finden.");
+            Serial.println("AI could not find a valid move.");
+            return false;
+        }
+
+        // Validate the AI move's bounds
+        if (currentMove.x < 0 || currentMove.x >= MAP_WIDTH) {
+            Serial.printf("AI move out of bounds: Invalid X=%d.\n", currentMove.x);
+            return false;
+        }
+        if (currentMove.rotation < 0 || currentMove.rotation > Shape::ROTATEPOSITION3) {
+            Serial.printf("AI move out of bounds: Invalid rotation=%d.\n", currentMove.rotation);
             return false;
         }
     }
 
-    Serial.printf("AI-Steuerung: Ziel-X=%d, Ziel-Rotation=%d\n", currentMove.x, currentMove.rotation);
+    // Check if target position is reached
+    if (shape->getBlock(0).getX() == currentMove.x && shape->getRotatePosition() == currentMove.rotation) {
+        Serial.println("Target position reached. Shape will now fall.");
+        shape->eraseShape(tft, displayManager.getBackgroundColor());
+        shape->fallDown(blockMap); // Drop the shape
+        blockMap.addBlocks(shape->getBlockList(), Shape::NUM_BLOCKS); // Add blocks to map
+        shape->drawShape(tft);
+        delete shape;
+        shape = nullptr;
+        currentMove.score = std::numeric_limits<int>::min(); // Reset AI move
+        return true;
+    }
 
     bool shapeUpdated = false;
 
+    // Stepwise rotation
     if (shape->getRotatePosition() < currentMove.rotation) {
         int nextRotation = shape->getRotatePosition() + 1;
         if (shape->canRotateToPosition(nextRotation, blockMap)) {
-            shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+            shape->eraseShape(tft, displayManager.getBackgroundColor());
             shape->rotateToPosition(nextRotation, blockMap);
             shapeUpdated = true;
         }
     } else if (shape->getRotatePosition() > currentMove.rotation) {
         int nextRotation = shape->getRotatePosition() - 1;
         if (shape->canRotateToPosition(nextRotation, blockMap)) {
-            shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+            shape->eraseShape(tft, displayManager.getBackgroundColor());
             shape->rotateToPosition(nextRotation, blockMap);
             shapeUpdated = true;
         }
     }
 
+    // Stepwise movement left or right
     if (!shapeUpdated) {
         if (shape->getBlock(0).getX() < currentMove.x && shape->isMovableToTheRight(blockMap)) {
-            shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+            shape->eraseShape(tft, displayManager.getBackgroundColor());
             shape->moveRight(blockMap);
             shapeUpdated = true;
         } else if (shape->getBlock(0).getX() > currentMove.x && shape->isMovableToTheLeft(blockMap)) {
-            shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+            shape->eraseShape(tft, displayManager.getBackgroundColor());
             shape->moveLeft(blockMap);
             shapeUpdated = true;
         }
     }
 
+    // Draw the updated shape
     if (shapeUpdated) {
-        shape->drawShape(tft, BOX_SIZE);
+        shape->drawShape(tft);
     }
 
     return shapeUpdated;

@@ -3,29 +3,28 @@
 #include <ctime>
 #include <iostream>
 #include <set>
+#include "Config.h"
 
-Shape::Shape() {
-    
-    // Generate the random value
-    rotatePos = random(0, 4);
-    //std::cout << "Initialized rotatePos to: " << rotatePos << std::endl;
-    for (int i = 0; i < NUM_BLOCKS; ++i) {
-        blockList[i] = Block(); // Initialisiere leere Blöcke
-    }
-}
+Shape::Shape() : rotatePos(random(0, ROTATEPOSITION3)) {}
 
 Shape::~Shape() {}
 
-Block* Shape::getBlockList() {
+Block* Shape::getBlockList()  {
     return blockList;
 }
 
-Point (*Shape::getPositions())[NUM_POSITIONS] {
+Point (*Shape::getPositions() )[NUM_POSITIONS] {
     return positions;
 }
 
 void Shape::setBlock(const Block& block, int index) {
-    blockList[index] = block;
+    if (index >= 0 && index < NUM_BLOCKS) {
+        blockList[index] = block;
+    } else {
+        throw std::out_of_range("setBlock: Index " + std::to_string(index) + 
+                                " is out of range. Valid range is 0 to " + 
+                                std::to_string(NUM_BLOCKS - 1) + ".");
+    }
 }
 
 void Shape::setPoint(int x, int y, const Point& point) {
@@ -57,20 +56,31 @@ void Shape::generateShape() {
     for (int i = 1; i < NUM_BLOCKS; ++i) {
         blockList[i] = Block(getXPosition(i - 1), getYPosition(i - 1), color);
     }
+    
+    Serial.printf("Shape: Rotation %d, Punkte:\n", rotatePos);
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        Serial.printf("Punkt %d: X=%d, Y=%d\n", i, positions[rotatePos][i].getX(), positions[rotatePos][i].getY());
+    }
 }
 
 int Shape::getXPosition(int index) const {
     if (index >= 0 && index < NUM_POSITIONS) {
         return blockList[0].getX() + static_cast<int>(positions[rotatePos][index].getX());
     }
-    return blockList[0].getX(); // Default fallback
+    // Throw exception if the index is out of bounds
+    throw std::out_of_range("getXPosition: Index " + std::to_string(index) + 
+                            " is out of range. Valid range is 0 to " + 
+                            std::to_string(NUM_POSITIONS - 1) + ".");
 }
 
 int Shape::getYPosition(int index) const {
     if (index >= 0 && index < NUM_POSITIONS) {
         return blockList[0].getY() + static_cast<int>(positions[rotatePos][index].getY());
     }
-    return blockList[0].getY(); // Default fallback
+    // Throw exception if the index is out of bounds
+    throw std::out_of_range("getYPosition: Index " + std::to_string(index) + 
+                            " is out of range. Valid range is 0 to " + 
+                            std::to_string(NUM_POSITIONS - 1) + ".");
 }
 
 bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const {
@@ -115,8 +125,10 @@ void Shape::rotateToPosition(int targetRotatePosition, BlockMap& blockMap) {
     }
 }
 
-void Shape::rotateAntiClockwise(BlockMap& blockMap) {
-    int nextRotatePos = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
+void Shape::rotate(BlockMap& blockMap, bool clockwise) {
+    int nextRotatePos = clockwise
+                        ? (rotatePos == ROTATEPOSITION3 ? ROTATEPOSITION0 : rotatePos + 1)
+                        : (rotatePos == ROTATEPOSITION0 ? ROTATEPOSITION3 : rotatePos - 1);
     if (canRotateToPosition(nextRotatePos, blockMap)) {
         rotatePos = nextRotatePos;
         generateShape();
@@ -124,11 +136,11 @@ void Shape::rotateAntiClockwise(BlockMap& blockMap) {
 }
 
 void Shape::rotateClockwise(BlockMap& blockMap) {
-    int nextRotatePos = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
-    if (canRotateToPosition(nextRotatePos, blockMap)) {
-        rotatePos = nextRotatePos;
-        generateShape();
-    }
+    rotate(blockMap, true);
+}
+
+void Shape::rotateAntiClockwise(BlockMap& blockMap) {
+    rotate(blockMap, false);
 }
 
 Block Shape::getLeftBlock() {
@@ -138,21 +150,19 @@ Block Shape::getLeftBlock() {
             leftBlock = blockList[i];
         }
     }
-    return leftBlock;
+    return std::move(leftBlock);
 }
 
 bool Shape::isMovableToTheLeft(BlockMap& blockMap) {
-    bool result = true;
     if (getLeftBlock().getX() == 0) {
-        result = false;
-    } else {
-        for (int i = 0; i <= 3; i++) {
-            if (result == true) {
-                result = !isInCollisionWithLeftBlock(getBlock(i), blockMap);
-            }
+        return false;
+    }
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        if (!isInCollisionWithLeftBlock(getBlock(i), blockMap)) {
+            return true;
         }
     }
-    return result;
+    return false;
 }
 
 bool Shape::isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap) {
@@ -275,22 +285,22 @@ void Shape::fallDown(BlockMap& blockMap) {
     }
 }
 
-void Shape::drawShape(TFT_eSPI& tft, int boxSize) const {
+void Shape::drawShape(TFT_eSPI& tft) const {
     for (int i = 0; i < NUM_BLOCKS; ++i) {
-        blockList[i].draw(tft, boxSize);
+        blockList[i].draw(tft);
 
     }
 }
 
-void Shape::drawShapeBorderOnly(TFT_eSPI& tft, int boxSize, int offset) const {
+void Shape::drawShapeBorderOnly(TFT_eSPI& tft, int offset) const {
     for (const auto& block : blockList) {
-        block.drawBorderOnly(tft, boxSize, offset);
+        block.drawBorderOnly(tft, offset);
     }
 }
 
-void Shape::eraseShape(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) const {
+void Shape::eraseShape(TFT_eSPI& tft, uint16_t backgroundColor) const {
     for (int i = 0; i < NUM_BLOCKS; ++i) {
-        blockList[i].draw(tft, boxSize, backgroundColor);
+        blockList[i].draw(tft, backgroundColor);
     }
 }
 
@@ -306,9 +316,9 @@ bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
 }
 
 void Shape::moveToLowestBlockkAtMinusOne() {
-    Block lowestBlock = getLowestBlock(); // Assuming this function finds the block with the highest y value in the shape
+    Block highestBlock = getHighestBlock(); // Assuming this function finds the block with the highest y value in the shape
 
-    int yOffset = lowestBlock.getY() - (-1); // Calculate offset to move the highest block to -1
+    int yOffset = highestBlock.getY() - (-1); // Calculate offset to move the highest block to -1
 
     for (auto& block : blockList) {
         block.setY(block.getY() - yOffset); // Adjust each block's y position by the computed offset

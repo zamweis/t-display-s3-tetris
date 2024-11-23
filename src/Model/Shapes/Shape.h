@@ -22,8 +22,6 @@ public:
     static constexpr int ROTATEPOSITION3 = 3;
     static constexpr int NUM_BLOCKS = 4;
     static constexpr int NUM_POSITIONS = 3;
-    static constexpr int MAP_WIDTH = 10;
-    static constexpr int MAP_HEIGHT = 19;
 
     Block blockList[NUM_BLOCKS];
     Point positions[NUM_BLOCKS][NUM_POSITIONS];
@@ -46,6 +44,7 @@ public:
     bool isRotatableClockwise(BlockMap& blockMap);
     void rotateAntiClockwise(BlockMap& blockMap);
     void rotateClockwise(BlockMap& blockMap);
+    void rotate(BlockMap& blockMap, bool clockwise);
     Block getLeftBlock();
     bool isMovableToTheLeft(BlockMap& blockMap);
     bool isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap);
@@ -60,9 +59,9 @@ public:
     bool isInCollisionWithLowerBlock(const Block& block, BlockMap& blockMap);
     void moveDown(BlockMap& blockMap);
     void fallDown(BlockMap& blockMap);
-    void drawShape(TFT_eSPI& tft, int boxSize) const;
-    void drawShapeBorderOnly(TFT_eSPI& tft, int boxSize, int offset) const;
-    void eraseShape(TFT_eSPI& tft, int boxSize, uint16_t backgroundColor) const;
+    void drawShape(TFT_eSPI& tft) const;
+    void drawShapeBorderOnly(TFT_eSPI& tft, int offset) const;
+    void eraseShape(TFT_eSPI& tft, uint16_t backgroundColor) const;
     void moveToLowestBlockkAtMinusOne();
     int getWidth();
     bool isValidPosition(int x, int y);
