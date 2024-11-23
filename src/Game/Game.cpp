@@ -43,16 +43,13 @@ void Game::setup() {
     displayStartScreenLoop();
     resetGame(); // Only reset and start the game after button press
 }
-
 void Game::loop() {
-    unsigned long currentTime = millis();
-
     if (blockMap.checkGameOver()) {
+        Serial.println("Game Over erkannt.");
         handleGameOver();
         return;
     }
 
-    // Schrittweise AI-Steuerung
     if (shape) {
         executeAIStep();
         delay(200); // Füge eine Pause hinzu, um die Animation sichtbar zu machen
@@ -63,18 +60,6 @@ void Game::loop() {
     blockMap.drawAllBlocks(tft, BOX_SIZE);
 }
 
-void Game::executeAIMove() {
-    if (!shape) return; // Ensure there is a shape
-
-    // Find the best move using TetrisAI
-    TetrisAI::Move bestMove = tetrisAI.findBestMove(blockMap, *shape);
-
-    // Apply the best move
-    for (int i = 0; i < bestMove.rotation; ++i) {
-        shape->rotateClockwise(blockMap);
-    }
-    shape->setPosition(bestMove.x, 0); // Move shape to the suggested x position
-}
 
 void Game::handleShapeMovement(unsigned long currentTime) {
     handleButtonState(leftButtonState, BUTTON_LEFT, currentTime, &Shape::moveLeft, &Shape::rotateAntiClockwise);
@@ -101,8 +86,18 @@ void Game::updateShapePosition(unsigned long currentTime) {
 void Game::createNewShape() {
     shape = ShapeFactory::createRandomShape();
     if (shape) {
+        if (!shape->canMoveToPosition(shape->getBlock(0).getX(), shape->getBlock(0).getY(), blockMap)) {
+            Serial.println("Game Over: Keine gültige Startposition für neue Shape.");
+            delete shape;
+            shape = nullptr;
+            return;
+        }
+
+        Serial.println("Neue Shape erstellt und erfolgreich positioniert.");
         shape->moveToLowestBlockkAtMinusOne();
         shape->drawShape(tft, BOX_SIZE);
+    } else {
+        Serial.println("Fehler: Shape konnte nicht erstellt werden.");
     }
 }
 
@@ -207,6 +202,9 @@ bool Game::executeAIStep() {
         }
     }
 
+    // Lösche die aktuelle Position der Shape, um die Bewegung darzustellen
+    shape->eraseShape(tft, BOX_SIZE, displayManager.getBackgroundColor());
+
     // Schrittweise Rotation
     int nextRotation = shape->getRotatePosition();
     if (shape->getRotatePosition() < currentMove.rotation) {
@@ -217,6 +215,10 @@ bool Game::executeAIStep() {
 
     if (nextRotation != shape->getRotatePosition() && shape->canRotateToPosition(nextRotation, blockMap)) {
         shape->rotateToPosition(nextRotation, blockMap);
+
+        // Zeichne die aktualisierte Shape und BlockMap
+        shape->drawShape(tft, BOX_SIZE);
+        blockMap.drawAllBlocks(tft, BOX_SIZE);
         return true; // Rotation abgeschlossen
     }
 
@@ -224,11 +226,19 @@ bool Game::executeAIStep() {
     if (shape->getBlock(0).getX() < currentMove.x) {
         if (shape->isMovableToTheRight(blockMap)) {
             shape->moveRight(blockMap);
+
+            // Zeichne die aktualisierte Shape und BlockMap
+            shape->drawShape(tft, BOX_SIZE);
+            blockMap.drawAllBlocks(tft, BOX_SIZE);
             return true; // Bewegung abgeschlossen
         }
     } else if (shape->getBlock(0).getX() > currentMove.x) {
         if (shape->isMovableToTheLeft(blockMap)) {
             shape->moveLeft(blockMap);
+
+            // Zeichne die aktualisierte Shape und BlockMap
+            shape->drawShape(tft, BOX_SIZE);
+            blockMap.drawAllBlocks(tft, BOX_SIZE);
             return true; // Bewegung abgeschlossen
         }
     }
@@ -236,12 +246,19 @@ bool Game::executeAIStep() {
     // Wenn Rotation und Bewegung abgeschlossen sind, lasse die Form fallen
     if (shape->isMovableDownWards(blockMap)) {
         shape->moveDown(blockMap);
+
+        // Zeichne die aktualisierte Shape und BlockMap
+        shape->drawShape(tft, BOX_SIZE);
+        blockMap.drawAllBlocks(tft, BOX_SIZE);
     } else {
         // Form platzieren und neuen Zug vorbereiten
         blockMap.addBlocks(shape->getBlockList(), Shape::NUM_BLOCKS);
         delete shape;
         shape = nullptr;
         currentMove.score = std::numeric_limits<int>::min();
+
+        // Zeichne die aktualisierte BlockMap
+        blockMap.drawAllBlocks(tft, BOX_SIZE);
     }
 
     return true;

@@ -85,24 +85,27 @@ bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap)
 }
 
 bool Shape::canMoveToPosition(int x, int y, const BlockMap& blockMap) const {
-    // Überprüfe jede Blockposition der Shape relativ zu (x, y)
     for (int i = 0; i < NUM_BLOCKS; ++i) {
-        int blockX = x + positions[rotatePos][i].getX(); // Berechne die Ziel-X-Position
-        int blockY = y + positions[rotatePos][i].getY(); // Berechne die Ziel-Y-Position
+        int blockX = x + positions[rotatePos][i].getX(); // Berechne Ziel-X-Position
+        int blockY = y + positions[rotatePos][i].getY(); // Berechne Ziel-Y-Position
 
-        // Prüfe, ob die Zielposition innerhalb des Spielfelds liegt
-        if (blockX < 0 || blockX >= BlockMap::MAP_WIDTH || blockY < 0 || blockY >= BlockMap::MAP_HEIGHT) {
-            return false; // Block ist außerhalb des Spielfelds
+        // Prüfe, ob die X-Position außerhalb des Spielfelds liegt
+        if (blockX < 0 || blockX >= BlockMap::MAP_WIDTH) {
+            return false; // X-Position ist außerhalb des Spielfelds
         }
 
-        // Prüfe, ob das Feld in der BlockMap frei ist
+        // Prüfe, ob die Y-Position unterhalb der Grenze liegt
+        if (blockY >= BlockMap::MAP_HEIGHT) {
+            return false; // Y-Position ist unterhalb der Spielfeldgrenze
+        }
+
+        // Prüfe, ob das Feld besetzt ist
         if (!blockMap.isFieldEmpty(blockX, blockY)) {
             return false; // Feld ist besetzt
         }
     }
 
-    // Alle Blöcke können bewegt werden
-    return true;
+    return true; // Alle Prüfungen bestanden
 }
 
 void Shape::rotateToPosition(int targetRotatePosition, BlockMap& blockMap) {

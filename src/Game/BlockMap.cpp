@@ -85,6 +85,7 @@ bool BlockMap::isFieldEmpty(int x, int y) const {
     if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
         return map[x][y] == nullptr;
     } 
+    // Fields outside the grid are seen as empty
     return true;
 }
 
