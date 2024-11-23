@@ -85,7 +85,7 @@ bool BlockMap::isFieldEmpty(int x, int y) const {
     if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
         return map[x][y] == nullptr;
     } 
-    // Fields outside the grid are seen as empty
+    // Fields outside the grid are seen as empty because this methode should only be used to check for collisions with other blocks
     return true;
 }
 
@@ -243,9 +243,9 @@ int BlockMap::getTotalHoles() const {
         bool blockFound = false;
         for (int y = 0; y < MAP_HEIGHT; ++y) {
             if (map[x][y] != nullptr) {
-                blockFound = true;
+                blockFound = true; // Start counting holes after the first block
             } else if (blockFound) {
-                totalHoles++;
+                totalHoles++; // Count holes only after encountering a block
             }
         }
     }

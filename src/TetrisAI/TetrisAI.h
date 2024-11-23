@@ -10,7 +10,7 @@ public:
     struct Move {
         int x;
         int rotation;
-        int score;
+        double score;
     };
 
     // Constructor and Destructor
@@ -23,14 +23,15 @@ public:
 
 private:
     // Heuristic weights (can be adjusted for different AI behavior)
-    int heightWeight;
-    int holeWeight;
-    int bumpinessWeight;
-    int lineClearWeight;
+    double heightWeight;
+    double holeWeight;
+    double bumpinessWeight;
+    double lineClearWeight;
 
     // Helper methods for evaluating and scoring potential moves
-    int evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation);
-    int calculateScore(const BlockMap& blockMap);
+    double evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation);
+    double calculateScore(const BlockMap& blockMap);
+    void adjustHeuristicWeights(const BlockMap& blockMap);
 };
 
 #endif // TETRISAI_H

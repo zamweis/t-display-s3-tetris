@@ -56,11 +56,12 @@ void Shape::generateShape() {
     for (int i = 1; i < NUM_BLOCKS; ++i) {
         blockList[i] = Block(getXPosition(i - 1), getYPosition(i - 1), color);
     }
-    
+    /*
     Serial.printf("Shape: Rotation %d, Punkte:\n", rotatePos);
     for (int i = 0; i < NUM_BLOCKS; ++i) {
         Serial.printf("Punkt %d: X=%d, Y=%d\n", i, positions[rotatePos][i].getX(), positions[rotatePos][i].getY());
     }
+    */
 }
 
 int Shape::getXPosition(int index) const {
@@ -81,17 +82,6 @@ int Shape::getYPosition(int index) const {
     throw std::out_of_range("getYPosition: Index " + std::to_string(index) + 
                             " is out of range. Valid range is 0 to " + 
                             std::to_string(NUM_POSITIONS - 1) + ".");
-}
-
-bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const {
-    for (int i = 1; i < NUM_BLOCKS; ++i) {
-        int x = blockList[0].getX() + static_cast<int>(positions[tmpRotatePosition][i - 1].getX());
-        int y = blockList[0].getY() + static_cast<int>(positions[tmpRotatePosition][i - 1].getY());
-        if (y >= MAP_HEIGHT || x < 0 || x >= MAP_WIDTH || !blockMap.isFieldEmpty(x, y)) {
-            return false; // Ungültige Position
-        }
-    }
-    return true;
 }
 
 bool Shape::canMoveToPosition(int x, int y, const BlockMap& blockMap) const {
@@ -116,6 +106,17 @@ bool Shape::canMoveToPosition(int x, int y, const BlockMap& blockMap) const {
     }
 
     return true; // Alle Prüfungen bestanden
+}
+
+bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const {
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
+        int x = blockList[0].getX() + static_cast<int>(positions[tmpRotatePosition][i - 1].getX());
+        int y = blockList[0].getY() + static_cast<int>(positions[tmpRotatePosition][i - 1].getY());
+        if (y >= MAP_HEIGHT || x < 0 || x >= MAP_WIDTH || !blockMap.isFieldEmpty(x, y)) {
+            return false; // Ungültige Position
+        }
+    }
+    return true;
 }
 
 void Shape::rotateToPosition(int targetRotatePosition, BlockMap& blockMap) {
@@ -198,9 +199,9 @@ bool Shape::isMovableToTheRight(BlockMap& blockMap) {
     if (getRightBlock().getX() == MAP_WIDTH-1) {
         result = false;
     } else {
-        for (int i = 0; i <= 3; i++) {
-            if (result == true) {
-                result = !isInCollisionWithRightBlock(getBlock(i), blockMap);
+        for (int i = 0; i < NUM_BLOCKS; ++i) {
+            if (isInCollisionWithRightBlock(getBlock(i), blockMap)) {
+                return false;
             }
         }
     }
@@ -215,10 +216,6 @@ bool Shape::isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap) 
         result = true;
     }
     return result;
-}
-
-bool Shape::isValidPosition(int x, int y) {
-    return (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT);
 }
 
 void Shape::moveRight(BlockMap& blockMap) {
@@ -251,7 +248,7 @@ Block Shape::getHighestBlock() {
 
 bool Shape::isMovableDownWards(BlockMap& blockMap) {
     bool result = true;
-    if (getLowestBlock().getY() == MAP_HEIGHT-1) {
+    if (getLowestBlock().getY() >= MAP_HEIGHT-1) {
         result = false;
     } else {
         for (int i = 0; i <= 3 && result == true; i++) {
@@ -316,9 +313,9 @@ bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
 }
 
 void Shape::moveToLowestBlockkAtMinusOne() {
-    Block highestBlock = getHighestBlock(); // Assuming this function finds the block with the highest y value in the shape
+    Block lowerstBlock = getLowestBlock(); // Assuming this function finds the block with the highest y value in the shape
 
-    int yOffset = highestBlock.getY() - (-1); // Calculate offset to move the highest block to -1
+    int yOffset = lowerstBlock.getY() - (-1); // Calculate offset to move the highest block to -1
 
     for (auto& block : blockList) {
         block.setY(block.getY() - yOffset); // Adjust each block's y position by the computed offset

@@ -49,38 +49,32 @@ void Game::setup() {
 
 void Game::loop() {
     unsigned long currentTime = millis();
-    handleShapeMovement(currentTime);
+    //handleShapeMovement(currentTime);
 
-    // Prüfe auf Game Over
     if (blockMap.checkGameOver()) {
         Serial.println("Game Over erkannt.");
         handleGameOver();
         return;
     }
 
-    // Aktualisiere die Gravitation der Shape
-    //Serial.println("Prüfe Gravitation...");
-    updateShapePosition(currentTime);
-
-    // Führt die AI-Logik aus, ohne die Gravitation zu blockieren
     if (shape) {
-        static unsigned long lastAIStepTime = 0; // Zeitpunkt des letzten KI-Schritts
-        unsigned long aiStepInterval = 200; // Intervall für die KI (in ms)
+        static unsigned long lastAIStepTime = 0;
+        unsigned long aiStepInterval = 200;
 
         if (currentTime - lastAIStepTime >= aiStepInterval) {
             if (!isGravityActive) {
                 executeAIStep();
                 lastAIStepTime = currentTime;
-            } else {
-                //Serial.println("KI wartet: Gravitation aktiv.");
             }
         }
+        if (shape) {
+            // Gravity and shape deletion
+            updateShapePosition(currentTime);
+        }
     } else {
-        // Erstelle eine neue Shape, wenn keine vorhanden ist
         createNewShape();
     }
 
-    // Zeichne die aktualisierte BlockMap
     blockMap.drawAllBlocks(tft);
 }
 
@@ -237,22 +231,50 @@ bool Game::executeAIStep() {
         }
 
         // Validate the AI move's bounds
-        if (currentMove.x < 0 || currentMove.x >= MAP_WIDTH) {
+        if (currentMove.x < 0 || currentMove.x >= BlockMap::MAP_WIDTH) {
             Serial.printf("AI move out of bounds: Invalid X=%d.\n", currentMove.x);
             return false;
         }
-        if (currentMove.rotation < 0 || currentMove.rotation > Shape::ROTATEPOSITION3) {
+        if (currentMove.rotation < 0 || currentMove.rotation > 3) {
             Serial.printf("AI move out of bounds: Invalid rotation=%d.\n", currentMove.rotation);
             return false;
         }
     }
 
-    // Check if target position is reached
+    // Stepwise rotation (ensure rotation before moving horizontally)
+    if (shape->getRotatePosition() != currentMove.rotation) {
+        int nextRotation = shape->getRotatePosition() < currentMove.rotation
+                               ? shape->getRotatePosition() + 1
+                               : shape->getRotatePosition() - 1;
+
+        if (shape->canRotateToPosition(nextRotation, blockMap)) {
+            shape->eraseShape(tft, displayManager.getBackgroundColor());
+            shape->rotateToPosition(nextRotation, blockMap);
+            shape->drawShape(tft);
+            return true; // Rotation performed, no need to move horizontally yet
+        }
+    }
+
+    // Horizontal movement after rotation is complete
+    if (shape->getBlock(0).getX() != currentMove.x) {
+        if (shape->getBlock(0).getX() < currentMove.x && shape->isMovableToTheRight(blockMap)) {
+            shape->eraseShape(tft, displayManager.getBackgroundColor());
+            shape->moveRight(blockMap);
+            shape->drawShape(tft);
+            return true; // Movement to the right performed
+        } else if (shape->getBlock(0).getX() > currentMove.x && shape->isMovableToTheLeft(blockMap)) {
+            shape->eraseShape(tft, displayManager.getBackgroundColor());
+            shape->moveLeft(blockMap);
+            shape->drawShape(tft);
+            return true; // Movement to the left performed
+        }
+    }
+
+    // If the target position is reached, drop the shape
     if (shape->getBlock(0).getX() == currentMove.x && shape->getRotatePosition() == currentMove.rotation) {
-        Serial.println("Target position reached. Shape will now fall.");
         shape->eraseShape(tft, displayManager.getBackgroundColor());
-        shape->fallDown(blockMap); // Drop the shape
-        blockMap.addBlocks(shape->getBlockList(), Shape::NUM_BLOCKS); // Add blocks to map
+        shape->fallDown(blockMap);
+        blockMap.addBlocks(shape->getBlockList(), Shape::NUM_BLOCKS);
         shape->drawShape(tft);
         delete shape;
         shape = nullptr;
@@ -260,42 +282,5 @@ bool Game::executeAIStep() {
         return true;
     }
 
-    bool shapeUpdated = false;
-
-    // Stepwise rotation
-    if (shape->getRotatePosition() < currentMove.rotation) {
-        int nextRotation = shape->getRotatePosition() + 1;
-        if (shape->canRotateToPosition(nextRotation, blockMap)) {
-            shape->eraseShape(tft, displayManager.getBackgroundColor());
-            shape->rotateToPosition(nextRotation, blockMap);
-            shapeUpdated = true;
-        }
-    } else if (shape->getRotatePosition() > currentMove.rotation) {
-        int nextRotation = shape->getRotatePosition() - 1;
-        if (shape->canRotateToPosition(nextRotation, blockMap)) {
-            shape->eraseShape(tft, displayManager.getBackgroundColor());
-            shape->rotateToPosition(nextRotation, blockMap);
-            shapeUpdated = true;
-        }
-    }
-
-    // Stepwise movement left or right
-    if (!shapeUpdated) {
-        if (shape->getBlock(0).getX() < currentMove.x && shape->isMovableToTheRight(blockMap)) {
-            shape->eraseShape(tft, displayManager.getBackgroundColor());
-            shape->moveRight(blockMap);
-            shapeUpdated = true;
-        } else if (shape->getBlock(0).getX() > currentMove.x && shape->isMovableToTheLeft(blockMap)) {
-            shape->eraseShape(tft, displayManager.getBackgroundColor());
-            shape->moveLeft(blockMap);
-            shapeUpdated = true;
-        }
-    }
-
-    // Draw the updated shape
-    if (shapeUpdated) {
-        shape->drawShape(tft);
-    }
-
-    return shapeUpdated;
+    return false;
 }
