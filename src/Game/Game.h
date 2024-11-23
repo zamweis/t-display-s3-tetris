@@ -42,6 +42,7 @@ private:
     void createNewShape();
     void resetGame();
     void handleGameOver();
+    void finalizeShape();
     void handleHighScoreEntry();
     void updateScoreAndLevel(int clearedLines);
     void handleShapeMovement(unsigned long currentTime);

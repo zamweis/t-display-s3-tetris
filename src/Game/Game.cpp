@@ -67,10 +67,9 @@ void Game::loop() {
                 lastAIStepTime = currentTime;
             }
         }
-        if (shape) {
-            // Gravity and shape deletion
-            updateShapePosition(currentTime);
-        }
+        
+        // Gravity and shape deletion
+        updateShapePosition(currentTime);
     } else {
         createNewShape();
     }
@@ -274,10 +273,6 @@ bool Game::executeAIStep() {
     if (shape->getBlock(0).getX() == currentMove.x && shape->getRotatePosition() == currentMove.rotation) {
         shape->eraseShape(tft, displayManager.getBackgroundColor());
         shape->fallDown(blockMap);
-        blockMap.addBlocks(shape->getBlockList(), Shape::NUM_BLOCKS);
-        shape->drawShape(tft);
-        delete shape;
-        shape = nullptr;
         currentMove.score = std::numeric_limits<int>::min(); // Reset AI move
         return true;
     }

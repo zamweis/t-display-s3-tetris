@@ -46,6 +46,7 @@ public:
     void rotateClockwise(BlockMap& blockMap);
     void rotate(BlockMap& blockMap, bool clockwise);
     Block getLeftBlock();
+    Block getMaintBlock();
     bool isMovableToTheLeft(BlockMap& blockMap);
     bool isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap);
     void moveLeft(BlockMap& blockMap);
@@ -68,6 +69,7 @@ public:
     void rotateToPosition(int targetRotatePosition, BlockMap& blockMap);
     bool canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const;
     bool canMoveToPosition(int x, int y, const BlockMap& blockMap) const;
+    std::pair<int, int> getHorizontalBounds(const BlockMap& blockMap) const;
 
 private:
     bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap);

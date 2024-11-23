@@ -86,38 +86,54 @@ int Shape::getYPosition(int index) const {
 
 bool Shape::canMoveToPosition(int x, int y, const BlockMap& blockMap) const {
     for (int i = 0; i < NUM_BLOCKS; ++i) {
-        int blockX = x + positions[rotatePos][i].getX(); // Berechne Ziel-X-Position
-        int blockY = y + positions[rotatePos][i].getY(); // Berechne Ziel-Y-Position
+        int blockX = x + positions[rotatePos][i].getX();
+        int blockY = y + positions[rotatePos][i].getY(); 
 
-        // Prüfe, ob die X-Position außerhalb des Spielfelds liegt
-        if (blockX < 0 || blockX >= BlockMap::MAP_WIDTH) {
-            return false; // X-Position ist außerhalb des Spielfelds
+        if (blockX < 0 || blockX >= BlockMap::MAP_WIDTH || blockY >= BlockMap::MAP_HEIGHT) {
+            return false; 
         }
 
-        // Prüfe, ob die Y-Position unterhalb der Grenze liegt
-        if (blockY >= BlockMap::MAP_HEIGHT) {
-            return false; // Y-Position ist unterhalb der Spielfeldgrenze
-        }
-
-        // Prüfe, ob das Feld besetzt ist
         if (!blockMap.isFieldEmpty(blockX, blockY)) {
-            return false; // Feld ist besetzt
+            return false;
         }
     }
 
-    return true; // Alle Prüfungen bestanden
+    return true;
 }
 
 bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const {
-    for (int i = 1; i < NUM_BLOCKS; ++i) {
-        int x = blockList[0].getX() + static_cast<int>(positions[tmpRotatePosition][i - 1].getX());
-        int y = blockList[0].getY() + static_cast<int>(positions[tmpRotatePosition][i - 1].getY());
-        if (y >= MAP_HEIGHT || x < 0 || x >= MAP_WIDTH || !blockMap.isFieldEmpty(x, y)) {
-            return false; // Ungültige Position
+    // Check all blocks in the shape, including the main block
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        // Calculate the rotated position for the current block
+        int x = blockList[0].getX() + positions[tmpRotatePosition][i].getX();
+        int y = blockList[0].getY() + positions[tmpRotatePosition][i].getY();
+
+        // Check if the block is within the vertical bounds
+        if (y >= MAP_HEIGHT) {
+            Serial.printf("Rotation to position %d not possible: Y=%d exceeds height boundary.\n", 
+                          tmpRotatePosition, y);
+            return false;
+        }
+
+        // Check if the block is within the horizontal bounds
+        if (x < 0 || x >= MAP_WIDTH) {
+            Serial.printf("Rotation to position %d not possible: X=%d is out of horizontal bounds.\n", 
+                          tmpRotatePosition, x);
+            return false;
+        }
+
+        // Check if the block collides with another block on the map
+        if (!blockMap.isFieldEmpty(x, y)) {
+            Serial.printf("Rotation to position %d not possible: collision at X=%d, Y=%d (block %d).\n", 
+                          tmpRotatePosition, x, y, i);
+            return false;
         }
     }
+
+    // All blocks pass the checks; rotation is valid
     return true;
 }
+
 
 void Shape::rotateToPosition(int targetRotatePosition, BlockMap& blockMap) {
     if (canRotateToPosition(targetRotatePosition, blockMap)) {
@@ -156,14 +172,17 @@ Block Shape::getLeftBlock() {
 
 bool Shape::isMovableToTheLeft(BlockMap& blockMap) {
     if (getLeftBlock().getX() == 0) {
+        Serial.println("Movement to the left is not possible: shape is at the left boundary.");
         return false;
     }
     for (int i = 0; i < NUM_BLOCKS; ++i) {
-        if (!isInCollisionWithLeftBlock(getBlock(i), blockMap)) {
-            return true;
+        if (isInCollisionWithLeftBlock(getBlock(i), blockMap)) {
+            Serial.printf("Movement to the left blocked by collision at X=%d, Y=%d.\n",
+                          getBlock(i).getX() - 1, getBlock(i).getY());
+            return false;
         }
     }
-    return false;
+    return true;
 }
 
 bool Shape::isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap) {
@@ -184,6 +203,11 @@ void Shape::moveLeft(BlockMap& blockMap) {
     }
 }
 
+Block Shape::getMaintBlock() {
+    Block mainBlock = blockList[0];
+    return mainBlock;
+}
+
 Block Shape::getRightBlock() {
     Block rightBlock = blockList[0];
     for (int i = 1; i < NUM_BLOCKS; ++i) {
@@ -195,17 +219,18 @@ Block Shape::getRightBlock() {
 }
 
 bool Shape::isMovableToTheRight(BlockMap& blockMap) {
-    bool result = true;
-    if (getRightBlock().getX() == MAP_WIDTH-1) {
-        result = false;
-    } else {
-        for (int i = 0; i < NUM_BLOCKS; ++i) {
-            if (isInCollisionWithRightBlock(getBlock(i), blockMap)) {
-                return false;
-            }
+    if (getRightBlock().getX() == MAP_WIDTH - 1) {
+        Serial.println("Movement to the right is not possible: shape is at the right boundary.");
+        return false;
+    }
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        if (isInCollisionWithRightBlock(getBlock(i), blockMap)) {
+            Serial.printf("Movement to the right blocked by collision at X=%d, Y=%d.\n",
+                          getBlock(i).getX() + 1, getBlock(i).getY());
+            return false;
         }
     }
-    return result;
+    return true;
 }
 
 bool Shape::isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap) {
@@ -247,15 +272,18 @@ Block Shape::getHighestBlock() {
 }
 
 bool Shape::isMovableDownWards(BlockMap& blockMap) {
-    bool result = true;
-    if (getLowestBlock().getY() >= MAP_HEIGHT-1) {
-        result = false;
-    } else {
-        for (int i = 0; i <= 3 && result == true; i++) {
-            result = !isInCollisionWithLowerBlock(getBlock(i), blockMap);
+    if (getLowestBlock().getY() >= MAP_HEIGHT - 1) {
+        Serial.println("Movement downwards is not possible: shape is at the bottom boundary.");
+        return false;
+    }
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        if (isInCollisionWithLowerBlock(getBlock(i), blockMap)) {
+            //Serial.printf("Movement downwards blocked by collision at X=%d, Y=%d.\n",
+            //              getBlock(i).getX(), getBlock(i).getY() + 1);
+            return false;
         }
     }
-    return result;
+    return true;
 }
 
 bool Shape::isInCollisionWithLowerBlock(const Block& block, BlockMap& blockMap) {
@@ -340,4 +368,26 @@ void Shape::setPosition(int x, int y) {
     blockList[0].setCoordinates(x, y);
 
     generateShape();   
+}
+
+std::pair<int, int> Shape::getHorizontalBounds(const BlockMap& blockMap) const {
+    int minX = BlockMap::MAP_WIDTH;
+    int maxX = 0;
+
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        int blockX = blockList[0].getX() + positions[rotatePos][i].getX();
+
+        if (blockX < minX) {
+            minX = blockX;
+        }
+        if (blockX > maxX) {
+            maxX = blockX;
+        }
+    }
+
+    // Adjust bounds to fit within the grid
+    minX = std::max(0, minX);
+    maxX = std::min(BlockMap::MAP_WIDTH - 1, maxX);
+
+    return {minX, maxX};
 }
