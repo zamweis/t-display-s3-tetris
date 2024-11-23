@@ -9,6 +9,9 @@ Shape::Shape() {
     // Generate the random value
     rotatePos = random(0, 4);
     //std::cout << "Initialized rotatePos to: " << rotatePos << std::endl;
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        blockList[i] = Block(); // Initialisiere leere Blöcke
+    }
 }
 
 Shape::~Shape() {}
@@ -70,26 +73,57 @@ int Shape::getYPosition(int index) const {
     return blockList[0].getY(); // Default fallback
 }
 
-bool Shape::isRotatableAntiClockwise(BlockMap& blockMap) {
-    int tmpRotatePosition = (rotatePos == ROTATEPOSITION3) ? ROTATEPOSITION0 : rotatePos + 1;
-    return checkRotationValidity(tmpRotatePosition, blockMap);
+bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const {
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
+        int x = blockList[0].getX() + static_cast<int>(positions[tmpRotatePosition][i - 1].getX());
+        int y = blockList[0].getY() + static_cast<int>(positions[tmpRotatePosition][i - 1].getY());
+        if (y >= MAP_HEIGHT || x < 0 || x >= MAP_WIDTH || !blockMap.isFieldEmpty(x, y)) {
+            return false; // Ungültige Position
+        }
+    }
+    return true;
 }
 
-bool Shape::isRotatableClockwise(BlockMap& blockMap) {
-    int tmpRotatePosition = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
-    return checkRotationValidity(tmpRotatePosition, blockMap);
+bool Shape::canMoveToPosition(int x, int y, const BlockMap& blockMap) const {
+    // Überprüfe jede Blockposition der Shape relativ zu (x, y)
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        int blockX = x + positions[rotatePos][i].getX(); // Berechne die Ziel-X-Position
+        int blockY = y + positions[rotatePos][i].getY(); // Berechne die Ziel-Y-Position
+
+        // Prüfe, ob die Zielposition innerhalb des Spielfelds liegt
+        if (blockX < 0 || blockX >= BlockMap::MAP_WIDTH || blockY < 0 || blockY >= BlockMap::MAP_HEIGHT) {
+            return false; // Block ist außerhalb des Spielfelds
+        }
+
+        // Prüfe, ob das Feld in der BlockMap frei ist
+        if (!blockMap.isFieldEmpty(blockX, blockY)) {
+            return false; // Feld ist besetzt
+        }
+    }
+
+    // Alle Blöcke können bewegt werden
+    return true;
+}
+
+void Shape::rotateToPosition(int targetRotatePosition, BlockMap& blockMap) {
+    if (canRotateToPosition(targetRotatePosition, blockMap)) {
+        rotatePos = targetRotatePosition;
+        generateShape();
+    }
 }
 
 void Shape::rotateAntiClockwise(BlockMap& blockMap) {
-    if (isRotatableAntiClockwise(blockMap)) {
-        rotatePos = (rotatePos == ROTATEPOSITION3) ? ROTATEPOSITION0 : rotatePos + 1;
+    int nextRotatePos = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
+    if (canRotateToPosition(nextRotatePos, blockMap)) {
+        rotatePos = nextRotatePos;
         generateShape();
     }
 }
 
 void Shape::rotateClockwise(BlockMap& blockMap) {
-    if (isRotatableClockwise(blockMap)) {
-        rotatePos = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
+    int nextRotatePos = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
+    if (canRotateToPosition(nextRotatePos, blockMap)) {
+        rotatePos = nextRotatePos;
         generateShape();
     }
 }
@@ -297,4 +331,3 @@ void Shape::setPosition(int x, int y) {
 
     generateShape();   
 }
-

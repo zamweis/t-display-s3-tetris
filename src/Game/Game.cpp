@@ -46,15 +46,16 @@ void Game::setup() {
 
 void Game::loop() {
     unsigned long currentTime = millis();
-    
+
     if (blockMap.checkGameOver()) {
         handleGameOver();
         return;
     }
 
+    // Schrittweise AI-Steuerung
     if (shape) {
-        executeAIMove(); // New function to handle AI moves
-        updateShapePosition(currentTime);
+        executeAIStep();
+        delay(200); // Füge eine Pause hinzu, um die Animation sichtbar zu machen
     } else {
         createNewShape();
     }
@@ -190,4 +191,58 @@ void Game::handleButtonState(ButtonState &state, int buttonPin, unsigned long cu
             }
             break;
     }
+}
+
+TetrisAI::Move currentMove; // Globale oder Klassenvariable, um den aktuellen Zug zu speichern
+
+bool Game::executeAIStep() {
+    if (!shape) return false;
+
+    // Berechne neuen Zug, falls keiner vorhanden
+    if (currentMove.score == std::numeric_limits<int>::min()) {
+        currentMove = tetrisAI.findBestMove(blockMap, *shape);
+        if (currentMove.score == std::numeric_limits<int>::min()) {
+            Serial.println("AI konnte keinen gültigen Zug finden.");
+            return false;
+        }
+    }
+
+    // Schrittweise Rotation
+    int nextRotation = shape->getRotatePosition();
+    if (shape->getRotatePosition() < currentMove.rotation) {
+        nextRotation = shape->getRotatePosition() + 1;
+    } else if (shape->getRotatePosition() > currentMove.rotation) {
+        nextRotation = shape->getRotatePosition() - 1;
+    }
+
+    if (nextRotation != shape->getRotatePosition() && shape->canRotateToPosition(nextRotation, blockMap)) {
+        shape->rotateToPosition(nextRotation, blockMap);
+        return true; // Rotation abgeschlossen
+    }
+
+    // Schrittweise Bewegung nach links oder rechts
+    if (shape->getBlock(0).getX() < currentMove.x) {
+        if (shape->isMovableToTheRight(blockMap)) {
+            shape->moveRight(blockMap);
+            return true; // Bewegung abgeschlossen
+        }
+    } else if (shape->getBlock(0).getX() > currentMove.x) {
+        if (shape->isMovableToTheLeft(blockMap)) {
+            shape->moveLeft(blockMap);
+            return true; // Bewegung abgeschlossen
+        }
+    }
+
+    // Wenn Rotation und Bewegung abgeschlossen sind, lasse die Form fallen
+    if (shape->isMovableDownWards(blockMap)) {
+        shape->moveDown(blockMap);
+    } else {
+        // Form platzieren und neuen Zug vorbereiten
+        blockMap.addBlocks(shape->getBlockList(), Shape::NUM_BLOCKS);
+        delete shape;
+        shape = nullptr;
+        currentMove.score = std::numeric_limits<int>::min();
+    }
+
+    return true;
 }

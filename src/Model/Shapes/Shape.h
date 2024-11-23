@@ -67,6 +67,9 @@ public:
     int getWidth();
     bool isValidPosition(int x, int y);
     void setPosition(int x, int y);
+    void rotateToPosition(int targetRotatePosition, BlockMap& blockMap);
+    bool canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const;
+    bool canMoveToPosition(int x, int y, const BlockMap& blockMap) const;
 
 private:
     bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap);

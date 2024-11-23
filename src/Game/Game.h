@@ -47,6 +47,7 @@ private:
     void handleShapeMovement(unsigned long currentTime);
     void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentTime, void (Shape::*moveFunc)(BlockMap &), void (Shape::*rotateFunc)(BlockMap &));
     void executeAIMove();
+    bool executeAIStep();
 };
 
 #endif // GAME_H

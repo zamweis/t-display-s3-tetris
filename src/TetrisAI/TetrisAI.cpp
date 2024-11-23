@@ -12,16 +12,39 @@ TetrisAI::TetrisAI()
 // Destructor
 TetrisAI::~TetrisAI() {}
 
-// Method to find the best move based on the given state of the block map and shape
 TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& shape) {
-    Move bestMove = {0, 0, std::numeric_limits<int>::min()}; // Initialize with the worst score
+    Move bestMove = {0, 0, std::numeric_limits<int>::min()};
 
-    // Try all possible x positions and rotations for the shape
+    // Erstelle eine Kopie der BlockMap
+    BlockMap simulatedMap = blockMap;
+
+    // Iteriere über alle möglichen Rotationen
     for (int rotation = 0; rotation < 4; ++rotation) {
+        Shape simulatedShape = shape;
+
+        // Simuliere die Rotation
+        for (int i = 0; i < rotation; ++i) {
+            if (!simulatedShape.canRotateToPosition(simulatedShape.getRotatePosition() + 1, simulatedMap)) {
+                break; // Ungültige Rotation
+            }
+            simulatedShape.rotateClockwise(simulatedMap);
+        }
+
+        // Iteriere über alle möglichen x-Positionen
         for (int x = 0; x < BlockMap::MAP_WIDTH; ++x) {
-            // Simulate placing the shape at this position and rotation
-            int score = evaluatePlacement(blockMap, shape, x, rotation);
-            // Update the best move if this move has a better score
+            // Prüfe, ob die Form an die Position bewegt werden kann
+            if (!simulatedShape.canMoveToPosition(x, 0, simulatedMap)) {
+                continue; // Ungültige Position
+            }
+
+            // Simuliere die Bewegung
+            simulatedShape.setPosition(x, 0);
+            simulatedShape.fallDown(simulatedMap);
+
+            // Berechne den Score
+            int score = evaluatePlacement(simulatedMap, simulatedShape, x, rotation);
+
+            // Aktualisiere den besten Zug
             if (score > bestMove.score) {
                 bestMove = {x, rotation, score};
             }
@@ -31,39 +54,44 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
     return bestMove;
 }
 
-// Evaluates the score of placing the shape at the given position and rotation
 int TetrisAI::evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation) {
-    // Create a copy of the block map for simulation
     BlockMap simulatedMap = blockMap;
-    // Create a copy of the shape for simulation
     Shape simulatedShape = shape;
 
-    // Apply the specified rotations
+    // Simuliere Rotation
     for (int i = 0; i < rotation; ++i) {
         simulatedShape.rotateClockwise(simulatedMap);
     }
-    // Set the shape to the specified x position
+
+    // Simuliere Bewegung
     simulatedShape.setPosition(x, 0);
+    simulatedShape.fallDown(simulatedMap);
 
-    // Move the shape down to its final resting position
-    while (simulatedShape.isMovableDownWards(simulatedMap)) {
-        simulatedShape.moveDown(simulatedMap);
-    }
-
-    // Add the shape's blocks to the simulated block map
+    // Füge die Form zur simulierten Map hinzu
     simulatedMap.addBlocks(simulatedShape.getBlockList(), Shape::NUM_BLOCKS);
 
-    // Calculate and return a score for the resulting state
+    // Berechne den Score der simulierten Map
     return calculateScore(simulatedMap);
 }
 
-// Calculates the heuristic score for the current state of the block map
 int TetrisAI::calculateScore(const BlockMap& blockMap) {
-    int height = blockMap.getColumnHeight(0); // Example: You might want to average across all columns instead
-    int totalHoles = blockMap.getTotalHoles();
-    int bumpiness = blockMap.getBumpiness();
-    int clearedLines = blockMap.getAmoutOfFullLines(); // Simulate clearing lines without modifying the real state
+    // Höhe
+    int totalHeight = 0;
+    for (int x = 0; x < BlockMap::MAP_WIDTH; ++x) {
+        totalHeight += blockMap.getColumnHeight(x);
+    }
+    int avgHeight = totalHeight / BlockMap::MAP_WIDTH;
 
-    // Heuristic score: higher scores are better
-    return (clearedLines * lineClearWeight) - (height * heightWeight + totalHoles * holeWeight + bumpiness * bumpinessWeight);
+    // Löcher
+    int totalHoles = blockMap.getTotalHoles();
+
+    // Unebenheit
+    int bumpiness = blockMap.getBumpiness();
+
+    // Gelöschte Reihen
+    int clearedLines = blockMap.getAmoutOfFullLines();
+
+    // Heuristik
+    return (clearedLines * lineClearWeight) -
+           (avgHeight * heightWeight + totalHoles * holeWeight + bumpiness * bumpinessWeight);
 }
