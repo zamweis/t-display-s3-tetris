@@ -50,11 +50,13 @@ public:
     void setRotatePosition(int rotatePosition);
     int getRotatePosition() const;
     void rotate(BlockMap& blockMap, bool clockwise);
+    bool isRotatableAntiClockwise(BlockMap& blockMap);
+    bool isRotatableClockwise(BlockMap& blockMap);
     void rotateAntiClockwise(BlockMap& blockMap);
     void rotateClockwise(BlockMap& blockMap);
-    void rotateToPosition(int targetRotatePosition, BlockMap& blockMap);
+    bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap);
     bool canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const;
-
+    
     // Movement Management
     bool isMovableToTheLeft(BlockMap& blockMap);
     bool isMovableToTheRight(BlockMap& blockMap);
@@ -81,10 +83,6 @@ public:
     static int getROTATEPOSITION1();
     static int getROTATEPOSITION2();
     static int getROTATEPOSITION3();
-
-private:
-    // Helper Methods
-    bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap);
 
 protected:
     // Member Variables

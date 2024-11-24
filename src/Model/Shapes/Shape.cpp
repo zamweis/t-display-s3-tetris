@@ -101,6 +101,41 @@ bool Shape::canMoveToPosition(int x, int y, const BlockMap& blockMap) const {
     return true;
 }
 
+bool Shape::isRotatableAntiClockwise(BlockMap& blockMap) {
+    int tmpRotatePosition = (rotatePos == ROTATEPOSITION3) ? ROTATEPOSITION0 : rotatePos + 1;
+    return checkRotationValidity(tmpRotatePosition, blockMap);
+}
+
+bool Shape::isRotatableClockwise(BlockMap& blockMap) {
+    int tmpRotatePosition = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
+    return checkRotationValidity(tmpRotatePosition, blockMap);
+}
+
+void Shape::rotateAntiClockwise(BlockMap& blockMap) {
+    if (isRotatableAntiClockwise(blockMap)) {
+        rotatePos = (rotatePos == ROTATEPOSITION3) ? ROTATEPOSITION0 : rotatePos + 1;
+        generateShape();
+    }
+}
+
+void Shape::rotateClockwise(BlockMap& blockMap) {
+    if (isRotatableClockwise(blockMap)) {
+        rotatePos = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
+        generateShape();
+    }
+}
+
+bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
+        int x = blockList[0].getX() + static_cast<int>(positions[tmpRotatePosition][i - 1].getX());
+        int y = blockList[0].getY() + static_cast<int>(positions[tmpRotatePosition][i - 1].getY());
+        if (y >= MAP_HEIGHT || x < 0 || x >= MAP_WIDTH || !blockMap.isFieldEmpty(x, y)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const {
     // Check all blocks in the shape, including the main block
     for (int i = 1; i < NUM_BLOCKS; ++i) {
@@ -132,32 +167,6 @@ bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap)
 
     // All blocks pass the checks; rotation is valid
     return true;
-}
-
-
-void Shape::rotateToPosition(int targetRotatePosition, BlockMap& blockMap) {
-    if (canRotateToPosition(targetRotatePosition, blockMap)) {
-        rotatePos = targetRotatePosition;
-        generateShape();
-    }
-}
-
-void Shape::rotate(BlockMap& blockMap, bool clockwise) {
-    int nextRotatePos = clockwise
-                        ? (rotatePos == ROTATEPOSITION3 ? ROTATEPOSITION0 : rotatePos + 1)
-                        : (rotatePos == ROTATEPOSITION0 ? ROTATEPOSITION3 : rotatePos - 1);
-    if (canRotateToPosition(nextRotatePos, blockMap)) {
-        rotatePos = nextRotatePos;
-        generateShape();
-    }
-}
-
-void Shape::rotateClockwise(BlockMap& blockMap) {
-    rotate(blockMap, true);
-}
-
-void Shape::rotateAntiClockwise(BlockMap& blockMap) {
-    rotate(blockMap, false);
 }
 
 Block Shape::getLeftBlock() {
@@ -329,21 +338,10 @@ void Shape::eraseShape(TFT_eSPI& tft, uint16_t backgroundColor) const {
     }
 }
 
-bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
-    for (int i = 1; i < NUM_BLOCKS; ++i) {
-        int x = blockList[0].getX() + static_cast<int>(positions[tmpRotatePosition][i - 1].getX());
-        int y = blockList[0].getY() + static_cast<int>(positions[tmpRotatePosition][i - 1].getY());
-        if (y >= MAP_HEIGHT || x < 0 || x >= MAP_WIDTH || !blockMap.isFieldEmpty(x, y)) {
-            return false;
-        }
-    }
-    return true;
-}
-
 void Shape::moveToLowestBlockkAtMinusOne() {
-    Block lowerstBlock = getHighestBlock(); // Assuming this function finds the block with the highest y value in the shape
+    Block lowerstBlock = getLowestBlock(); // Assuming this function finds the block with the highest y value in the shape
 
-    int yOffset = lowerstBlock.getY() - (-0); // Calculate offset to move the highest block to -1
+    int yOffset = lowerstBlock.getY() - (-1); // Calculate offset to move the highest block to -1
 
     for (auto& block : blockList) {
         block.setY(block.getY() - yOffset); // Adjust each block's y position by the computed offset

@@ -5,6 +5,7 @@
 
 TetrisAI::Move currentMove;
 bool isGravityActive = false;
+bool directionChosen = false;
 
 Game::Game(TFT_eSPI& tft, DisplayManager& displayManager, HighScoreManager& highScoreManager, InputHandler& inputHandler)
     : tft(tft), displayManager(displayManager), highScoreManager(highScoreManager), inputHandler(inputHandler),
@@ -62,7 +63,7 @@ void Game::loop() {
         createNewShape();
     } else {
         static unsigned long lastAIStepTime = 0;
-        unsigned long aiStepInterval = 100; // 100ms interval for AI step
+        unsigned long aiStepInterval = 200; // 100ms interval for AI step
 
         if (currentTime - lastAIStepTime >= aiStepInterval) {
             executeAIStep();
@@ -249,20 +250,59 @@ bool Game::calculateBestMove() {
 }
 
 bool Game::alignShapeRotation() {
-    if (shape->getRotatePosition() != currentMove.rotation) {
-        int targetRotation = currentMove.rotation;
-        if (shape->canRotateToPosition(targetRotation, blockMap)) {
-            shape->eraseShape(tft, displayManager.getBackgroundColor());
-            shape->rotateToPosition(targetRotation, blockMap);
-            shape->drawShape(tft);
-            Serial.printf("AI: Rotated shape to position %d.\n", targetRotation);
+    static bool rotateClockwise;  // Persist the chosen rotation direction
+    int currentRotation = shape->getRotatePosition();
+    int targetRotation = currentMove.rotation;
+
+    if (shape->getRotatePosition() == targetRotation) {
+        Serial.println("AI: Rotation alignment complete.");
+        directionChosen = false;  // Reset for the next alignment
+        return true;
+    }
+    
+    // Determine the shortest rotation direction if not already chosen
+    if (!directionChosen) {
+        int clockwiseSteps = (targetRotation - currentRotation + 4) % 4;
+        int antiClockwiseSteps = (currentRotation - targetRotation + 4) % 4;
+        rotateClockwise = clockwiseSteps <= antiClockwiseSteps;
+        directionChosen = true;  // Lock the chosen direction
+        Serial.printf("AI: Chosen rotation direction: %s\n", rotateClockwise ? "Clockwise" : "Anti-clockwise");
+    }
+
+    // Erase the shape before attempting to rotate
+    shape->eraseShape(tft, displayManager.getBackgroundColor());
+
+    // Attempt to rotate in the chosen direction
+    if (rotateClockwise) {
+        if (shape->isRotatableClockwise(blockMap)) {
+            shape->rotateClockwise(blockMap);
         } else {
-            Serial.printf("AI: Cannot rotate to position %d. Aborting move.\n", targetRotation);
-            currentMove.score = std::numeric_limits<int>::min(); // Force recalculation
-            return false; // Abort rotation
+            Serial.printf("AI: Cannot rotate clockwise. Switching to anti-clockwise.\n");
+            rotateClockwise = false;  // Change direction
+        }
+    } else {
+        if (shape->isRotatableAntiClockwise(blockMap)) {
+            shape->rotateAntiClockwise(blockMap);
+        } else {
+            Serial.printf("AI: Cannot rotate anti-clockwise. Switching to clockwise.\n");
+            rotateClockwise = true;  // Change direction
         }
     }
-    return true; // Rotation is aligned
+
+    // Draw the shape after rotation
+    shape->drawShape(tft);
+
+    // Debug the current rotation
+    Serial.printf("AI: Rotated shape to position %d.\n", shape->getRotatePosition());
+
+    // Check if alignment is complete
+    if (shape->getRotatePosition() == targetRotation) {
+        Serial.println("AI: Rotation alignment complete.");
+        directionChosen = false;  // Reset for the next alignment
+        return true;
+    }
+
+    return false;  // Alignment not yet complete
 }
 
 bool Game::moveShapeToTargetColumn() {
