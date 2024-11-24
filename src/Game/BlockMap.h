@@ -46,6 +46,8 @@ public:
     bool isBlockMovableDownwards(int x, int y) const;
     void drawAllBlocks(TFT_eSPI& tft);
 
+    void printBlockMap() const;
+
 private:
     // Helper methods for internal operations
     int getFirstNotEmptyLine(int lineIndex) const;

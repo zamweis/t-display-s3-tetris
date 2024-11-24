@@ -6,73 +6,91 @@
 #include "Model/Point.h"
 #include "TFT_eSPI.h"
 #include <stdexcept>
+#include <utility>
 
+/**
+ * @brief Base class representing a Tetris shape and its associated operations.
+ */
 class Shape {
-private:
-
-protected:
-    Shape();
-
 public:
-    ~Shape();
-
+    // Constants for rotation positions
     static constexpr int ROTATEPOSITION0 = 0;
     static constexpr int ROTATEPOSITION1 = 1;
     static constexpr int ROTATEPOSITION2 = 2;
     static constexpr int ROTATEPOSITION3 = 3;
-    static constexpr int NUM_BLOCKS = 4;
-    static constexpr int NUM_POSITIONS = 3;
 
-    Block blockList[NUM_BLOCKS];
-    Point positions[NUM_BLOCKS][NUM_POSITIONS];
-    int rotatePos;
+    static constexpr int NUM_BLOCKS = 4;    ///< Number of blocks in a shape
+    static constexpr int NUM_POSITIONS = 3; ///< Number of rotation positions
+
+    // Constructor and Destructor
+    Shape();
+    virtual ~Shape();
+
+    // Block Management
     Block* getBlockList();
-    Point (*getPositions())[NUM_POSITIONS];
+    Block& getBlock(int index);
     void setBlock(const Block& block, int index);
+    int getXPosition(int index) const;
+    int getYPosition(int index) const;
+    Block getLeftBlock();
+    Block getRightBlock();
+    Block getHighestBlock();
+    Block getLowestBlock();
+    Block getMaintBlock();
+    void generateShape();
+
+    // Position Management
+    Point (*getPositions())[NUM_POSITIONS];
     void setPoint(int x, int y, const Point& point);
+    std::pair<int, int> getHorizontalBounds(const BlockMap& blockMap) const;
+    void setPosition(int x, int y);
+    int getWidth();
+
+    // Rotation Management
     void setRotatePosition(int rotatePosition);
     int getRotatePosition() const;
+    void rotate(BlockMap& blockMap, bool clockwise);
+    void rotateAntiClockwise(BlockMap& blockMap);
+    void rotateClockwise(BlockMap& blockMap);
+    void rotateToPosition(int targetRotatePosition, BlockMap& blockMap);
+    bool canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const;
+
+    // Movement Management
+    bool isMovableToTheLeft(BlockMap& blockMap);
+    bool isMovableToTheRight(BlockMap& blockMap);
+    bool isMovableDownWards(BlockMap& blockMap);
+    void moveLeft(BlockMap& blockMap);
+    void moveRight(BlockMap& blockMap);
+    void moveDown(BlockMap& blockMap);
+    void fallDown(BlockMap& blockMap);
+    void moveToLowestBlockkAtMinusOne();
+    bool canMoveToPosition(int x, int y, const BlockMap& blockMap) const;
+
+    // Collision Detection
+    bool isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap);
+    bool isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap);
+    bool isInCollisionWithLowerBlock(const Block& block, BlockMap& blockMap);
+
+    // Drawing and Erasing
+    void drawShape(TFT_eSPI& tft) const;
+    void drawShapeBorderOnly(TFT_eSPI& tft, int offset) const;
+    void eraseShape(TFT_eSPI& tft, uint16_t backgroundColor) const;
+
+    // Static Accessors for Rotation Positions
     static int getROTATEPOSITION0();
     static int getROTATEPOSITION1();
     static int getROTATEPOSITION2();
     static int getROTATEPOSITION3();
-    Block& getBlock(int index);
-    void generateShape();
-    int getXPosition(int index) const;
-    int getYPosition(int index) const;
-    bool isRotatableAntiClockwise(BlockMap& blockMap);
-    bool isRotatableClockwise(BlockMap& blockMap);
-    void rotateAntiClockwise(BlockMap& blockMap);
-    void rotateClockwise(BlockMap& blockMap);
-    void rotate(BlockMap& blockMap, bool clockwise);
-    Block getLeftBlock();
-    Block getMaintBlock();
-    bool isMovableToTheLeft(BlockMap& blockMap);
-    bool isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap);
-    void moveLeft(BlockMap& blockMap);
-    Block getRightBlock();
-    Block getHighestBlock();
-    bool isMovableToTheRight(BlockMap& blockMap);
-    bool isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap);
-    void moveRight(BlockMap& blockMap);
-    Block getLowestBlock();
-    bool isMovableDownWards(BlockMap& blockMap);
-    bool isInCollisionWithLowerBlock(const Block& block, BlockMap& blockMap);
-    void moveDown(BlockMap& blockMap);
-    void fallDown(BlockMap& blockMap);
-    void drawShape(TFT_eSPI& tft) const;
-    void drawShapeBorderOnly(TFT_eSPI& tft, int offset) const;
-    void eraseShape(TFT_eSPI& tft, uint16_t backgroundColor) const;
-    void moveToLowestBlockkAtMinusOne();
-    int getWidth();
-    void setPosition(int x, int y);
-    void rotateToPosition(int targetRotatePosition, BlockMap& blockMap);
-    bool canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const;
-    bool canMoveToPosition(int x, int y, const BlockMap& blockMap) const;
-    std::pair<int, int> getHorizontalBounds(const BlockMap& blockMap) const;
 
 private:
+    // Helper Methods
     bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap);
+
+protected:
+    // Member Variables
+    Block blockList[NUM_BLOCKS]; ///< List of blocks comprising the shape
+    Point positions[NUM_BLOCKS][NUM_POSITIONS]; ///< Rotation offsets
+    int rotatePos; ///< Current rotation position
 };
 
 #endif // SHAPE_H

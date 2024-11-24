@@ -262,3 +262,18 @@ int BlockMap::getBumpiness() const {
     }
     return bumpiness;
 }
+
+void BlockMap::printBlockMap() const {
+    Serial.println("BlockMap State:");
+    for (int y = 0; y < MAP_HEIGHT; ++y) {
+        Serial.print(y < 10 ? " " : ""); // Align single-digit rows
+        Serial.print(y);
+        Serial.print(" | ");
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            Serial.print(map[x][y] != nullptr ? "#" : ".");
+        }
+        Serial.println();
+    }
+    Serial.println("    --------------------"); // Divider
+    Serial.println("     0 1 2 3 4 5 6 7 8 9"); // Column labels
+}

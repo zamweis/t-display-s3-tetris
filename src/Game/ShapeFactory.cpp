@@ -10,6 +10,7 @@
 
 Shape* ShapeFactory::createRandomShape() {
     int index = rand() % 7; // Or use another RNG function if needed
+    index =5;
     switch (index) {
         case 0: return new ShapeI();
         case 1: return new ShapeJ();

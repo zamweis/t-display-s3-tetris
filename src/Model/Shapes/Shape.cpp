@@ -103,7 +103,7 @@ bool Shape::canMoveToPosition(int x, int y, const BlockMap& blockMap) const {
 
 bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const {
     // Check all blocks in the shape, including the main block
-    for (int i = 0; i < NUM_BLOCKS; ++i) {
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
         // Calculate the rotated position for the current block
         int x = blockList[0].getX() + positions[tmpRotatePosition][i].getX();
         int y = blockList[0].getY() + positions[tmpRotatePosition][i].getY();
@@ -341,9 +341,9 @@ bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
 }
 
 void Shape::moveToLowestBlockkAtMinusOne() {
-    Block lowerstBlock = getLowestBlock(); // Assuming this function finds the block with the highest y value in the shape
+    Block lowerstBlock = getHighestBlock(); // Assuming this function finds the block with the highest y value in the shape
 
-    int yOffset = lowerstBlock.getY() - (-1); // Calculate offset to move the highest block to -1
+    int yOffset = lowerstBlock.getY() - (-0); // Calculate offset to move the highest block to -1
 
     for (auto& block : blockList) {
         block.setY(block.getY() - yOffset); // Adjust each block's y position by the computed offset

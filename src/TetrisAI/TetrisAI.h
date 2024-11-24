@@ -23,15 +23,14 @@ public:
 
 private:
     // Heuristic weights (can be adjusted for different AI behavior)
+    double lineClearWeight;
     double heightWeight;
     double holeWeight;
     double bumpinessWeight;
-    double lineClearWeight;
 
-    // Helper methods for evaluating and scoring potential moves
+    void adjustHeuristicWeights(const BlockMap& blockMap); // Dynamically adjust weights
     double evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation);
     double calculateScore(const BlockMap& blockMap);
-    void adjustHeuristicWeights(const BlockMap& blockMap);
 };
 
 #endif // TETRISAI_H
