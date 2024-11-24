@@ -63,7 +63,7 @@ void Game::loop() {
         createNewShape();
     } else {
         static unsigned long lastAIStepTime = 0;
-        unsigned long aiStepInterval = 200; // 100ms interval for AI step
+        unsigned long aiStepInterval = 400; // 100ms interval for AI step
 
         if (currentTime - lastAIStepTime >= aiStepInterval) {
             executeAIStep();
@@ -250,60 +250,71 @@ bool Game::calculateBestMove() {
 }
 
 bool Game::alignShapeRotation() {
-    static bool rotateClockwise;  // Persist the chosen rotation direction
+    static bool rotateClockwise;  // Persist chosen rotation direction
+    static int failedAttempts = 0; // Track failed attempts for fail-safe
+    const int MAX_ROTATION_ATTEMPTS = 4; // Maximum retries for rotation
+
     int currentRotation = shape->getRotatePosition();
     int targetRotation = currentMove.rotation;
 
-    if (shape->getRotatePosition() == targetRotation) {
+    // Skip further alignment if already aligned
+    if (currentRotation == targetRotation) {
         Serial.println("AI: Rotation alignment complete.");
-        directionChosen = false;  // Reset for the next alignment
+        directionChosen = false;  // Reset direction
+        failedAttempts = 0;  // Reset attempt counter
         return true;
     }
-    
-    // Determine the shortest rotation direction if not already chosen
+
+    // Decide rotation direction if not chosen yet
     if (!directionChosen) {
         int clockwiseSteps = (targetRotation - currentRotation + 4) % 4;
-        int antiClockwiseSteps = (currentRotation - targetRotation + 4) % 4;
-        rotateClockwise = clockwiseSteps <= antiClockwiseSteps;
-        directionChosen = true;  // Lock the chosen direction
+        int counterClockwiseSteps = (currentRotation - targetRotation + 4) % 4;
+        rotateClockwise = clockwiseSteps <= counterClockwiseSteps;
+        directionChosen = true;  // Lock direction choice
         Serial.printf("AI: Chosen rotation direction: %s\n", rotateClockwise ? "Clockwise" : "Anti-clockwise");
     }
 
-    // Erase the shape before attempting to rotate
-    shape->eraseShape(tft, displayManager.getBackgroundColor());
+    // Abort alignment if too many failed attempts
+    if (++failedAttempts >= MAX_ROTATION_ATTEMPTS) {
+        Serial.println("AI: Rotation alignment failed after multiple attempts.");
+        directionChosen = false;  // Reset for next alignment
+        failedAttempts = 0;
+        return false;
+    }
 
-    // Attempt to rotate in the chosen direction
+    // Attempt rotation
+    shape->eraseShape(tft, displayManager.getBackgroundColor());
     if (rotateClockwise) {
         if (shape->isRotatableClockwise(blockMap)) {
             shape->rotateClockwise(blockMap);
         } else {
-            Serial.printf("AI: Cannot rotate clockwise. Switching to anti-clockwise.\n");
-            rotateClockwise = false;  // Change direction
+            Serial.println("AI: Clockwise rotation blocked. Switching to anti-clockwise.");
+            rotateClockwise = false;  // Switch direction
         }
     } else {
         if (shape->isRotatableAntiClockwise(blockMap)) {
             shape->rotateAntiClockwise(blockMap);
         } else {
-            Serial.printf("AI: Cannot rotate anti-clockwise. Switching to clockwise.\n");
-            rotateClockwise = true;  // Change direction
+            Serial.println("AI: Anti-clockwise rotation blocked. Switching to clockwise.");
+            rotateClockwise = true;  // Switch direction
         }
     }
 
-    // Draw the shape after rotation
+    // Redraw shape and debug
     shape->drawShape(tft);
+    Serial.printf("AI: Rotated shape to position %d (Target=%d).\n", shape->getRotatePosition(), targetRotation);
 
-    // Debug the current rotation
-    Serial.printf("AI: Rotated shape to position %d.\n", shape->getRotatePosition());
-
-    // Check if alignment is complete
+    // Check alignment completion
     if (shape->getRotatePosition() == targetRotation) {
-        Serial.println("AI: Rotation alignment complete.");
-        directionChosen = false;  // Reset for the next alignment
+        Serial.println("AI: Rotation alignment successful.");
+        directionChosen = false;
+        failedAttempts = 0;
         return true;
     }
 
-    return false;  // Alignment not yet complete
+    return false;  // Continue alignment
 }
+
 
 bool Game::moveShapeToTargetColumn() {
     if (shape->getRotatePosition() != currentMove.rotation) {
@@ -338,8 +349,8 @@ bool Game::moveShapeToTargetColumn() {
 void Game::dropShape() {
     shape->eraseShape(tft, displayManager.getBackgroundColor());
     shape->fallDown(blockMap);
-    finalizeShapePlacement();
     shape->drawShape(tft);
+    finalizeShapePlacement();
 
     Serial.println("AI dropped the shape to finalize placement.");
 
