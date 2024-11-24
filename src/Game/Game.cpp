@@ -80,8 +80,6 @@ void Game::loop() {
 }
 
 void Game::handleShapeMovement(unsigned long currentTime) {
-    handleButtonState(leftButtonState, BUTTON_LEFT, currentTime, &Shape::moveLeft, &Shape::rotateAntiClockwise);
-    handleButtonState(rightButtonState, BUTTON_RIGHT, currentTime, &Shape::moveRight, &Shape::rotateClockwise);
 }
 
 void Game::createNewShape() {
@@ -189,18 +187,18 @@ void Game::handleButtonState(ButtonState &state, int buttonPin, unsigned long cu
 
 bool Game::executeAIStep() {
     if (!shape) {
-        Serial.println("No shape available. AI step aborted.");
+        //Serial.println("No shape available. AI step aborted.");
         return false;
     }
 
     if (isGravityActive) {
-        Serial.println("AI paused: Gravity active.");
+        //Serial.println("AI paused: Gravity active.");
         return false; // Wait until gravity finishes
     }
 
     // Step 1: Calculate the best move if not already done
     if (currentMove.score == std::numeric_limits<int>::min()) {
-        Serial.println("AI: Starting best move calculation.");
+        //Serial.println("AI: Starting best move calculation.");
         if (!calculateBestMove()) {
             Serial.println("AI: No valid move found. Skipping turn.");
             return false; // No valid move found
@@ -209,9 +207,9 @@ bool Game::executeAIStep() {
     }
 
     // Step 2: Rotate to the desired position
-    Serial.printf("AI: Aligning rotation. Current=%d, Target=%d.\n", shape->getRotatePosition(), currentMove.rotation);
+    //Serial.printf("AI: Aligning rotation. Current=%d, Target=%d.\n", shape->getRotatePosition(), currentMove.rotation);
     if (!alignShapeRotation()) {
-        Serial.println("AI: Waiting for rotation alignment.");
+        //Serial.println("AI: Waiting for rotation alignment.");
         return true; // Wait for the next loop iteration to continue
     }
 
@@ -224,14 +222,14 @@ bool Game::executeAIStep() {
     }
 
     // Step 4: Move horizontally to the target column
-    Serial.printf("AI: Preparing horizontal movement. CurrentX=%d, TargetX=%d.\n", shape->getBlock(0).getX(), currentMove.x);
+    //Serial.printf("AI: Preparing horizontal movement. CurrentX=%d, TargetX=%d.\n", shape->getBlock(0).getX(), currentMove.x);
     if (!moveShapeToTargetColumn()) {
-        Serial.println("AI: Waiting for horizontal alignment.");
+        //Serial.println("AI: Waiting for horizontal alignment.");
         return true; // Wait for the next loop iteration to continue
     }
 
     // Step 5: Drop the shape once it's aligned
-    Serial.println("AI: Dropping the shape.");
+    //Serial.println("AI: Dropping the shape.");
     dropShape();
 
     return true;
@@ -259,7 +257,7 @@ bool Game::alignShapeRotation() {
 
     // Skip further alignment if already aligned
     if (currentRotation == targetRotation) {
-        Serial.println("AI: Rotation alignment complete.");
+        //Serial.println("AI: Rotation alignment complete.");
         directionChosen = false;  // Reset direction
         failedAttempts = 0;  // Reset attempt counter
         return true;
@@ -271,12 +269,12 @@ bool Game::alignShapeRotation() {
         int counterClockwiseSteps = (currentRotation - targetRotation + 4) % 4;
         rotateClockwise = clockwiseSteps <= counterClockwiseSteps;
         directionChosen = true;  // Lock direction choice
-        Serial.printf("AI: Chosen rotation direction: %s\n", rotateClockwise ? "Clockwise" : "Anti-clockwise");
+        //Serial.printf("AI: Chosen rotation direction: %s\n", rotateClockwise ? "Clockwise" : "Anti-clockwise");
     }
 
     // Abort alignment if too many failed attempts
     if (++failedAttempts >= MAX_ROTATION_ATTEMPTS) {
-        Serial.println("AI: Rotation alignment failed after multiple attempts.");
+        //Serial.println("AI: Rotation alignment failed after multiple attempts.");
         directionChosen = false;  // Reset for next alignment
         failedAttempts = 0;
         return false;
@@ -288,25 +286,25 @@ bool Game::alignShapeRotation() {
         if (shape->isRotatableClockwise(blockMap)) {
             shape->rotateClockwise(blockMap);
         } else {
-            Serial.println("AI: Clockwise rotation blocked. Switching to anti-clockwise.");
+            //Serial.println("AI: Clockwise rotation blocked. Switching to anti-clockwise.");
             rotateClockwise = false;  // Switch direction
         }
     } else {
         if (shape->isRotatableAntiClockwise(blockMap)) {
             shape->rotateAntiClockwise(blockMap);
         } else {
-            Serial.println("AI: Anti-clockwise rotation blocked. Switching to clockwise.");
+            //Serial.println("AI: Anti-clockwise rotation blocked. Switching to clockwise.");
             rotateClockwise = true;  // Switch direction
         }
     }
 
     // Redraw shape and debug
     shape->drawShape(tft);
-    Serial.printf("AI: Rotated shape to position %d (Target=%d).\n", shape->getRotatePosition(), targetRotation);
+    //Serial.printf("AI: Rotated shape to position %d (Target=%d).\n", shape->getRotatePosition(), targetRotation);
 
     // Check alignment completion
     if (shape->getRotatePosition() == targetRotation) {
-        Serial.println("AI: Rotation alignment successful.");
+        //Serial.println("AI: Rotation alignment successful.");
         directionChosen = false;
         failedAttempts = 0;
         return true;
@@ -318,7 +316,7 @@ bool Game::alignShapeRotation() {
 
 bool Game::moveShapeToTargetColumn() {
     if (shape->getRotatePosition() != currentMove.rotation) {
-        Serial.println("AI: Shape rotation mismatch detected. Aborting horizontal movement.");
+        //Serial.println("AI: Shape rotation mismatch detected. Aborting horizontal movement.");
         return false;
     }
 
@@ -329,14 +327,14 @@ bool Game::moveShapeToTargetColumn() {
             shape->eraseShape(tft, displayManager.getBackgroundColor());
             shape->moveRight(blockMap);
             shape->drawShape(tft);
-            Serial.printf("AI: Moved shape right to X=%d.\n", shape->getBlock(0).getX());
+            //Serial.printf("AI: Moved shape right to X=%d.\n", shape->getBlock(0).getX());
         } else if (shapeX > currentMove.x && shape->isMovableToTheLeft(blockMap)) {
             shape->eraseShape(tft, displayManager.getBackgroundColor());
             shape->moveLeft(blockMap);
             shape->drawShape(tft);
-            Serial.printf("AI: Moved shape left to X=%d.\n", shape->getBlock(0).getX());
+           // Serial.printf("AI: Moved shape left to X=%d.\n", shape->getBlock(0).getX());
         } else {
-            Serial.printf("AI: Cannot move shape to X=%d. Aborting move.\n", currentMove.x);
+            //Serial.printf("AI: Cannot move shape to X=%d. Aborting move.\n", currentMove.x);
             currentMove.score = std::numeric_limits<int>::min(); // Force recalculation
             return false; // Abort movement
         }
@@ -352,7 +350,7 @@ void Game::dropShape() {
     shape->drawShape(tft);
     finalizeShapePlacement();
 
-    Serial.println("AI dropped the shape to finalize placement.");
+   // Serial.println("AI dropped the shape to finalize placement.");
 
     // Reset shape and AI move for the next turn
     delete shape;
@@ -389,6 +387,6 @@ void Game::finalizeShapePlacement() {
         Serial.printf("Lines cleared: %d\n", clearedLines);
         updateScoreAndLevel(clearedLines);
     } else {
-        Serial.println("No lines cleared.");
+       // Serial.println("No lines cleared.");
     }
 }

@@ -4,12 +4,12 @@
 #include <limits>
 #include "Config.h"
 
-// Constructor with refined weights
+// Constructor with optimized weights
 TetrisAI::TetrisAI()
-    : lineClearWeight(0.76),  // Strong priority for line clears
-      heightWeight(-0.51),    // Moderate penalty for height
-      holeWeight(-0.66),      // Heavy penalty for holes
-      bumpinessWeight(-0.18)  // Moderate penalty for bumpiness
+    : lineClearWeight(10.0),   // Strong reward for clearing lines
+      heightWeight(-4.0),     // Penalize high stacks more aggressively
+      holeWeight(-6.0),       // Heavily penalize holes
+      bumpinessWeight(-3.0)   // Penalize surface unevenness
 {}
 
 // Destructor
@@ -17,25 +17,19 @@ TetrisAI::~TetrisAI() {}
 
 TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& shape) {
     Move bestMove = {0, 0, std::numeric_limits<double>::lowest()};
-    BlockMap simulatedMap = blockMap;
-
-    Serial.println("AI: Starting to evaluate best move.");
 
     for (int rotation = 0; rotation < 4; ++rotation) {
         Shape simulatedShape = shape;
 
-        // Check if the rotation is valid before proceeding
-        if (!simulatedShape.canRotateToPosition(rotation, simulatedMap)) {
-            Serial.printf("AI: Skipping rotation %d (invalid position).\n", rotation);
-            continue;  // Skip this rotation if it's invalid
+        if (!simulatedShape.canRotateToPosition(rotation, blockMap, true) &&
+            !simulatedShape.canRotateToPosition(rotation, blockMap, false)) {
+            continue; // Skip invalid rotations
         }
 
-        // Apply rotation
         for (int i = 0; i < rotation; ++i) {
-            simulatedShape.rotateClockwise(simulatedMap);
+            simulatedShape.rotateClockwise(blockMap);
         }
 
-        // Calculate horizontal bounds
         int shapeMinX = simulatedShape.getLeftBlock().getX();
         int shapeMaxX = simulatedShape.getRightBlock().getX();
         int mainBlockX = simulatedShape.getMaintBlock().getX();
@@ -43,24 +37,20 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
         int minX = mainBlockX - shapeMinX;
         int maxX = MAP_WIDTH - (shapeMaxX - mainBlockX) - 1;
 
-        Serial.printf("AI: Rotation %d, Horizontal Bounds: MinX=%d, MaxX=%d\n", rotation, minX, maxX);
-
-        // Test valid horizontal placements
         for (int x = minX; x <= maxX; ++x) {
-            if (!simulatedShape.canMoveToPosition(x, simulatedShape.getMaintBlock().getY(), simulatedMap)) {
-                Serial.printf("AI: Skipping position X=%d (collision detected).\n", x);
+            if (!simulatedShape.canMoveToPosition(x, simulatedShape.getMaintBlock().getY(), blockMap)) {
                 continue;
             }
 
+            BlockMap simulatedMap = blockMap;
             simulatedShape.setPosition(x, simulatedShape.getMaintBlock().getY());
             simulatedShape.fallDown(simulatedMap);
+            simulatedMap.addBlocks(simulatedShape.getBlockList(), Shape::NUM_BLOCKS);
 
-            // Evaluate the placement
-            double score = evaluatePlacement(simulatedMap, simulatedShape, x, rotation);
+            double score = calculateScore(simulatedMap);
 
             if (score > bestMove.score) {
                 bestMove = {x, rotation, score};
-                Serial.printf("AI: New best move found -> X=%d, Rotation=%d, Score=%.2f\n", x, rotation, score);
             }
         }
     }
@@ -74,87 +64,35 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
     return bestMove;
 }
 
-double TetrisAI::evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation) {
-    BlockMap simulatedMap = blockMap;
-    Shape simulatedShape = shape;
-
-    // Apply rotation
-    for (int i = 0; i < rotation; ++i) {
-        simulatedShape.rotateClockwise(simulatedMap);
-    }
-
-    // Simulate placement
-    simulatedShape.setPosition(x, 0);
-    simulatedShape.fallDown(simulatedMap);
-
-    // Add the shape to the map
-    simulatedMap.addBlocks(simulatedShape.getBlockList(), Shape::NUM_BLOCKS);
-
-    // Calculate the score
-    double score = calculateScore(simulatedMap);
-
-    Serial.printf("AI: Evaluating position X=%d, Rotation=%d -> Score=%.2f\n", x, rotation, score);
-    return score;
-}
-
 double TetrisAI::calculateScore(const BlockMap& blockMap) {
     double totalHeight = 0.0;
     double holes = 0.0;
     double bumpiness = 0.0;
     double clearedLines = static_cast<double>(blockMap.getAmoutOfFullLines());
 
+    int previousHeight = 0;
+
     for (int x = 0; x < BlockMap::MAP_WIDTH; ++x) {
         int columnHeight = blockMap.getColumnHeight(x);
         totalHeight += columnHeight;
 
-        // Count holes
-        bool blockFound = false;
         for (int y = BlockMap::MAP_HEIGHT - columnHeight; y < BlockMap::MAP_HEIGHT; ++y) {
-            if (blockMap.getBlock(x, y) != nullptr) {
-                blockFound = true;
-            } else if (blockFound) {
+            if (blockMap.getBlock(x, y) == nullptr && blockMap.getBlock(x, y - 1) != nullptr) {
                 holes++;
             }
         }
 
-        // Calculate bumpiness
         if (x > 0) {
-            int prevHeight = blockMap.getColumnHeight(x - 1);
-            bumpiness += abs(columnHeight - prevHeight);
+            bumpiness += abs(columnHeight - previousHeight);
         }
+
+        previousHeight = columnHeight;
     }
 
-    // Normalize total height to make weights scale-independent
     double normalizedHeight = totalHeight / BlockMap::MAP_WIDTH;
 
-    // Debug information for score calculation
-    Serial.printf("AI: Scoring - ClearedLines=%.2f, NormalizedHeight=%.2f, Holes=%.2f, Bumpiness=%.2f\n",
-                  clearedLines, normalizedHeight, holes, bumpiness);
-
-    // Heuristic score calculation
     return (clearedLines * lineClearWeight) +
            (normalizedHeight * heightWeight) +
            (holes * holeWeight) +
            (bumpiness * bumpinessWeight);
-}
-
-void TetrisAI::adjustHeuristicWeights(const BlockMap& blockMap) {
-    int highestColumn = 0;
-
-    // Find the highest column
-    for (int x = 0; x < BlockMap::MAP_WIDTH; ++x) {
-        int columnHeight = blockMap.getColumnHeight(x);
-        if (columnHeight > highestColumn) {
-            highestColumn = columnHeight;
-        }
-    }
-
-    // Adjust weights based on the game state
-    if (highestColumn > BlockMap::MAP_HEIGHT / 2) {
-        lineClearWeight += 0.2;  // Prioritize line clears more
-        heightWeight -= 0.1;     // Penalize height more
-    }
-
-    Serial.printf("AI: Adjusted Heuristic Weights -> LineClearWeight=%.2f, HeightWeight=%.2f\n", 
-                  lineClearWeight, heightWeight);
 }

@@ -9,8 +9,8 @@ Shape::Shape() : rotatePos(random(0, ROTATEPOSITION3)) {}
 
 Shape::~Shape() {}
 
-Block* Shape::getBlockList()  {
-    return blockList;
+Block* Shape::getBlockList() const {
+    return const_cast<Block*>(blockList); // Safely return the block list without modifying it
 }
 
 Point (*Shape::getPositions() )[NUM_POSITIONS] {
@@ -101,31 +101,83 @@ bool Shape::canMoveToPosition(int x, int y, const BlockMap& blockMap) const {
     return true;
 }
 
-bool Shape::isRotatableAntiClockwise(BlockMap& blockMap) {
+bool Shape::isRotatableAntiClockwise(const BlockMap& blockMap) const {
     int tmpRotatePosition = (rotatePos == ROTATEPOSITION3) ? ROTATEPOSITION0 : rotatePos + 1;
     return checkRotationValidity(tmpRotatePosition, blockMap);
 }
 
-bool Shape::isRotatableClockwise(BlockMap& blockMap) {
+bool Shape::isRotatableClockwise(const BlockMap& blockMap) const {
     int tmpRotatePosition = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
     return checkRotationValidity(tmpRotatePosition, blockMap);
 }
 
-void Shape::rotateAntiClockwise(BlockMap& blockMap) {
+bool Shape::rotateAntiClockwise(const BlockMap& blockMap) {
     if (isRotatableAntiClockwise(blockMap)) {
         rotatePos = (rotatePos == ROTATEPOSITION3) ? ROTATEPOSITION0 : rotatePos + 1;
         generateShape();
+        return true;
     }
+    return false;
 }
 
-void Shape::rotateClockwise(BlockMap& blockMap) {
+bool Shape::rotateClockwise(const BlockMap& blockMap) {
     if (isRotatableClockwise(blockMap)) {
         rotatePos = (rotatePos == ROTATEPOSITION0) ? ROTATEPOSITION3 : rotatePos - 1;
         generateShape();
+        return true;
     }
+    return false;
 }
 
-bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
+bool Shape::canRotateToPosition(int targetRotation, const BlockMap& blockMap, bool checkClockwise) const {
+    int currentRotation = this->getRotatePosition();
+
+    // Calculate the number of steps needed
+    int steps = checkClockwise
+        ? (targetRotation - currentRotation + 4) % 4  // Clockwise steps
+        : (currentRotation - targetRotation + 4) % 4; // Counterclockwise steps
+
+    Shape simulatedShape = *this; // Copy the current shape
+    for (int i = 0; i < steps; ++i) {
+        if (checkClockwise) {
+            if (!simulatedShape.rotateClockwise(const_cast<BlockMap&>(blockMap))) { // Cast to non-const
+                return false; // Invalid position during clockwise rotation
+            }
+        } else {
+            if (!simulatedShape.rotateAntiClockwise(const_cast<BlockMap&>(blockMap))) { // Cast to non-const
+                return false; // Invalid position during counterclockwise rotation
+            }
+        }
+    }
+
+    return true;
+}
+
+bool Shape::rotateToPosition(int targetRotation, BlockMap& blockMap) {
+    int currentRotation = this->getRotatePosition();
+
+    int clockwiseSteps = (targetRotation - currentRotation + 4) % 4;
+    int counterclockwiseSteps = (currentRotation - targetRotation + 4) % 4;
+
+    if (clockwiseSteps <= counterclockwiseSteps) {
+        for (int i = 0; i < clockwiseSteps; ++i) {
+            if (!this->rotateClockwise(blockMap)) {
+                return false; // Abort if rotation fails
+            }
+        }
+    } else {
+        for (int i = 0; i < counterclockwiseSteps; ++i) {
+            if (!this->rotateAntiClockwise(blockMap)) {
+                return false; // Abort if rotation fails
+            }
+        }
+    }
+
+    return true; // Successfully rotated to target position
+}
+
+
+bool Shape::checkRotationValidity(int tmpRotatePosition, const BlockMap& blockMap) const {
     for (int i = 1; i < NUM_BLOCKS; ++i) {
         int x = blockList[0].getX() + static_cast<int>(positions[tmpRotatePosition][i - 1].getX());
         int y = blockList[0].getY() + static_cast<int>(positions[tmpRotatePosition][i - 1].getY());
@@ -133,39 +185,6 @@ bool Shape::checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap) {
             return false;
         }
     }
-    return true;
-}
-
-bool Shape::canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const {
-    // Check all blocks in the shape, including the main block
-    for (int i = 1; i < NUM_BLOCKS; ++i) {
-        // Calculate the rotated position for the current block
-        int x = blockList[0].getX() + positions[tmpRotatePosition][i].getX();
-        int y = blockList[0].getY() + positions[tmpRotatePosition][i].getY();
-
-        // Check if the block is within the vertical bounds
-        if (y >= MAP_HEIGHT) {
-            Serial.printf("Rotation to position %d not possible: Y=%d exceeds height boundary.\n", 
-                          tmpRotatePosition, y);
-            return false;
-        }
-
-        // Check if the block is within the horizontal bounds
-        if (x < 0 || x >= MAP_WIDTH) {
-            Serial.printf("Rotation to position %d not possible: X=%d is out of horizontal bounds.\n", 
-                          tmpRotatePosition, x);
-            return false;
-        }
-
-        // Check if the block collides with another block on the map
-        if (!blockMap.isFieldEmpty(x, y)) {
-            Serial.printf("Rotation to position %d not possible: collision at X=%d, Y=%d (block %d).\n", 
-                          tmpRotatePosition, x, y, i);
-            return false;
-        }
-    }
-
-    // All blocks pass the checks; rotation is valid
     return true;
 }
 
@@ -181,13 +200,13 @@ Block Shape::getLeftBlock() {
 
 bool Shape::isMovableToTheLeft(BlockMap& blockMap) {
     if (getLeftBlock().getX() == 0) {
-        Serial.println("Movement to the left is not possible: shape is at the left boundary.");
+        //Serial.println("Movement to the left is not possible: shape is at the left boundary.");
         return false;
     }
     for (int i = 0; i < NUM_BLOCKS; ++i) {
         if (isInCollisionWithLeftBlock(getBlock(i), blockMap)) {
-            Serial.printf("Movement to the left blocked by collision at X=%d, Y=%d.\n",
-                          getBlock(i).getX() - 1, getBlock(i).getY());
+           //Serial.printf("Movement to the left blocked by collision at X=%d, Y=%d.\n",
+            //              getBlock(i).getX() - 1, getBlock(i).getY());
             return false;
         }
     }
@@ -229,13 +248,13 @@ Block Shape::getRightBlock() {
 
 bool Shape::isMovableToTheRight(BlockMap& blockMap) {
     if (getRightBlock().getX() == MAP_WIDTH - 1) {
-        Serial.println("Movement to the right is not possible: shape is at the right boundary.");
+        //Serial.println("Movement to the right is not possible: shape is at the right boundary.");
         return false;
     }
     for (int i = 0; i < NUM_BLOCKS; ++i) {
         if (isInCollisionWithRightBlock(getBlock(i), blockMap)) {
-            Serial.printf("Movement to the right blocked by collision at X=%d, Y=%d.\n",
-                          getBlock(i).getX() + 1, getBlock(i).getY());
+            //Serial.printf("Movement to the right blocked by collision at X=%d, Y=%d.\n",
+            //              getBlock(i).getX() + 1, getBlock(i).getY());
             return false;
         }
     }
@@ -282,7 +301,7 @@ Block Shape::getHighestBlock() {
 
 bool Shape::isMovableDownWards(BlockMap& blockMap) {
     if (getLowestBlock().getY() >= MAP_HEIGHT - 1) {
-        Serial.println("Movement downwards is not possible: shape is at the bottom boundary.");
+        //Serial.println("Movement downwards is not possible: shape is at the bottom boundary.");
         return false;
     }
     for (int i = 0; i < NUM_BLOCKS; ++i) {
@@ -339,7 +358,7 @@ void Shape::eraseShape(TFT_eSPI& tft, uint16_t backgroundColor) const {
 }
 
 void Shape::moveToLowestBlockkAtMinusOne() {
-    Block lowerstBlock = getLowestBlock(); // Assuming this function finds the block with the highest y value in the shape
+    Block lowerstBlock = getHighestBlock(); // Assuming this function finds the block with the highest y value in the shape
 
     int yOffset = lowerstBlock.getY() - (-1); // Calculate offset to move the highest block to -1
 

@@ -27,7 +27,7 @@ public:
     virtual ~Shape();
 
     // Block Management
-    Block* getBlockList();
+    Block* getBlockList() const;
     Block& getBlock(int index);
     void setBlock(const Block& block, int index);
     int getXPosition(int index) const;
@@ -50,12 +50,13 @@ public:
     void setRotatePosition(int rotatePosition);
     int getRotatePosition() const;
     void rotate(BlockMap& blockMap, bool clockwise);
-    bool isRotatableAntiClockwise(BlockMap& blockMap);
-    bool isRotatableClockwise(BlockMap& blockMap);
-    void rotateAntiClockwise(BlockMap& blockMap);
-    void rotateClockwise(BlockMap& blockMap);
-    bool checkRotationValidity(int tmpRotatePosition, BlockMap& blockMap);
-    bool canRotateToPosition(int tmpRotatePosition, const BlockMap& blockMap) const;
+    bool canRotateToPosition(int targetRotation, const BlockMap& blockMap, bool checkClockwise) const;
+    bool rotateToPosition(int targetRotation, BlockMap& blockMap);
+    bool isRotatableAntiClockwise(const BlockMap& blockMap) const;
+    bool isRotatableClockwise(const BlockMap& blockMap)const ;
+    bool rotateAntiClockwise(const BlockMap& blockMap);
+    bool rotateClockwise(const BlockMap& blockMap);
+    bool checkRotationValidity(int tmpRotatePosition, const BlockMap& blockMap) const;
     
     // Movement Management
     bool isMovableToTheLeft(BlockMap& blockMap);
