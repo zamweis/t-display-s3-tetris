@@ -27,5 +27,5 @@ ShapeZ::ShapeZ() : Shape() {
     setPoint(3, 2, Point(-1, 0));
 
     generateShape();
-    Serial.println("ShapeZ: created");
+    //Serial.println("ShapeZ: created");
 }

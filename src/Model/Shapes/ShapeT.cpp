@@ -24,5 +24,5 @@ ShapeT::ShapeT() : Shape() {
     setPoint(3, 2, Point(0, 1));
 
     generateShape();
-    Serial.println("ShapeT: created");
+    //Serial.println("ShapeT: created");
 }

@@ -6,44 +6,58 @@
 
 // Constructor with optimized weights
 TetrisAI::TetrisAI()
-    : lineClearWeight(10.0),   // Strong reward for clearing lines
-      heightWeight(-4.0),     // Penalize high stacks more aggressively
-      holeWeight(-6.0),       // Heavily penalize holes
-      bumpinessWeight(-3.0)   // Penalize surface unevenness
+    : lineClearWeight(10.0),  // Strong reward for clearing lines
+      heightWeight(-4.0),    // Penalize high stacks more aggressively
+      holeWeight(-6.0),      // Heavily penalize holes
+      bumpinessWeight(-3.0)  // Penalize surface unevenness
 {}
 
 // Destructor
 TetrisAI::~TetrisAI() {}
 
+// Method to set weights
+void TetrisAI::setWeights(float heightWeight, float holeWeight, float bumpinessWeight, float lineClearWeight) {
+    this->heightWeight = heightWeight;
+    this->holeWeight = holeWeight;
+    this->bumpinessWeight = bumpinessWeight;
+    this->lineClearWeight = lineClearWeight;
+}
+
+// Print results in CSV format for datasets
+void TetrisAI::printSimulationResults(int score, int linesCleared) {
+    Serial.printf("%.2f,%.2f,%.2f,%.2f,%d,%d\n",
+                  heightWeight,
+                  holeWeight,
+                  bumpinessWeight,
+                  lineClearWeight,
+                  score,
+                  linesCleared);
+}
+
+// Find the best move using heuristic evaluation
 TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& shape) {
     Move bestMove = {0, 0, std::numeric_limits<double>::lowest()};
 
     for (int rotation = 0; rotation < 4; ++rotation) {
         Shape simulatedShape = shape;
 
-        if (!simulatedShape.canRotateToPosition(rotation, blockMap, true) &&
-            !simulatedShape.canRotateToPosition(rotation, blockMap, false)) {
-            continue; // Skip invalid rotations
-        }
-
         for (int i = 0; i < rotation; ++i) {
+            if (!simulatedShape.isRotatableClockwise(blockMap)) break;
             simulatedShape.rotateClockwise(blockMap);
         }
 
         int shapeMinX = simulatedShape.getLeftBlock().getX();
         int shapeMaxX = simulatedShape.getRightBlock().getX();
-        int mainBlockX = simulatedShape.getMaintBlock().getX();
+        int mainBlockX = simulatedShape.getBlock(0).getX();
 
         int minX = mainBlockX - shapeMinX;
         int maxX = MAP_WIDTH - (shapeMaxX - mainBlockX) - 1;
 
         for (int x = minX; x <= maxX; ++x) {
-            if (!simulatedShape.canMoveToPosition(x, simulatedShape.getMaintBlock().getY(), blockMap)) {
-                continue;
-            }
+            if (!simulatedShape.canMoveToPosition(x, simulatedShape.getBlock(0).getY(), blockMap)) continue;
 
             BlockMap simulatedMap = blockMap;
-            simulatedShape.setPosition(x, simulatedShape.getMaintBlock().getY());
+            simulatedShape.setPosition(x, simulatedShape.getBlock(0).getY());
             simulatedShape.fallDown(simulatedMap);
             simulatedMap.addBlocks(simulatedShape.getBlockList(), Shape::NUM_BLOCKS);
 
@@ -55,15 +69,10 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
         }
     }
 
-    if (bestMove.score == std::numeric_limits<double>::lowest()) {
-        Serial.println("AI: No valid moves found.");
-    } else {
-        Serial.printf("AI: Best move finalized -> X=%d, Rotation=%d, Score=%.2f\n", bestMove.x, bestMove.rotation, bestMove.score);
-    }
-
     return bestMove;
 }
 
+// Heuristic evaluation score calculation
 double TetrisAI::calculateScore(const BlockMap& blockMap) {
     double totalHeight = 0.0;
     double holes = 0.0;

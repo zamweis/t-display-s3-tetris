@@ -9,7 +9,7 @@ bool directionChosen = false;
 
 Game::Game(TFT_eSPI& tft, DisplayManager& displayManager, HighScoreManager& highScoreManager, InputHandler& inputHandler)
     : tft(tft), displayManager(displayManager), highScoreManager(highScoreManager), inputHandler(inputHandler),
-      lastMoveDownTime(0), shape(nullptr), score(0), level(1), linesCleared(0), leftButtonState(IDLE), rightButtonState(IDLE),
+      shape(nullptr), score(0), level(1), linesCleared(0), leftButtonState(IDLE), rightButtonState(IDLE),
       tetrisAI() {} // Initialize TetrisAI instance
 
 void Game::displayStartScreenLoop() {
@@ -44,7 +44,7 @@ void Game::handleHighScoreDisplay() {
 }
 
 void Game::setup() {
-    displayStartScreenLoop();
+    //displayStartScreenLoop();
     resetGame(); // Only reset and start the game after button press
 }
 
@@ -52,34 +52,19 @@ void Game::loop() {
     unsigned long currentTime = millis();
 
     if (blockMap.checkGameOver()) {
-        Serial.println("Game Over detected.");
-        handleGameOver();
         return;
     }
-
-    handleShapeMovement(currentTime);
 
     if (!shape) {
         createNewShape();
     } else {
-        static unsigned long lastAIStepTime = 0;
-        unsigned long aiStepInterval = 400; // 100ms interval for AI step
-
-        if (currentTime - lastAIStepTime >= aiStepInterval) {
-            executeAIStep();
-            lastAIStepTime = currentTime; // Update the last AI step time
-        }
-
+        executeAIStep();
         if (!shape) {
             createNewShape();
-        }
-        updateShapePosition(currentTime);
+        } else updateShapePosition(currentTime);
     }
 
     blockMap.drawAllBlocks(tft);
-}
-
-void Game::handleShapeMovement(unsigned long currentTime) {
 }
 
 void Game::createNewShape() {
@@ -187,63 +172,64 @@ void Game::handleButtonState(ButtonState &state, int buttonPin, unsigned long cu
 
 bool Game::executeAIStep() {
     if (!shape) {
-        //Serial.println("No shape available. AI step aborted.");
         return false;
     }
 
     if (isGravityActive) {
-        //Serial.println("AI paused: Gravity active.");
         return false; // Wait until gravity finishes
     }
 
     // Step 1: Calculate the best move if not already done
     if (currentMove.score == std::numeric_limits<int>::min()) {
-        //Serial.println("AI: Starting best move calculation.");
         if (!calculateBestMove()) {
-            Serial.println("AI: No valid move found. Skipping turn.");
             return false; // No valid move found
         }
-        Serial.printf("AI: Best move calculated: X=%d, Rotation=%d.\n", currentMove.x, currentMove.rotation);
     }
 
-    // Step 2: Rotate to the desired position
-    //Serial.printf("AI: Aligning rotation. Current=%d, Target=%d.\n", shape->getRotatePosition(), currentMove.rotation);
+    // Step 2: Check if the shape can still rotate to the desired position
+    if (!shape->canRotateToPosition(currentMove.rotation, blockMap, true)) {
+        currentMove.score = std::numeric_limits<int>::min(); // Force recalculation
+        if (!calculateBestMove()) {
+            return false; // No valid move found
+        }
+    }
+
+    // Rotate to the desired position
     if (!alignShapeRotation()) {
-        //Serial.println("AI: Waiting for rotation alignment.");
         return true; // Wait for the next loop iteration to continue
     }
 
-    // Step 3: Validate rotation before moving horizontally
-    if (shape->getRotatePosition() != currentMove.rotation) {
-        Serial.printf("AI: Rotation mismatch. Current=%d, Target=%d. Recalculating move.\n",
-                      shape->getRotatePosition(), currentMove.rotation);
+    // Step 3: Validate rotation and check if the shape is still movable to the target position
+    if (shape->getRotatePosition() != currentMove.rotation ||
+        !shape->canMoveToPosition(currentMove.x, shape->getBlock(0).getY(), blockMap)) {
         currentMove.score = std::numeric_limits<int>::min(); // Force recalculation
-        return false;
+        if (!calculateBestMove()) {
+            return false; // No valid move found
+        }
+        return true; // Recalculation done, wait for the next loop iteration
     }
 
     // Step 4: Move horizontally to the target column
-    //Serial.printf("AI: Preparing horizontal movement. CurrentX=%d, TargetX=%d.\n", shape->getBlock(0).getX(), currentMove.x);
     if (!moveShapeToTargetColumn()) {
-        //Serial.println("AI: Waiting for horizontal alignment.");
         return true; // Wait for the next loop iteration to continue
     }
 
     // Step 5: Drop the shape once it's aligned
-    //Serial.println("AI: Dropping the shape.");
     dropShape();
 
     return true;
 }
 
+
 bool Game::calculateBestMove() {
     currentMove = tetrisAI.findBestMove(blockMap, *shape);
 
     if (currentMove.score == std::numeric_limits<int>::min()) {
-        Serial.println("AI could not find a valid move.");
+        //Serial.println("AI could not find a valid move.");
         return false;
     }
 
-    Serial.printf("AI move calculated: X=%d, Rotation=%d\n", currentMove.x, currentMove.rotation);
+    //Serial.printf("AI move calculated: X=%d, Rotation=%d\n", currentMove.x, currentMove.rotation);
     return true;
 }
 
@@ -380,13 +366,85 @@ void Game::updateShapePosition(unsigned long currentTime) {
 
 void Game::finalizeShapePlacement() {
     blockMap.addBlocks(shape->getBlockList(), Shape::NUM_BLOCKS);
-    blockMap.printBlockMap();
+    //blockMap.printBlockMap();
 
     int clearedLines = blockMap.clearAndMoveAllFullLines(tft, displayManager.getBackgroundColor());
     if (clearedLines > 0) {
-        Serial.printf("Lines cleared: %d\n", clearedLines);
+       //Serial.printf("Lines cleared: %d\n", clearedLines);
         updateScoreAndLevel(clearedLines);
     } else {
        // Serial.println("No lines cleared.");
     }
 }
+
+void Game::runSimulation(int numSimulations) {
+    for (int i = 0; i < numSimulations; i++) {
+        if (Serial.available() > 0) {
+        String command = Serial.readStringUntil('\n');
+        command.trim();
+        if (command.equalsIgnoreCase("stop")) {
+            //Serial.println("Stopping simulations...");
+            break;
+        }
+    }
+
+        int heightWeight = random(1, 10);
+        int holeWeight = random(1, 10);
+        int bumpinessWeight = random(1, 10);
+        int lineClearWeight = random(1, 10);
+        
+        tetrisAI.setWeights(heightWeight, holeWeight, bumpinessWeight, lineClearWeight);
+
+        resetGame();
+        while (!blockMap.checkGameOver()) {
+            loop();
+        }
+
+        tetrisAI.printSimulationResults(score, linesCleared);
+    }
+}
+
+void Game::runSimulationGridSearch() {
+    // Updated ranges based on your optimized weights
+    float heightWeightRange[] = {-5.0, -4.0, -3.0};      // Penalize high stacks
+    float holeWeightRange[] = {-7.0, -6.0, -5.0};        // Penalize holes
+    float bumpinessWeightRange[] = {-4.0, -3.0, -2.0};   // Penalize unevenness
+    float lineClearWeightRange[] = {9.0, 10.0, 11.0};    // Reward clearing lines
+
+    int numHeightWeights = sizeof(heightWeightRange) / sizeof(heightWeightRange[0]);
+    int numHoleWeights = sizeof(holeWeightRange) / sizeof(holeWeightRange[0]);
+    int numBumpinessWeights = sizeof(bumpinessWeightRange) / sizeof(bumpinessWeightRange[0]);
+    int numLineClearWeights = sizeof(lineClearWeightRange) / sizeof(lineClearWeightRange[0]);
+
+    // Iterate over all combinations of weights
+    for (int h = 0; h < numHeightWeights; h++) {
+        for (int ho = 0; ho < numHoleWeights; ho++) {
+            for (int b = 0; b < numBumpinessWeights; b++) {
+                for (int l = 0; l < numLineClearWeights; l++) {
+                    // Set weights
+                    tetrisAI.setWeights(
+                        heightWeightRange[h],
+                        holeWeightRange[ho],
+                        bumpinessWeightRange[b],
+                        lineClearWeightRange[l]
+                    );
+
+                    // Reset game
+                    resetGame();
+
+                    // Run game until game over
+                    while (!blockMap.checkGameOver()) {
+                        loop();
+                    }
+
+                    // Print results
+                    tetrisAI.printSimulationResults(score, linesCleared);
+                }
+            }
+        }
+    }
+
+    Serial.println("Grid Search Completed.");
+}
+
+

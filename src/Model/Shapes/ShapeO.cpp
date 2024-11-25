@@ -12,5 +12,5 @@ ShapeO::ShapeO() : Shape() {
     }
     
     generateShape();
-    Serial.println("ShapeO: created");
+    //Serial.println("ShapeO: created");
 }

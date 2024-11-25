@@ -34,6 +34,6 @@ constexpr int MAX_NAME_LENGTH = 6; // Ensure this is constexpr
 constexpr int maxHighScores = 15;  // Ensure this is constexpr
 
 // Level speed table (values in milliseconds)
-constexpr int levelSpeeds[] = {500, 450, 400, 350, 300, 250, 200, 190, 180, 170, 160, 150, 140, 130, 120, 110, 100, 90, 80, 60, 50};
+constexpr int levelSpeeds[] = {250};
 
 #endif // CONFIG_H

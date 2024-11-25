@@ -28,5 +28,5 @@ ShapeL::ShapeL() : Shape() {
 
 
     generateShape();
-    Serial.println("ShapeL: created");
+    //Serial.println("ShapeL: created");
 }

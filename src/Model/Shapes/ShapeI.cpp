@@ -31,5 +31,5 @@ ShapeI::ShapeI() : Shape() {
     setPoint(3, 2, Point(0, -2));
 
     generateShape();
-    Serial.println("ShapeI: created");
+    //Serial.println("ShapeI: created");
 }

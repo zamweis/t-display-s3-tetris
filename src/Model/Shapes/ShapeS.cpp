@@ -27,5 +27,5 @@ ShapeS::ShapeS() : Shape() {
     setPoint(3, 2, Point(-1, 1));
 
     generateShape();
-    Serial.println("ShapeS: created");
+    //Serial.println("ShapeS: created");
 }

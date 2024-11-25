@@ -28,5 +28,5 @@ ShapeJ::ShapeJ() : Shape() {
     setPoint(3, 2, Point(1, 1));
 
     generateShape();
-    Serial.println("ShapeJ: created");
+    //Serial.println("ShapeJ: created");
 }

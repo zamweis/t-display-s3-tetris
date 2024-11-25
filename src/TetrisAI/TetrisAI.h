@@ -17,6 +17,9 @@ public:
     TetrisAI();
     ~TetrisAI();
 
+    void setWeights(float heightWeight, float holeWeight, float bumpinessWeight, float lineClearWeight);
+    void printSimulationResults(int score, int linesCleared);
+
     // Method to find the best move given the current state of the game
     Move findBestMove(const BlockMap& blockMap, const Shape& shape);
 

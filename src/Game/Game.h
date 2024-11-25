@@ -14,6 +14,8 @@ public:
     Game(TFT_eSPI& tft, DisplayManager& displayManager, HighScoreManager& highScoreManager, InputHandler& inputHandler);
     void setup();
     void loop();
+    void runSimulation(int numSimulations);
+    void runSimulationGridSearch();
 
 private:
     // Member variables
@@ -25,7 +27,7 @@ private:
     Shape* shape = nullptr;      // Pointer to the current shape
     unsigned long lastMoveDownTime = 0; // Time tracking for gravity
     unsigned long lastAIMoveTime = 0;   // Time tracking for AI move interval
-    unsigned long aiMoveInterval = 300; // Interval for AI moves
+    unsigned long aiMoveInterval = 0; // Interval for AI moves
     int score = 0;               // Current game score
     int level = 1;               // Current game level
     int linesCleared = 0;        // Total lines cleared
@@ -49,7 +51,6 @@ private:
     void updateScoreAndLevel(int clearedLines);
 
     // Input and movement handling
-    void handleShapeMovement(unsigned long currentTime);
     void handleButtonState(ButtonState &state, int buttonPin, unsigned long currentTime, void (Shape::*moveFunc)(BlockMap &), void (Shape::*rotateFunc)(BlockMap &));
 
     // AI and movement logic

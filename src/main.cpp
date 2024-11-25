@@ -17,15 +17,19 @@ Game game(tft, displayManager, highScoreManager, inputHandler);
 
 void setup() {
     randomSeed(analogRead(0));
-    Serial.begin(115200);
+    Serial.begin(115200); // Initialize serial communication
     tft.init();
     pinMode(BACKLIGHT_PIN, OUTPUT);
     analogWrite(BACKLIGHT_PIN, 100);
     tft.setRotation(0);
-    game.setup();
+
+    // Run grid search
+    Serial.println("Starting Grid Search...");
+    game.runSimulationGridSearch();
+    Serial.println("Grid Search completed. Entering normal game loop...");
 }
 
 void loop() {
+    // Normal game loop
     game.loop();
 }
- 
