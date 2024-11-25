@@ -180,7 +180,7 @@ void Game::handleButtonState(ButtonState &state, int buttonPin, unsigned long cu
 
 bool Game::executeAIStep() {
     if (!shape) {
-        return false;
+        return false; // No active shape to operate on
     }
 
     // Step 1: Calculate the best move if not already done
@@ -195,22 +195,7 @@ bool Game::executeAIStep() {
     bool canMoveToPosition = shape->canMoveToPosition(currentMove.x, shape->getBlock(0).getY(), blockMap);
     bool canRotateToPosition = shape->canRotateToPosition(currentMove.rotation, blockMap, true);
 
-    if ( !canRotateToPosition) {
-        if (!canMoveToPosition) {
-            Serial.printf("Move to position failed: Target X=%d, Y=%d. Current block positions:\n", currentMove.x, shape->getBlock(0).getY());
-            for (int i = 0; i < 4; ++i) {
-                auto block = shape->getBlock(i);
-                Serial.printf(" - Block %d at X=%d, Y=%d\n", i, block.getX(), block.getY());
-            }
-        }
-        if (!canRotateToPosition) {
-            Serial.printf("Rotation to position failed: Target Rotation=%d. Current shape orientation:\n", currentMove.rotation);
-            for (int i = 0; i < 4; ++i) {
-                auto block = shape->getBlock(i);
-                Serial.printf(" - Block %d at X=%d, Y=%d\n", i, block.getX(), block.getY());
-            }
-        }
-
+    if (!canMoveToPosition || !canRotateToPosition) {
         Serial.println("Current best move invalid. Recalculating...");
         currentMove.score = std::numeric_limits<int>::min(); // Force recalculation
         if (!calculateBestMove()) {
@@ -221,10 +206,7 @@ bool Game::executeAIStep() {
     }
 
     // Step 3: Align shape's rotation
-    Serial.printf("Current Rotation: %d, Target Rotation: %d\n", shape->getRotatePosition(), currentMove.rotation);
-    if (shape->getRotatePosition() == currentMove.rotation) {
-        Serial.println("Rotation alignment not needed. Already aligned.");
-    } else {
+    if (shape->getRotatePosition() != currentMove.rotation) {
         if (!alignShapeRotation()) {
             Serial.println("Alignment of shape's rotation in progress...");
             return true; // Wait for the next loop iteration
@@ -232,17 +214,35 @@ bool Game::executeAIStep() {
     }
 
     // Step 4: Move horizontally to the target column
-    if (!moveShapeToTargetColumn()) {
-        Serial.println("Horizontal movement towards target column in progress...");
-        return true; // Wait for the next loop iteration
+    if (shape->getBlock(0).getX() != currentMove.x) {
+        if (!moveShapeToTargetColumn()) {
+            Serial.println("Horizontal movement towards target column in progress...");
+            return true; // Wait for the next loop iteration
+        }
     }
 
-    // Step 5: Drop the shape once aligned
-    dropShape();
-    Serial.println("Shape successfully dropped.");
+    // Step 5: Move the shape downward by one block
+    if (shape->isMovableDownWards(blockMap)) {
+        shape->eraseShape(tft, displayManager.getBackgroundColor());
+        shape->moveDown(blockMap);
+        shape->drawShape(tft);
+        Serial.println("Shape moved down one block.");
+
+        // Recalculate the move after downward movement
+        currentMove.score = std::numeric_limits<int>::min(); // Force recalculation for next step
+        return true; // Continue the process in the next iteration
+    }
+
+    // Step 6: Finalize placement if no further downward movement is possible
+    finalizeShapePlacement();
+    delete shape;
+    shape = nullptr;
+    currentMove = {0, 0, std::numeric_limits<double>::lowest()}; // Reset the move for the next shape
+    Serial.println("Shape placed and finalized.");
 
     return true;
 }
+
 
 bool Game::calculateBestMove() {
     currentMove = tetrisAI.findBestMove(blockMap, *shape);
