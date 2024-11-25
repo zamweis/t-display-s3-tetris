@@ -37,11 +37,15 @@ void TetrisAI::printSimulationResults(int score, int linesCleared) {
 // Find the best move using heuristic evaluation
 TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& shape) {
     Move bestMove = {0, 0, std::numeric_limits<double>::lowest()};
+    int currentRotation = shape.getRotatePosition(); // Get the current rotation of the shape
 
     for (int rotation = 0; rotation < 4; ++rotation) {
         Shape simulatedShape = shape;
 
-        for (int i = 0; i < rotation; ++i) {
+        // Calculate relative rotation steps
+        int rotationSteps = (rotation - currentRotation + 4) % 4;
+
+        for (int i = 0; i < rotationSteps; ++i) {
             if (!simulatedShape.isRotatableClockwise(blockMap)) break;
             simulatedShape.rotateClockwise(blockMap);
         }

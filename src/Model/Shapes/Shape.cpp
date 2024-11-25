@@ -358,7 +358,7 @@ void Shape::eraseShape(TFT_eSPI& tft, uint16_t backgroundColor) const {
 }
 
 void Shape::moveToLowestBlockkAtMinusOne() {
-    Block lowerstBlock = getHighestBlock(); // Assuming this function finds the block with the highest y value in the shape
+    Block lowerstBlock = getLowestBlock(); // Assuming this function finds the block with the highest y value in the shape
 
     int yOffset = lowerstBlock.getY() - (-1); // Calculate offset to move the highest block to -1
 
