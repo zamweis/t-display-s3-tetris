@@ -23,10 +23,10 @@ void setup() {
     analogWrite(BACKLIGHT_PIN, 100);
     tft.setRotation(0);
 
-    // Run grid search
-    Serial.println("Starting Grid Search...");
-    game.runSimulationGridSearch();
-    Serial.println("Grid Search completed. Entering normal game loop...");
+    // Run genetic algorithm
+    Serial.println("Starting Genetic Algorithm...");
+    game.runGeneticAlgorithm();
+    Serial.println("Genetic Algorithm completed. Entering normal game loop...");
 }
 
 void loop() {

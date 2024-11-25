@@ -16,6 +16,7 @@ public:
     void loop();
     void runSimulation(int numSimulations);
     void runSimulationGridSearch();
+    void runGeneticAlgorithm();
 
 private:
     // Member variables
@@ -60,6 +61,20 @@ private:
     bool moveShapeToTargetColumn(); // Moves the shape horizontally to the target column
     void dropShape(); // Drops the shape to finalize placement
     void finalizeShapePlacement();
+
+    // GA helper methods and structures
+    struct Chromosome {
+        float heightWeight;
+        float holeWeight;
+        float bumpinessWeight;
+        float lineClearWeight;
+        int score;
+        int linesCleared;
+    };
+
+    float randomFloat(float min, float max);
+    Chromosome crossover(const Chromosome& parent1, const Chromosome& parent2);
+    void mutate(Chromosome& chromo, float mutationRate, float minWeight, float maxWeight);
 };
 
 #endif // GAME_H
