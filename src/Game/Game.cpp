@@ -180,62 +180,69 @@ void Game::handleButtonState(ButtonState &state, int buttonPin, unsigned long cu
 
 bool Game::executeAIStep() {
     if (!shape) {
-        //Serial.println("Debug: No active shape to operate on.");
+        // No active shape to operate on
         return false;
     }
 
-    //Serial.printf("Debug: Current AI Move -> X: %d, Rotation: %d, Score: %.2f, RotateClockwise: %s\n",
-    //              currentMove.x, currentMove.rotation, currentMove.score,
-    //              currentMove.rotateClockwise ? "true" : "false");
-
-    // Step 1: Align the shape's rotation
-    if (shape->getRotatePosition() != currentMove.rotation &&  shape->canRotateToPosition(currentMove.rotation, blockMap, currentMove.rotateClockwise)) {
-        //Serial.printf("Debug: Aligning rotation. Current: %d, Target: %d\n",
-        //              shape->getRotatePosition(), currentMove.rotation);
+    // Align the shape's rotation
+    if (shape->getRotatePosition() != currentMove.rotation &&
+        shape->canRotateToPosition(currentMove.rotation, blockMap, currentMove.rotateClockwise)) {
         shape->eraseShape(tft, displayManager.getBackgroundColor());
 
         if (currentMove.rotateClockwise) {
-            //Serial.println("Debug: Rotating clockwise.");
             shape->rotateClockwise(blockMap);
         } else {
-            //Serial.println("Debug: Rotating counter-clockwise.");
             shape->rotateAntiClockwise(blockMap);
         }
 
         shape->drawShape(tft);
         return true; // Continue aligning rotation in the next loop iteration
-    } else {
-        //Serial.println("Debug: Rotation to target position is not possible.");
-        // Break the loop or reset AI calculation
     }
 
-    // Step 2: Move horizontally to the target column
+    // Move horizontally to the target column
     int currentX = shape->getBlock(0).getX();
+
+    // Check if the shape can move horizontally before attempting the move
     if (currentX != currentMove.x) {
-        //Serial.printf("Debug: Moving horizontally. Current X: %d, Target X: %d\n", currentX, currentMove.x);
         shape->eraseShape(tft, displayManager.getBackgroundColor());
 
         if (currentX < currentMove.x) {
-            //Serial.println("Debug: Moving right.");
-            shape->moveRight();
+            // Attempt to move right
+            if (shape->isMovableToTheRight(blockMap)) {
+                shape->moveRight();
+            } else {
+                // Recalculate a new best move if moving right is not possible
+                if (!calculateBestMove()) {
+                    Serial.println("Debug: Failed to calculate a new best move.");
+                    return false;
+                }
+                return true;
+            }
         } else {
-            //Serial.println("Debug: Moving left.");
-            shape->moveLeft();
+            // Attempt to move left
+            if (shape->isMovableToTheLeft(blockMap)) {
+                shape->moveLeft();
+            } else {
+                // Recalculate a new best move if moving left is not possible
+                if (!calculateBestMove()) {
+                    Serial.println("Debug: Failed to calculate a new best move.");
+                    return false;
+                }
+                return true;
+            }
         }
 
         shape->drawShape(tft);
         return true; // Continue horizontal movement in the next loop iteration
     }
 
-    // Step 3: Drop the shape one block down if possible
+    // Drop the shape one block down if possible
     if (shape->isMovableDownWards(blockMap)) {
-        //Serial.println("Debug: Dropping shape one block down.");
         shape->eraseShape(tft, displayManager.getBackgroundColor());
         shape->moveDown();
         shape->drawShape(tft);
 
         // Recalculate the best move after moving down
-        //Serial.println("Debug: Recalculating best move after moving down.");
         if (!calculateBestMove()) {
             Serial.println("Debug: Failed to recalculate the best move.");
             return false;
@@ -244,8 +251,7 @@ bool Game::executeAIStep() {
         return true; // Wait for the next loop iteration
     }
 
-    // Step 4: Finalize the shape's placement
-    //Serial.println("Debug: Finalizing shape placement.");
+    // Finalize the shape's placement
     finalizeShapePlacement();
     delete shape;
     shape = nullptr;
@@ -261,7 +267,10 @@ bool Game::calculateBestMove() {
         return false;
     }
 
-    //Serial.printf("AI move calculated: X=%d, Rotation=%d\n", currentMove.x, currentMove.rotation);
+    //Serial.printf("AI Best Move Calculated: Target X=%d, Rotation=%d, Score=%.2f, RotateClockwise=%s\n",
+    //            currentMove.x, currentMove.rotation, currentMove.score,
+    //            currentMove.rotateClockwise ? "true" : "false");
+
     return true;
 }
 
@@ -521,6 +530,7 @@ void Game::runGeneticAlgorithm() {
 
             // Run game loop until game over
             while (!blockMap.checkGameOver()) {
+                delay(20);
                 if (!shape) {
                     createNewShape();
                 } else {
