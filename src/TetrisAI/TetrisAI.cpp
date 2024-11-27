@@ -118,6 +118,7 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
     return bestMove;
 }
 
+
 double TetrisAI::calculateScore(const BlockMap& blockMap) {
     double totalHeight = 0.0;
     double holes = 0.0;

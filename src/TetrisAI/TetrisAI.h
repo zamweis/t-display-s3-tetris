@@ -40,7 +40,6 @@ private:
     void adjustHeuristicWeights(const BlockMap& blockMap); // Dynamically adjust weights
     double evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation);
     double calculateScore(const BlockMap& blockMap);
-    int normalizeRotation(int targetRotation, int currentRotation, int totalRotations);
 };
 
 #endif // TETRISAI_H
