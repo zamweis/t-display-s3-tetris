@@ -42,10 +42,10 @@ public:
     void setBlock(const Block& block, int index);
     int getXPosition(int index) const;
     int getYPosition(int index) const;
-    const Block& getLeftBlock() const;
-    const Block& getRightBlock() const;
-    const Block& getHighestBlock() const;
-    const Block& getLowestBlock() const;
+    Block getLeftBlock() const;
+    Block getRightBlock() const;
+    Block getHighestBlock();
+    Block getLowestBlock();
     Block getMaintBlock();
     void generateShape();
 
@@ -54,7 +54,7 @@ public:
     void setPoint(int x, int y, const Point& point);
     std::pair<int, int> getHorizontalBounds(const BlockMap& blockMap) const;
     void setPosition(int x, int y);
-    int getWidth() const;
+    int getWidth();
 
     // Rotation Management
     int getNumRotations() const { return numRotations; }

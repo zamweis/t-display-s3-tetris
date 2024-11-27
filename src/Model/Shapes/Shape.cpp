@@ -188,10 +188,14 @@ bool Shape::checkRotationValidity(int tmpRotatePosition, const BlockMap& blockMa
     return true;
 }
 
-const Block& Shape::getLeftBlock() const {
-    return *std::min_element(blockList, blockList + NUM_BLOCKS, [](const Block& a, const Block& b) {
-        return a.getX() < b.getX();
-    });
+Block Shape::getLeftBlock() const {
+    Block leftBlock = blockList[0];
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
+        if (leftBlock.getX() > blockList[i].getX()) {
+            leftBlock = blockList[i];
+        }
+    }
+    return std::move(leftBlock);
 }
 
 bool Shape::isMovableToTheLeft(const BlockMap& blockMap) {
@@ -230,10 +234,14 @@ Block Shape::getMaintBlock() {
     return mainBlock;
 }
 
-const Block& Shape::getRightBlock() const {
-    return *std::max_element(blockList, blockList + NUM_BLOCKS, [](const Block& a, const Block& b) {
-        return a.getX() < b.getX();
-    });
+Block Shape::getRightBlock() const {
+    Block rightBlock = blockList[0];
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
+        if (rightBlock.getX() < blockList[i].getX()) {
+            rightBlock = blockList[i];
+        }
+    }
+    return rightBlock;
 }
 
 bool Shape::isMovableToTheRight(const BlockMap& blockMap) {
@@ -267,16 +275,24 @@ void Shape::moveRight() {
     }
 }
 
-const Block& Shape::getLowestBlock() const {
-    return *std::max_element(blockList, blockList + NUM_BLOCKS, [](const Block& a, const Block& b) {
-        return a.getY() < b.getY();
-    });
+Block Shape::getLowestBlock() {
+    Block lowestBlock = blockList[0];
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
+        if (lowestBlock.getY() < blockList[i].getY()) {
+            lowestBlock = blockList[i];
+        }
+    }
+    return lowestBlock;
 }
 
-const Block& Shape::getHighestBlock() const {
-    return *std::min_element(blockList, blockList + NUM_BLOCKS, [](const Block& a, const Block& b) {
-        return a.getY() < b.getY(); // Smaller Y value indicates a higher block
-    });
+Block Shape::getHighestBlock() {
+    Block highestBlock = blockList[0];
+    for (int i = 1; i < NUM_BLOCKS; ++i) {
+        if (highestBlock.getY() > blockList[i].getY()) {
+            highestBlock = blockList[i];
+        }
+    }
+    return highestBlock;
 }
 
 bool Shape::isMovableDownWards(const BlockMap& blockMap) {
@@ -346,11 +362,16 @@ void Shape::moveToLowestBlockkAtMinusOne() {
 }
 
 // In Shape.cpp or relevant source file
-int Shape::getWidth() const {
-    auto [minIt, maxIt] = std::minmax_element(blockList, blockList + NUM_BLOCKS, [](const Block& a, const Block& b) {
-        return a.getX() < b.getX();
-    });
-    return maxIt->getX() - minIt->getX() + 1;
+int Shape::getWidth() {
+   std::set<int> uniqueXCoordinates;
+
+    // Collect unique x-coordinates of all blocks
+    for (const Block& block : blockList) {
+        uniqueXCoordinates.insert(block.getX());
+    }
+
+    // The width is the number of unique x-coordinates
+    return uniqueXCoordinates.size();
 }
 
 void Shape::setPosition(int x, int y) {

@@ -15,8 +15,10 @@ BlockMap::BlockMap() {
 BlockMap::~BlockMap() {
     for (int x = 0; x < MAP_WIDTH; ++x) {
         for (int y = 0; y < MAP_HEIGHT; ++y) {
-            delete map[x][y];
-            map[x][y] = nullptr;
+            if (map[x][y] != nullptr) {
+                delete map[x][y];
+                map[x][y] = nullptr;
+            }
         }
     }
 }
@@ -25,7 +27,11 @@ BlockMap::~BlockMap() {
 BlockMap::BlockMap(const BlockMap& other) {
     for (int x = 0; x < MAP_WIDTH; ++x) {
         for (int y = 0; y < MAP_HEIGHT; ++y) {
-            map[x][y] = other.map[x][y] ? new Block(*other.map[x][y]) : nullptr;
+            if (other.map[x][y] != nullptr) {
+                map[x][y] = new Block(*other.map[x][y]); // Deep copy
+            } else {
+                map[x][y] = nullptr;
+            }
         }
     }
 }
@@ -33,10 +39,21 @@ BlockMap::BlockMap(const BlockMap& other) {
 // Assignment Operator
 BlockMap& BlockMap::operator=(const BlockMap& other) {
     if (this != &other) {
+        // Free existing blocks
         for (int x = 0; x < MAP_WIDTH; ++x) {
             for (int y = 0; y < MAP_HEIGHT; ++y) {
                 delete map[x][y];
-                map[x][y] = other.map[x][y] ? new Block(*other.map[x][y]) : nullptr;
+                map[x][y] = nullptr;
+            }
+        }
+        // Copy new blocks
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            for (int y = 0; y < MAP_HEIGHT; ++y) {
+                if (other.map[x][y] != nullptr) {
+                    map[x][y] = new Block(*other.map[x][y]); // Deep copy
+                } else {
+                    map[x][y] = nullptr;
+                }
             }
         }
     }
@@ -44,20 +61,23 @@ BlockMap& BlockMap::operator=(const BlockMap& other) {
 }
 
 void BlockMap::addBlock(Block* block) {
-    if (!block) return;
-    int x = block->getX(), y = block->getY();
-    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
-        delete map[x][y];
-        map[x][y] = block;
+    if (block != nullptr && block->getX() >= 0 && block->getX() < MAP_WIDTH &&
+        block->getY() >= 0 && block->getY() < MAP_HEIGHT) {
+        // Free existing block memory (if any)
+        if (map[block->getX()][block->getY()] != nullptr) {
+            delete map[block->getX()][block->getY()]; // Prevent memory leaks
+        }
+        // Assign new block pointer
+        map[block->getX()][block->getY()] = block;
     } else {
-        delete block; // Out-of-bounds cleanup
+        delete block; // Clean up the block if it's out of bounds
     }
 }
 
 void BlockMap::addBlocks(Block blockList[], int size) {
     for (int i = 0; i < size; ++i) {
-        Block* newBlock = new Block(blockList[i]);
-        addBlock(newBlock);
+        // Creating a copy using new is fine, but you must ensure ownership and proper cleanup
+        addBlock(new Block(blockList[i])); // Copy constructor should create a deep copy
     }
 }
 
@@ -156,8 +176,11 @@ void BlockMap::moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, uin
     }
 }
 
+// Clears all full lines and moves all lines above down by the number of cleared lines
 int BlockMap::clearAndMoveAllFullLines(TFT_eSPI& tft, uint16_t backgroundColor) {
     int totalClearedLines = 0;
+
+    // Traverse from bottom to top to avoid index shifting issues
     for (int y = MAP_HEIGHT - 1; y >= 0; --y) {
         if (isLineFull(y)) {
             clearLine(y, tft, backgroundColor);
@@ -185,9 +208,12 @@ int BlockMap::getAmoutOfFullLines() const {
 
 void BlockMap::drawAllBlocks(TFT_eSPI& tft) {
     for (int y = 0; y < MAP_HEIGHT; ++y) {
+        if (isLineEmpty(y)) {
+            continue; // Skip drawing this line if it is empty
+        }
         for (int x = 0; x < MAP_WIDTH; ++x) {
-            if (map[x][y]) {
-                map[x][y]->draw(tft);
+            if (map[x][y] != nullptr) {
+                map[x][y]->draw(tft); // Draw the block if present
             }
         }
     }
@@ -202,21 +228,6 @@ bool BlockMap::checkGameOver() const {
     return false;
 }
 
-int BlockMap::getTotalHoles() const {
-    int totalHoles = 0;
-    for (int x = 0; x < MAP_WIDTH; ++x) {
-        bool blockFound = false;
-        for (int y = MAP_HEIGHT - 1; y >= 0; --y) {
-            if (map[x][y]) {
-                blockFound = true;
-            } else if (blockFound) {
-                ++totalHoles;
-            }
-        }
-    }
-    return totalHoles;
-}
-
 int BlockMap::getColumnHeight(int x) const {
     for (int y = 0; y < MAP_HEIGHT; ++y) {
         if (map[x][y] != nullptr) {
@@ -226,14 +237,28 @@ int BlockMap::getColumnHeight(int x) const {
     return 0; // Column is empty
 }
 
+int BlockMap::getTotalHoles() const {
+    int totalHoles = 0;
+    for (int x = 0; x < MAP_WIDTH; ++x) {
+        bool blockFound = false;
+        for (int y = 0; y < MAP_HEIGHT; ++y) {
+            if (map[x][y] != nullptr) {
+                blockFound = true; // Start counting holes after the first block
+            } else if (blockFound) {
+                totalHoles++; // Count holes only after encountering a block
+            }
+        }
+    }
+    return totalHoles;
+}
+
 int BlockMap::getBumpiness() const {
     int bumpiness = 0;
-    std::vector<int> heights(MAP_WIDTH);
-    for (int x = 0; x < MAP_WIDTH; ++x) {
-        heights[x] = getColumnHeight(x);
-    }
+    int prevHeight = getColumnHeight(0);
     for (int x = 1; x < MAP_WIDTH; ++x) {
-        bumpiness += std::abs(heights[x] - heights[x - 1]);
+        int currHeight = getColumnHeight(x);
+        bumpiness += abs(currHeight - prevHeight);
+        prevHeight = currHeight;
     }
     return bumpiness;
 }
