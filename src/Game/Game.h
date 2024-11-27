@@ -70,11 +70,17 @@ private:
         float lineClearWeight;
         int score;
         int linesCleared;
+        float fitness; // Fitness value for genetic selection
     };
 
     float randomFloat(float min, float max);
     Chromosome crossover(const Chromosome& parent1, const Chromosome& parent2);
     void mutate(Chromosome& chromo, float mutationRate, float minWeight, float maxWeight);
+    void gaussianMutate(Chromosome& chromo, float mutationRate, float minWeight, float maxWeight);
+    float calculateFitness(const Chromosome& chromo);
+    Game::Chromosome weightedCrossover(const Chromosome& parent1, const Chromosome& parent2);
+    float randomGaussian(float mean, float stddev);
+
 };
 
 #endif // GAME_H

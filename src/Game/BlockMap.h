@@ -26,7 +26,6 @@ public:
     bool isFieldEmpty(int x, int y) const;
     Block* getBlock(int x, int y) const;
     bool checkGameOver() const;
-
     // Line operations
     void clearLine(int lineIndex, TFT_eSPI& tft, uint16_t backgroundColor);
     bool isLineFull(int lineIndex) const;

@@ -118,37 +118,45 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
     return bestMove;
 }
 
-
-// Heuristic evaluation score calculation
 double TetrisAI::calculateScore(const BlockMap& blockMap) {
     double totalHeight = 0.0;
     double holes = 0.0;
     double bumpiness = 0.0;
     double clearedLines = static_cast<double>(blockMap.getAmoutOfFullLines());
-
     int previousHeight = 0;
 
     for (int x = 0; x < BlockMap::MAP_WIDTH; ++x) {
         int columnHeight = blockMap.getColumnHeight(x);
-        totalHeight += columnHeight;
+        totalHeight += pow(columnHeight, heightExponent);
 
         for (int y = BlockMap::MAP_HEIGHT - columnHeight; y < BlockMap::MAP_HEIGHT; ++y) {
-            if (blockMap.getBlock(x, y) == nullptr && blockMap.getBlock(x, y - 1) != nullptr) {
-                holes++;
+            if (blockMap.getBlock(x, y) == nullptr) {
+                // Left-neighbor holes
+                if (x > 0 && blockMap.getBlock(x - 1, y) != nullptr) {
+                    holes += pow(BlockMap::MAP_HEIGHT - y, holeLeftExponent);
+                }
+
+                // Right-neighbor holes
+                if (x < BlockMap::MAP_WIDTH - 1 && blockMap.getBlock(x + 1, y) != nullptr) {
+                    holes += pow(BlockMap::MAP_HEIGHT - y, holeRightExponent);
+                }
+
+                // Under-topmost holes
+                if (y > 0 && blockMap.getBlock(x, y - 1) != nullptr) {
+                    holes += pow(BlockMap::MAP_HEIGHT - y, holeUnderExponent);
+                }
             }
         }
 
+        // Bumpiness
         if (x > 0) {
             bumpiness += abs(columnHeight - previousHeight);
         }
-
         previousHeight = columnHeight;
     }
 
-    double normalizedHeight = totalHeight / BlockMap::MAP_WIDTH;
-
     return (clearedLines * lineClearWeight) +
-           (normalizedHeight * heightWeight) +
+           (totalHeight * heightWeight) +
            (holes * holeWeight) +
            (bumpiness * bumpinessWeight);
 }

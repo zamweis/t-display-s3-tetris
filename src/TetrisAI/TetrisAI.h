@@ -26,6 +26,11 @@ public:
 
 
 private:
+    float heightExponent = 1.0;       // Default exponent for height scoring
+    float holeUnderExponent = 2.0;   // Exponent for holes below filled blocks
+    float holeLeftExponent = 1.5;    // Exponent for holes left of blocks
+    float holeRightExponent = 1.5;   // Exponent for holes right of blocks
+
     // Heuristic weights (can be adjusted for different AI behavior)
     double lineClearWeight;
     double heightWeight;
@@ -35,7 +40,7 @@ private:
     void adjustHeuristicWeights(const BlockMap& blockMap); // Dynamically adjust weights
     double evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation);
     double calculateScore(const BlockMap& blockMap);
-    double calculateConnectivity(const BlockMap& blockMap, const Shape& shape);
+    int normalizeRotation(int targetRotation, int currentRotation, int totalRotations);
 };
 
 #endif // TETRISAI_H
