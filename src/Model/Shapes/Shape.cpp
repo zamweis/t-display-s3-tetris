@@ -188,7 +188,7 @@ bool Shape::checkRotationValidity(int tmpRotatePosition, const BlockMap& blockMa
     return true;
 }
 
-Block Shape::getLeftBlock() {
+Block Shape::getLeftBlock() const {
     Block leftBlock = blockList[0];
     for (int i = 1; i < NUM_BLOCKS; ++i) {
         if (leftBlock.getX() > blockList[i].getX()) {
@@ -198,7 +198,7 @@ Block Shape::getLeftBlock() {
     return std::move(leftBlock);
 }
 
-bool Shape::isMovableToTheLeft(BlockMap& blockMap) {
+bool Shape::isMovableToTheLeft(const BlockMap& blockMap) {
     if (getLeftBlock().getX() == 0) {
         //Serial.println("Movement to the left is not possible: shape is at the left boundary.");
         return false;
@@ -213,7 +213,7 @@ bool Shape::isMovableToTheLeft(BlockMap& blockMap) {
     return true;
 }
 
-bool Shape::isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap) {
+bool Shape::isInCollisionWithLeftBlock(const Block& block, const BlockMap& blockMap) {
     bool result = false;
     int x = block.getX() - 1;
     int y = block.getY();
@@ -223,11 +223,9 @@ bool Shape::isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap) {
     return result;
 }
 
-void Shape::moveLeft(BlockMap& blockMap) {
-    if (isMovableToTheLeft(blockMap)) {
-        for (int i = 0; i < NUM_BLOCKS; ++i) {
-            blockList[i].moveLeft();
-        }
+void Shape::moveLeft() {
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        blockList[i].moveLeft();
     }
 }
 
@@ -236,7 +234,7 @@ Block Shape::getMaintBlock() {
     return mainBlock;
 }
 
-Block Shape::getRightBlock() {
+Block Shape::getRightBlock() const {
     Block rightBlock = blockList[0];
     for (int i = 1; i < NUM_BLOCKS; ++i) {
         if (rightBlock.getX() < blockList[i].getX()) {
@@ -246,7 +244,7 @@ Block Shape::getRightBlock() {
     return rightBlock;
 }
 
-bool Shape::isMovableToTheRight(BlockMap& blockMap) {
+bool Shape::isMovableToTheRight(const BlockMap& blockMap) {
     if (getRightBlock().getX() == MAP_WIDTH - 1) {
         //Serial.println("Movement to the right is not possible: shape is at the right boundary.");
         return false;
@@ -261,7 +259,7 @@ bool Shape::isMovableToTheRight(BlockMap& blockMap) {
     return true;
 }
 
-bool Shape::isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap) {
+bool Shape::isInCollisionWithRightBlock(const Block& block, const BlockMap& blockMap) {
     bool result = false;
     int x = block.getX() + 1;
     int y = block.getY();
@@ -271,11 +269,9 @@ bool Shape::isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap) 
     return result;
 }
 
-void Shape::moveRight(BlockMap& blockMap) {
-    if (isMovableToTheRight(blockMap)) {
-        for (int i = 0; i < NUM_BLOCKS; ++i) {
-            blockList[i].moveRight();
-        }
+void Shape::moveRight() {
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        blockList[i].moveRight();
     }
 }
 
@@ -299,7 +295,7 @@ Block Shape::getHighestBlock() {
     return highestBlock;
 }
 
-bool Shape::isMovableDownWards(BlockMap& blockMap) {
+bool Shape::isMovableDownWards(const BlockMap& blockMap) {
     if (getLowestBlock().getY() >= MAP_HEIGHT - 1) {
         //Serial.println("Movement downwards is not possible: shape is at the bottom boundary.");
         return false;
@@ -314,7 +310,7 @@ bool Shape::isMovableDownWards(BlockMap& blockMap) {
     return true;
 }
 
-bool Shape::isInCollisionWithLowerBlock(const Block& block, BlockMap& blockMap) {
+bool Shape::isInCollisionWithLowerBlock(const Block& block, const BlockMap& blockMap) {
     bool result = false;
     int x = block.getX();
     int y = block.getY() + 1;
@@ -324,17 +320,15 @@ bool Shape::isInCollisionWithLowerBlock(const Block& block, BlockMap& blockMap) 
     return result;
 }
 
-void Shape::moveDown(BlockMap& blockMap) {
-    if (isMovableDownWards(blockMap)) {
-        for (auto& block : blockList) {
-            block.moveDown();
-        }
+void Shape::moveDown() {
+    for (auto& block : blockList) {
+        block.moveDown();
     }
 }
 
-void Shape::fallDown(BlockMap& blockMap) {
+void Shape::fallDown(const BlockMap& blockMap) {
     while (isMovableDownWards(blockMap)) {
-        moveDown(blockMap);
+        moveDown();
     }
 }
 
@@ -388,19 +382,9 @@ void Shape::setPosition(int x, int y) {
 }
 
 std::pair<int, int> Shape::getHorizontalBounds(const BlockMap& blockMap) const {
-    int minX = BlockMap::MAP_WIDTH;
-    int maxX = 0;
-
-    for (int i = 0; i < NUM_BLOCKS; ++i) {
-        int blockX = blockList[0].getX() + positions[rotatePos][i].getX();
-
-        if (blockX < minX) {
-            minX = blockX;
-        }
-        if (blockX > maxX) {
-            maxX = blockX;
-        }
-    }
+    // Use the leftmost and rightmost blocks to determine the bounds
+    int minX = getLeftBlock().getX();
+    int maxX = getRightBlock().getX();
 
     // Adjust bounds to fit within the grid
     minX = std::max(0, minX);

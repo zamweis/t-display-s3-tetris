@@ -224,7 +224,7 @@ bool Game::executeAIStep() {
     // Step 5: Move the shape downward by one block
     if (shape->isMovableDownWards(blockMap)) {
         shape->eraseShape(tft, displayManager.getBackgroundColor());
-        shape->moveDown(blockMap);
+        shape->moveDown();
         shape->drawShape(tft);
         Serial.println("Shape moved down one block.");
 
@@ -334,12 +334,12 @@ bool Game::moveShapeToTargetColumn() {
     if (shapeX != currentMove.x) {
         if (shapeX < currentMove.x && shape->isMovableToTheRight(blockMap)) {
             shape->eraseShape(tft, displayManager.getBackgroundColor());
-            shape->moveRight(blockMap);
+            shape->moveRight();
             shape->drawShape(tft);
             //Serial.printf("AI: Moved shape right to X=%d.\n", shape->getBlock(0).getX());
         } else if (shapeX > currentMove.x && shape->isMovableToTheLeft(blockMap)) {
             shape->eraseShape(tft, displayManager.getBackgroundColor());
-            shape->moveLeft(blockMap);
+            shape->moveLeft();
             shape->drawShape(tft);
            // Serial.printf("AI: Moved shape left to X=%d.\n", shape->getBlock(0).getX());
         } else {
@@ -374,7 +374,7 @@ void Game::updateShapePosition(unsigned long currentTime) {
 
         if (shape->isMovableDownWards(blockMap)) {
             shape->eraseShape(tft, displayManager.getBackgroundColor());
-            shape->moveDown(blockMap);
+            shape->moveDown();
             shape->drawShape(tft);
         } else {
             finalizeShapePlacement();

@@ -11,6 +11,7 @@ public:
         int x;
         int rotation;
         double score;
+        bool rotateClockwise;
     };
 
     // Constructor and Destructor

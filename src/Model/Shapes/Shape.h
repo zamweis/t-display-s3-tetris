@@ -32,8 +32,8 @@ public:
     void setBlock(const Block& block, int index);
     int getXPosition(int index) const;
     int getYPosition(int index) const;
-    Block getLeftBlock();
-    Block getRightBlock();
+    Block getLeftBlock() const;
+    Block getRightBlock() const;
     Block getHighestBlock();
     Block getLowestBlock();
     Block getMaintBlock();
@@ -59,24 +59,23 @@ public:
     bool checkRotationValidity(int tmpRotatePosition, const BlockMap& blockMap) const;
     
     // Movement Management
-    bool isMovableToTheLeft(BlockMap& blockMap);
-    bool isMovableToTheRight(BlockMap& blockMap);
-    bool isMovableDownWards(BlockMap& blockMap);
-    void moveLeft(BlockMap& blockMap);
-    void moveRight(BlockMap& blockMap);
-    void moveDown(BlockMap& blockMap);
-    void fallDown(BlockMap& blockMap);
-    void moveToLowestBlockkAtMinusOne();
+    bool isMovableToTheLeft(const BlockMap& blockMap);
+    bool isMovableToTheRight(const BlockMap& blockMap);
+    bool isMovableDownWards(const BlockMap& blockMap);
     bool canMoveToPosition(int x, int y, const BlockMap& blockMap) const;
+    void moveLeft();
+    void moveRight();
+    void moveDown();
+    void fallDown(const BlockMap& blockMap);
+    void moveToLowestBlockkAtMinusOne();
 
     // Collision Detection
-    bool isInCollisionWithLeftBlock(const Block& block, BlockMap& blockMap);
-    bool isInCollisionWithRightBlock(const Block& block, BlockMap& blockMap);
-    bool isInCollisionWithLowerBlock(const Block& block, BlockMap& blockMap);
+    bool isInCollisionWithLeftBlock(const Block& block, const BlockMap& blockMap);
+    bool isInCollisionWithRightBlock(const Block& block, const BlockMap& blockMap);
+    bool isInCollisionWithLowerBlock(const Block& block, const BlockMap& blockMap);
 
     // Drawing and Erasing
-    void drawShape(TFT_eSPI& tft) const;
-    void drawShapeBorderOnly(TFT_eSPI& tft, int offset) const;
+    void drawShape(TFT_eSPI& tft) const;    void drawShapeBorderOnly(TFT_eSPI& tft, int offset) const;
     void eraseShape(TFT_eSPI& tft, uint16_t backgroundColor) const;
 
     // Static Accessors for Rotation Positions

@@ -34,47 +34,78 @@ void TetrisAI::printSimulationResults(int score, int linesCleared) {
                   linesCleared);
 }
 
-// Find the best move using heuristic evaluation
 TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& shape) {
-    Move bestMove = {0, 0, std::numeric_limits<double>::lowest()};
+    Move bestMove = {0, 0, std::numeric_limits<double>::lowest(), true};
     int currentRotation = shape.getRotatePosition(); // Get the current rotation of the shape
 
-    for (int rotation = 0; rotation < 4; ++rotation) {
+    for (int targetRotation = 0; targetRotation < 4; ++targetRotation) {
         Shape simulatedShape = shape;
 
-        // Calculate relative rotation steps
-        int rotationSteps = (rotation - currentRotation + 4) % 4;
+        // Determine the shortest rotation direction
+        int clockwiseSteps = (targetRotation - currentRotation + 4) % 4;
+        int anticlockwiseSteps = (currentRotation - targetRotation + 4) % 4;
+        bool rotateClockwise = clockwiseSteps <= anticlockwiseSteps;
 
-        for (int i = 0; i < rotationSteps; ++i) {
-            if (!simulatedShape.isRotatableClockwise(blockMap)) break;
-            simulatedShape.rotateClockwise(blockMap);
+        int stepsToRotate = rotateClockwise ? clockwiseSteps : anticlockwiseSteps;
+
+        // Apply the chosen rotation direction
+        for (int i = 0; i < stepsToRotate; ++i) {
+            if (rotateClockwise) {
+                if (!simulatedShape.rotateClockwise(blockMap)) break;
+            } else {
+                if (!simulatedShape.rotateAntiClockwise(blockMap)) break;
+            }
         }
 
-        int shapeMinX = simulatedShape.getLeftBlock().getX();
-        int shapeMaxX = simulatedShape.getRightBlock().getX();
+        // Get horizontal bounds based on the current rotation and shape position
+        auto [shapeMinX, shapeMaxX] = simulatedShape.getHorizontalBounds(blockMap);
         int mainBlockX = simulatedShape.getBlock(0).getX();
 
         int minX = mainBlockX - shapeMinX;
         int maxX = MAP_WIDTH - (shapeMaxX - mainBlockX) - 1;
 
         for (int x = minX; x <= maxX; ++x) {
-            if (!simulatedShape.canMoveToPosition(x, simulatedShape.getBlock(0).getY(), blockMap)) continue;
+            Shape testShape = simulatedShape; // Create a copy for movement simulation
 
+            // Step-by-step horizontal movement to check for collisions
+            bool canReach = true;
+            int currentX = testShape.getBlock(0).getX();
+            while (currentX != x) {
+                if (currentX < x) {
+                    if (!testShape.isMovableToTheRight(blockMap)) {
+                        canReach = false;
+                        break;
+                    }
+                    testShape.moveRight();
+                    currentX++;
+                } else {
+                    if (!testShape.isMovableToTheLeft(blockMap)) {
+                        canReach = false;
+                        break;
+                    }
+                    testShape.moveLeft();
+                    currentX--;
+                }
+            }
+
+            if (!canReach) continue; // Skip if the target position is not reachable
+
+            // Simulate the fall and evaluate the score
             BlockMap simulatedMap = blockMap;
-            simulatedShape.setPosition(x, simulatedShape.getBlock(0).getY());
-            simulatedShape.fallDown(simulatedMap);
-            simulatedMap.addBlocks(simulatedShape.getBlockList(), Shape::NUM_BLOCKS);
+            testShape.fallDown(simulatedMap);
+            simulatedMap.addBlocks(testShape.getBlockList(), Shape::NUM_BLOCKS);
 
             double score = calculateScore(simulatedMap);
 
             if (score > bestMove.score) {
-                bestMove = {x, rotation, score};
+                bestMove = {x, targetRotation, score, rotateClockwise};
             }
         }
     }
 
     return bestMove;
 }
+
 
 // Heuristic evaluation score calculation
 double TetrisAI::calculateScore(const BlockMap& blockMap) {
