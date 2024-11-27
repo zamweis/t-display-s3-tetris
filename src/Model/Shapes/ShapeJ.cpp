@@ -2,7 +2,8 @@
 
 ShapeJ::ShapeJ() : Shape() {
     uint16_t color = TFT_BLUE;
-
+    numRotations = 4;
+    rotatePos = random(0, numRotations);
     // Initialisierung Mainblock
     blockList[0] = Block(4, 0, color);
 

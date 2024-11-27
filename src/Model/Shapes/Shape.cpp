@@ -5,7 +5,7 @@
 #include <set>
 #include "Config.h"
 
-Shape::Shape() : rotatePos(random(0, ROTATEPOSITION3)) {}
+Shape::Shape() {}
 
 Shape::~Shape() {}
 

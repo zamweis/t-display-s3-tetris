@@ -2,12 +2,10 @@
 
 ShapeZ::ShapeZ() : Shape() {
     uint16_t color = TFT_RED;
-
+    numRotations = 2;
+    rotatePos = random(0, numRotations);
     // Initialisierung der Blöcke
     blockList[0] = Block(4, 0, color);
-    blockList[1] = Block(5, 0, color);
-    blockList[2] = Block(4, 0, color);
-    blockList[3] = Block(5, 0, color);
 
     // Rotationspunkte
     setPoint(0, 0, Point(1, -1));

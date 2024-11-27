@@ -5,9 +5,10 @@
 ShapeI::ShapeI() : Shape() {
     // Initialize rotation position
     uint16_t color = TFT_WHITE; // Example 16-bit color representation (yellow)
-
+    numRotations = 2;
+    rotatePos = random(0, numRotations);
     // Initialize blocks based on rotation position
-    if (rotatePos == ROTATEPOSITION1 || rotatePos == ROTATEPOSITION3) {
+    if (rotatePos == ROTATEPOSITION1) {
         blockList[0] = Block(5, -30, color);
     } else {
         blockList[0] = Block(5, -30, color);

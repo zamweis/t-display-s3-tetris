@@ -13,14 +13,24 @@
  */
 class Shape {
 public:
+    enum class ShapeType {
+        I,
+        O,
+        T,
+        S,
+        Z,
+        J,
+        L,
+        Unknown
+    };
     // Constants for rotation positions
     static constexpr int ROTATEPOSITION0 = 0;
     static constexpr int ROTATEPOSITION1 = 1;
     static constexpr int ROTATEPOSITION2 = 2;
     static constexpr int ROTATEPOSITION3 = 3;
 
-    static constexpr int NUM_BLOCKS = 4;    ///< Number of blocks in a shape
-    static constexpr int NUM_POSITIONS = 3; ///< Number of rotation positions
+    static constexpr int NUM_BLOCKS = 4;    // Number of blocks in a shape
+    static constexpr int NUM_POSITIONS = 3; // Number of rotation positions
 
     // Constructor and Destructor
     Shape();
@@ -47,6 +57,7 @@ public:
     int getWidth();
 
     // Rotation Management
+    int getNumRotations() const { return numRotations; }
     void setRotatePosition(int rotatePosition);
     int getRotatePosition() const;
     void rotate(BlockMap& blockMap, bool clockwise);
@@ -84,11 +95,16 @@ public:
     static int getROTATEPOSITION2();
     static int getROTATEPOSITION3();
 
+    virtual ShapeType getType() const {
+        return ShapeType::Unknown; // Default implementation for the base class
+    }
+
 protected:
     // Member Variables
-    Block blockList[NUM_BLOCKS]; ///< List of blocks comprising the shape
-    Point positions[NUM_BLOCKS][NUM_POSITIONS]; ///< Rotation offsets
-    int rotatePos; ///< Current rotation position
+    Block blockList[NUM_BLOCKS]; // List of blocks comprising the shape
+    Point positions[NUM_BLOCKS][NUM_POSITIONS]; // Rotation offsets
+    int rotatePos; // Current rotation position
+    int numRotations; // Number of rotations for the shape
 };
 
 #endif // SHAPE_H

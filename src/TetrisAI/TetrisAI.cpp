@@ -37,13 +37,14 @@ void TetrisAI::printSimulationResults(int score, int linesCleared) {
 TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& shape) {
     Move bestMove = {0, 0, std::numeric_limits<double>::lowest(), true};
     int currentRotation = shape.getRotatePosition(); // Get the current rotation of the shape
+    int totalRotations = shape.getNumRotations();
 
-    for (int targetRotation = 0; targetRotation < 4; ++targetRotation) {
+    for (int targetRotation = 0; targetRotation < totalRotations; ++targetRotation) {
         Shape simulatedShape = shape;
 
-        // Determine the shortest rotation direction
-        int clockwiseSteps = (targetRotation - currentRotation + 4) % 4;
-        int anticlockwiseSteps = (currentRotation - targetRotation + 4) % 4;
+        // Normalize rotations
+        int clockwiseSteps = (targetRotation - currentRotation + totalRotations) % totalRotations;
+        int anticlockwiseSteps = (currentRotation - targetRotation + totalRotations) % totalRotations;
         bool rotateClockwise = clockwiseSteps <= anticlockwiseSteps;
 
         int stepsToRotate = rotateClockwise ? clockwiseSteps : anticlockwiseSteps;
@@ -51,9 +52,15 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
         // Apply the chosen rotation direction
         for (int i = 0; i < stepsToRotate; ++i) {
             if (rotateClockwise) {
-                if (!simulatedShape.rotateClockwise(blockMap)) break;
+                if (!simulatedShape.rotateClockwise(blockMap)) {
+                    //Serial.println("Debug: Clockwise rotation blocked.");
+                    break;
+                }
             } else {
-                if (!simulatedShape.rotateAntiClockwise(blockMap)) break;
+                if (!simulatedShape.rotateAntiClockwise(blockMap)) {
+                    //Serial.println("Debug: Anti-clockwise rotation blocked.");
+                    break;
+                }
             }
         }
 
@@ -102,6 +109,11 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
             }
         }
     }
+
+    // Debug: Log the best move
+    //Serial.printf("Debug: BestMove -> X=%d, Rotation=%d, Score=%.2f, RotateClockwise=%s\n",
+    //              bestMove.x, bestMove.rotation, bestMove.score,
+    //              bestMove.rotateClockwise ? "true" : "false");
 
     return bestMove;
 }

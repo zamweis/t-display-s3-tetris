@@ -7,6 +7,9 @@
 class ShapeZ : public Shape {
 public:
     ShapeZ();
+    ShapeType getType() const override {
+        return ShapeType::Z;
+    }
 };
 
 #endif // SHAPEZ_H

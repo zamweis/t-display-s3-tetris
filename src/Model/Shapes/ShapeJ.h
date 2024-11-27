@@ -15,6 +15,9 @@ public:
      * Initializes the J-shaped tetromino.
      */
     ShapeJ();
+    ShapeType getType() const override {
+        return ShapeType::J;
+    }
 };
 
 #endif // SHAPEJ_H

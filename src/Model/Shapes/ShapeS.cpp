@@ -2,12 +2,10 @@
 
 ShapeS::ShapeS() : Shape() {
     uint16_t color = TFT_GREEN;
-
+    numRotations = 2;
+    rotatePos = random(0, numRotations);
     // Initialisierung der Blöcke
     blockList[0] = Block(4, 0, color);
-    blockList[1] = Block(5, 0, color);
-    blockList[2] = Block(5, -1, color);
-    blockList[3] = Block(6, -1, color);
 
     // Rotationspunkte
     setPoint(0, 0, Point(0, -1));

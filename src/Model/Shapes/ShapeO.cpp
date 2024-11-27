@@ -2,7 +2,8 @@
 
 ShapeO::ShapeO() : Shape() {
     uint16_t color = TFT_YELLOW;
-
+    numRotations = 1;
+    rotatePos = random(0, numRotations);
     blockList[0] = Block(4, -2, color);
 
     for (int i = 0; i < 4; ++i) {

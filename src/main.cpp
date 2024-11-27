@@ -30,6 +30,4 @@ void setup() {
 }
 
 void loop() {
-    // Normal game loop
-    game.loop();
 }

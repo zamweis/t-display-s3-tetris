@@ -15,6 +15,9 @@ public:
      * Initializes the S-shaped tetromino.
      */
     ShapeS();
+    ShapeType getType() const override {
+        return ShapeType::S;
+    }
 };
 
 #endif // SHAPES_H

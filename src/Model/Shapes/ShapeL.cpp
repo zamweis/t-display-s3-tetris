@@ -2,7 +2,8 @@
 
 ShapeL::ShapeL() : Shape() {
     uint16_t color = TFT_ORANGE;
-
+    numRotations = 4;
+    rotatePos = random(0, numRotations);
     // Initialisierung der Blöcke
     blockList[0] = Block(4, 0, color);
 
