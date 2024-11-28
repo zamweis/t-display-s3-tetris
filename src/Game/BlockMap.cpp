@@ -5,109 +5,137 @@
 
 // Constructor
 BlockMap::BlockMap() {
-    std::fill(map, map + MAP_WIDTH * MAP_HEIGHT, nullptr);
+    for (int x = 0; x < MAP_WIDTH; ++x) {
+        for (int y = 0; y < MAP_HEIGHT; ++y) {
+            map[x][y] = nullptr;
+        }
+    }
 }
 
 // Destructor
 BlockMap::~BlockMap() {
-    for (Block* block : map) {
-        delete block;
+    for (int x = 0; x < MAP_WIDTH; ++x) {
+        for (int y = 0; y < MAP_HEIGHT; ++y) {
+            if (map[x][y] != nullptr) {
+                delete map[x][y];
+                map[x][y] = nullptr;
+            }
+        }
     }
 }
 
 // Copy Constructor
 BlockMap::BlockMap(const BlockMap& other) {
-    for (int i = 0; i < MAP_WIDTH * MAP_HEIGHT; ++i) {
-        map[i] = other.map[i] ? new Block(*other.map[i]) : nullptr;
+    for (int x = 0; x < MAP_WIDTH; ++x) {
+        for (int y = 0; y < MAP_HEIGHT; ++y) {
+            if (other.map[x][y] != nullptr) {
+                map[x][y] = new Block(*other.map[x][y]); // Deep copy
+            } else {
+                map[x][y] = nullptr;
+            }
+        }
     }
 }
 
 // Assignment Operator
 BlockMap& BlockMap::operator=(const BlockMap& other) {
-    if (this == &other) return *this;
-
-    // Clean up existing data
-    for (Block* block : map) {
-        delete block;
+    if (this != &other) {
+        // Free existing blocks
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            for (int y = 0; y < MAP_HEIGHT; ++y) {
+                delete map[x][y];
+                map[x][y] = nullptr;
+            }
+        }
+        // Copy new blocks
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            for (int y = 0; y < MAP_HEIGHT; ++y) {
+                if (other.map[x][y] != nullptr) {
+                    map[x][y] = new Block(*other.map[x][y]); // Deep copy
+                } else {
+                    map[x][y] = nullptr;
+                }
+            }
+        }
     }
-
-    // Copy data
-    for (int i = 0; i < MAP_WIDTH * MAP_HEIGHT; ++i) {
-        map[i] = other.map[i] ? new Block(*other.map[i]) : nullptr;
-    }
-
     return *this;
 }
 
 void BlockMap::addBlock(Block* block) {
-    if (block && block->getX() >= 0 && block->getX() < MAP_WIDTH &&
+    if (block != nullptr && block->getX() >= 0 && block->getX() < MAP_WIDTH &&
         block->getY() >= 0 && block->getY() < MAP_HEIGHT) {
-        int index = block->getY() * MAP_WIDTH + block->getX();
-        delete map[index];
-        map[index] = block;
+        // Free existing block memory (if any)
+        if (map[block->getX()][block->getY()] != nullptr) {
+            delete map[block->getX()][block->getY()]; // Prevent memory leaks
+        }
+        // Assign new block pointer
+        map[block->getX()][block->getY()] = block;
     } else {
-        delete block;
+        delete block; // Clean up the block if it's out of bounds
     }
 }
 
 void BlockMap::addBlocks(Block blockList[], int size) {
     for (int i = 0; i < size; ++i) {
-        addBlock(new Block(blockList[i]));
+        // Creating a copy using new is fine, but you must ensure ownership and proper cleanup
+        addBlock(new Block(blockList[i])); // Copy constructor should create a deep copy
     }
 }
 
 bool BlockMap::isFieldEmpty(int x, int y) const {
     if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
-        return map[y * MAP_WIDTH + x] == nullptr;
-    }
+        return map[x][y] == nullptr;
+    } 
+    // Fields outside the grid are seen as empty because this methode should only be used to check for collisions with other blocks
     return true;
 }
 
 // Gets the block at given coordinates
 Block* BlockMap::getBlock(int x, int y) const {
     if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
-        return map[y * MAP_WIDTH + x];
+        return map[x][y];
     }
     return nullptr;
 }
 
 // Removes a specific block from blockMap
 void BlockMap::removeBlock(Block* block) {
-    if (block && block->getX() >= 0 && block->getX() < MAP_WIDTH &&
+    if (block != nullptr && block->getX() >= 0 && block->getX() < MAP_WIDTH &&
         block->getY() >= 0 && block->getY() < MAP_HEIGHT) {
-        int index = block->getY() * MAP_WIDTH + block->getX();
-        delete map[index];
-        map[index] = nullptr;
+        delete map[block->getX()][block->getY()];
+        map[block->getX()][block->getY()] = nullptr;
     }
 }
 
 // Removes a block from blockMap by its coordinates
 void BlockMap::removeBlock(int x, int y) {
     if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
-        int index = y * MAP_WIDTH + x;
-        delete map[index];
-        map[index] = nullptr;
+        delete map[x][y];
+        map[x][y] = nullptr;
     }
 }
 
 // Clears all blocks in a given line
 void BlockMap::clearLine(int lineIndex, TFT_eSPI& tft, uint16_t backgroundColor) {
     if (lineIndex >= 0 && lineIndex < MAP_HEIGHT) {
-        int startIdx = lineIndex * MAP_WIDTH;
         for (int x = 0; x < MAP_WIDTH; ++x) {
-            map[startIdx + x]->draw(tft, backgroundColor); // Clear block graphics
-            delete map[startIdx + x];
-            map[startIdx + x] = nullptr; // Remove block
+            if (map[x][lineIndex] != nullptr) {
+                map[x][lineIndex]->draw(tft, backgroundColor); // Clear block graphics
+                delete map[x][lineIndex]; // Free memory
+                map[x][lineIndex] = nullptr; // Remove block
+            }
         }
     }
 }
 
+// Clears all blocks in a given line
 void BlockMap::clearLine(int lineIndex) {
     if (lineIndex >= 0 && lineIndex < MAP_HEIGHT) {
-        int startIdx = lineIndex * MAP_WIDTH;
         for (int x = 0; x < MAP_WIDTH; ++x) {
-            delete map[startIdx + x];
-            map[startIdx + x] = nullptr;
+            if (map[x][lineIndex] != nullptr) {
+                delete map[x][lineIndex]; // Free memory
+                map[x][lineIndex] = nullptr; // Remove block
+            }
         }
     }
 }
@@ -115,9 +143,10 @@ void BlockMap::clearLine(int lineIndex) {
 // Checks if a line is full
 bool BlockMap::isLineFull(int lineIndex) const {
     if (lineIndex >= 0 && lineIndex < MAP_HEIGHT) {
-        int startIdx = lineIndex * MAP_WIDTH;
         for (int x = 0; x < MAP_WIDTH; ++x) {
-            if (!map[startIdx + x]) return false;
+            if (isFieldEmpty(x, lineIndex)) {
+                return false;
+            }
         }
         return true;
     }
@@ -126,26 +155,22 @@ bool BlockMap::isLineFull(int lineIndex) const {
 
 bool BlockMap::isLineEmpty(int lineIndex) const {
     if (lineIndex >= 0 && lineIndex < MAP_HEIGHT) {
-        int startIdx = lineIndex * MAP_WIDTH;
         for (int x = 0; x < MAP_WIDTH; ++x) {
-            if (map[startIdx + x]) return false;
+            if (!isFieldEmpty(x, lineIndex)) {
+                return false; // A block is found, so the line is not empty
+            }
         }
-        return true;
+        return true; // No blocks found, so the line is empty
     }
-    return true;
+    return true; // Return true for out-of-bounds line index
 }
 
 // Moves a block down by one field
 void BlockMap::moveBlockDown(int x, int y) {
-    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y + 1 < MAP_HEIGHT) {
-        int currentIdx = y * MAP_WIDTH + x;
-        int targetIdx = currentIdx + MAP_WIDTH;
-
-        if (map[currentIdx]) {
-            map[targetIdx] = map[currentIdx];
-            map[currentIdx] = nullptr;
-            map[targetIdx]->setY(y + 1);
-        }
+    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y + 1 < MAP_HEIGHT && map[x][y] != nullptr) {
+        map[x][y + 1] = map[x][y];
+        map[x][y] = nullptr;
+        map[x][y + 1]->setY(y + 1);
     }
 }
 
@@ -263,60 +288,72 @@ int BlockMap::clearAndMoveAllFullLines2(const Shape& shape) {
     return totalClearedLines;
 }
 
+// Moves an entire line down by a specified number of lines
 void BlockMap::moveLineDown(int lineIndex, int rowsToMove) {
-    if (lineIndex >= 0 && lineIndex < MAP_HEIGHT && rowsToMove > 0) {
-        int startIdx = lineIndex * MAP_WIDTH;
-        int targetStartIdx = startIdx + rowsToMove * MAP_WIDTH;
+    // Debug: Check inputs
+    //Serial.printf("moveLineDown(lineIndex=%d, rowsToMove=%d)\n", lineIndex, rowsToMove);
 
-        for (int x = 0; x < MAP_WIDTH; ++x) {
-            if (targetStartIdx + x < MAP_WIDTH * MAP_HEIGHT) {
-                delete map[targetStartIdx + x];
-                map[targetStartIdx + x] = map[startIdx + x];
-                map[startIdx + x] = nullptr;
+    int targetIndex = lineIndex + rowsToMove;
+/*
+    // Ensure parameters are valid
+    if (lineIndex < 0 || targetIndex >= MAP_HEIGHT || rowsToMove <= 0) {
+        //Serial.println("Invalid parameters. Exiting moveLineDown.");
+        return;
+    }
+*/
+    // Debug: Valid parameters
+    //Serial.printf("Moving line %d to %d\n", lineIndex, targetIndex);
 
-                if (map[targetStartIdx + x]) {
-                    map[targetStartIdx + x]->setY((targetStartIdx + x) / MAP_WIDTH);
-                }
-            }
+    // Move each block in the line down
+    for (int x = 0; x < MAP_WIDTH; ++x) {
+        if (map[x][lineIndex] != nullptr) {
+            // Debug: Log block movement
+            //Serial.printf("Moving block at (%d, %d) to (%d, %d)\n", x, lineIndex, x, targetIndex);
+
+            // Move block to the target index
+            map[x][targetIndex] = map[x][lineIndex];
+            map[x][lineIndex] = nullptr; // Clear the original position
         }
     }
+    //Serial.println("Line moved successfully.");
 }
 
 void BlockMap::moveLineDown(int lineIndex, TFT_eSPI& tft, int rowsToMove, uint16_t backgroundColor) {
-    if (lineIndex < 0 || lineIndex >= MAP_HEIGHT || rowsToMove <= 0) {
+    // Debug: Check inputs
+    //Serial.printf("moveLineDown(lineIndex=%d, rowsToMove=%d)\n", lineIndex, rowsToMove);
+
+    int targetIndex = lineIndex + rowsToMove;
+/*
+    // Ensure parameters are valid
+    if (lineIndex < 0 || targetIndex >= MAP_HEIGHT || rowsToMove <= 0) {
         Serial.println("Invalid parameters. Exiting moveLineDown.");
         return;
     }
+*/
+    // Debug: Valid parameters
+    //Serial.printf("Moving line %d to %d\n", lineIndex, targetIndex);
 
-    int targetIndex = lineIndex + rowsToMove;
-    if (targetIndex >= MAP_HEIGHT) {
-        Serial.printf("Target index (%d) out of bounds. Skipping.\n", targetIndex);
-        return;
-    }
-
-    int startIdx = lineIndex * MAP_WIDTH;
-    int targetStartIdx = targetIndex * MAP_WIDTH;
-
+    // Move each block in the line down
     for (int x = 0; x < MAP_WIDTH; ++x) {
-        int currentIdx = startIdx + x;
-        int targetIdx = targetStartIdx + x;
+        if (map[x][lineIndex] != nullptr) {
+            // Debug: Log block movement
+            //Serial.printf("Moving block at (%d, %d) to (%d, %d)\n", x, lineIndex, x, targetIndex);
 
-        if (map[currentIdx] != nullptr) {
             // Clear the block's previous graphical position
-            map[currentIdx]->draw(tft, backgroundColor);
+            map[x][lineIndex]->draw(tft, backgroundColor);
 
             // Move block to the target index
-            map[targetIdx] = map[currentIdx];
-            map[currentIdx] = nullptr; // Clear the original position
+            map[x][targetIndex] = map[x][lineIndex];
+            map[x][lineIndex] = nullptr; // Clear the original position
 
             // Update the block's position and redraw it
-            map[targetIdx]->setY(targetIndex);
-            map[targetIdx]->draw(tft);
+            map[x][targetIndex]->setY(targetIndex);
+            map[x][targetIndex]->draw(tft);
         }
     }
-    Serial.printf("Line %d moved down by %d rows to %d.\n", lineIndex, rowsToMove, targetIndex);
-}
 
+    //Serial.println("Line moved successfully.");
+}
 
 // Clears all full lines and moves all lines above down by the number of cleared lines
 int BlockMap::getAmoutOfFullLines() const {
@@ -334,49 +371,30 @@ int BlockMap::getAmoutOfFullLines() const {
 
 void BlockMap::drawAllBlocks(TFT_eSPI& tft) {
     for (int y = 0; y < MAP_HEIGHT; ++y) {
-        int startIdx = y * MAP_WIDTH;
-
-        // Check if the line is empty
-        bool lineIsEmpty = true;
-        for (int x = 0; x < MAP_WIDTH; ++x) {
-            if (map[startIdx + x] != nullptr) {
-                lineIsEmpty = false;
-                break;
-            }
-        }
-        if (lineIsEmpty) {
+        if (isLineEmpty(y)) {
             continue; // Skip drawing this line if it is empty
         }
-
-        // Draw all blocks in the line
         for (int x = 0; x < MAP_WIDTH; ++x) {
-            Block* block = map[startIdx + x];
-            if (block != nullptr) {
-                block->draw(tft); // Draw the block if present
+            if (map[x][y] != nullptr) {
+                map[x][y]->draw(tft); // Draw the block if present
             }
         }
     }
 }
-
 
 bool BlockMap::checkGameOver() const {
     for (int x = 0; x < MAP_WIDTH; ++x) {
-        if (map[x] != nullptr) { // Top row corresponds to indices 0 to MAP_WIDTH - 1
-            return true; // Block found in the top row
+        if (map[x][0] != nullptr) { // If there's a block in the top row
+            return true;
         }
     }
-    return false; // No blocks in the top row
+    return false;
 }
 
 int BlockMap::getColumnHeight(int x) const {
-    if (x < 0 || x >= MAP_WIDTH) {
-        return 0; // Out-of-bounds column
-    }
-
     for (int y = 0; y < MAP_HEIGHT; ++y) {
-        int index = y * MAP_WIDTH + x;
-        if (map[index] != nullptr) {
-            return MAP_HEIGHT - y; // Height is measured from the bottom
+        if (map[x][y] != nullptr) {
+            return MAP_HEIGHT - y;
         }
     }
     return 0; // Column is empty
@@ -387,8 +405,7 @@ int BlockMap::getTotalHoles() const {
     for (int x = 0; x < MAP_WIDTH; ++x) {
         bool blockFound = false;
         for (int y = 0; y < MAP_HEIGHT; ++y) {
-            int index = y * MAP_WIDTH + x; // Calculate the 1D index
-            if (map[index] != nullptr) {
+            if (map[x][y] != nullptr) {
                 blockFound = true; // Start counting holes after the first block
             } else if (blockFound) {
                 totalHoles++; // Count holes only after encountering a block
@@ -415,9 +432,8 @@ void BlockMap::printBlockMap() const {
         Serial.print(y < 10 ? " " : ""); // Align single-digit rows
         Serial.print(y);
         Serial.print(" | ");
-        int rowStartIndex = y * MAP_WIDTH; // Start index for the row
         for (int x = 0; x < MAP_WIDTH; ++x) {
-            Serial.print(map[rowStartIndex + x] != nullptr ? "#" : ".");
+            Serial.print(map[x][y] != nullptr ? "#" : ".");
         }
         Serial.println();
     }

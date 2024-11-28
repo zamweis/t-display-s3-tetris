@@ -2,8 +2,7 @@
 #define BLOCKMAP_H
 #include <vector>
 #include "Model/Block.h"
-#include "Model/Block.h"
-#include <array> 
+
 // Forward declaration of Shape
 class Shape;
 
@@ -17,7 +16,7 @@ public:
     static constexpr int MAP_WIDTH = 10;
     static constexpr int MAP_HEIGHT = 19;
 
-    Block* map[MAP_WIDTH * MAP_HEIGHT] = {nullptr}; // Single contiguous array
+    Block* map[MAP_WIDTH][MAP_HEIGHT];
 
     // Block management
     void addBlock(Block* block);
