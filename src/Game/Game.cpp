@@ -7,6 +7,7 @@ TetrisAI::Move currentMove;
 bool isGravityActive = false;
 bool directionChosen = false;
 
+
 Game::Game(TFT_eSPI& tft, DisplayManager& displayManager, HighScoreManager& highScoreManager, InputHandler& inputHandler)
     : tft(tft), displayManager(displayManager), highScoreManager(highScoreManager), inputHandler(inputHandler),
       shape(nullptr), score(0), level(1), linesCleared(0), leftButtonState(IDLE), rightButtonState(IDLE),
@@ -409,7 +410,7 @@ void Game::finalizeShapePlacement() {
     blockMap.addBlocks(shape->getBlockList(), Shape::NUM_BLOCKS);
     //blockMap.printBlockMap();
 
-    int clearedLines = blockMap.clearAndMoveAllFullLines(tft, displayManager.getBackgroundColor());
+    int clearedLines = blockMap.clearAndMoveAllFullLines(tft, *shape, displayManager.getBackgroundColor());
     if (clearedLines > 0) {
        //Serial.printf("Lines cleared: %d\n", clearedLines);
         updateScoreAndLevel(clearedLines);
@@ -429,12 +430,13 @@ void Game::runSimulation(int numSimulations) {
         }
     }
 
-        int heightWeight = random(1, 10);
-        int holeWeight = random(1, 10);
-        int bumpinessWeight = random(1, 10);
-        int lineClearWeight = random(1, 10);
+        float heightWeight = randomFloat(1, 10);
+        float maxHeightWeight = randomFloat(1, 10);
+        float holeWeight = randomFloat(1, 10);
+        float bumpinessWeight = randomFloat(1, 10);
+        float lineClearWeight = randomFloat(1, 10);
         
-        tetrisAI.setWeights(heightWeight, holeWeight, bumpinessWeight, lineClearWeight);
+        tetrisAI.setWeights(heightWeight, maxHeightWeight, holeWeight, bumpinessWeight, lineClearWeight);
 
         resetGame();
         while (!blockMap.checkGameOver()) {
@@ -448,11 +450,13 @@ void Game::runSimulation(int numSimulations) {
 void Game::runSimulationGridSearch() {
     // Updated ranges based on your optimized weights
     float heightWeightRange[] = {-5.0, -4.0, -3.0};      // Penalize high stacks
+    float maxHeightWeightRange[] = {-5.0, -4.0, -3.0};      // Penalize high stacks
     float holeWeightRange[] = {-7.0, -6.0, -5.0};        // Penalize holes
     float bumpinessWeightRange[] = {-4.0, -3.0, -2.0};   // Penalize unevenness
     float lineClearWeightRange[] = {9.0, 10.0, 11.0};    // Reward clearing lines
 
     int numHeightWeights = sizeof(heightWeightRange) / sizeof(heightWeightRange[0]);
+    int numMaxHeightWeights = sizeof(maxHeightWeightRange) / sizeof(maxHeightWeightRange[0]);
     int numHoleWeights = sizeof(holeWeightRange) / sizeof(holeWeightRange[0]);
     int numBumpinessWeights = sizeof(bumpinessWeightRange) / sizeof(bumpinessWeightRange[0]);
     int numLineClearWeights = sizeof(lineClearWeightRange) / sizeof(lineClearWeightRange[0]);
@@ -465,6 +469,7 @@ void Game::runSimulationGridSearch() {
                     // Set weights
                     tetrisAI.setWeights(
                         heightWeightRange[h],
+                        1,
                         holeWeightRange[ho],
                         bumpinessWeightRange[b],
                         lineClearWeightRange[l]
@@ -488,166 +493,194 @@ void Game::runSimulationGridSearch() {
     Serial.println("Grid Search Completed.");
 }
 
+float Game::randomFloat(float min, float max) {
+    return min + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (max - min)));
+}
+
 void Game::runGeneticAlgorithm() {
     const int populationSize = 20;
     const int generations = 50;
-    const float mutationRate = 0.05f;
+    const float initialMutationRate = 0.1f;
+    const float finalMutationRate = 0.01f;
     const float crossoverRate = 0.8f;
+    const int eliteCount = 3; // Ensure top performers are preserved
 
-    // Weight ranges
-    const float minWeight = -10.0f;
-    const float maxWeight = 10.0f;
-
-    // Initialize population
     std::vector<Chromosome> population;
     for (int i = 0; i < populationSize; ++i) {
-        Chromosome chromo;
-        chromo.heightWeight = randomFloat(minWeight, maxWeight);
-        chromo.holeWeight = randomFloat(minWeight, maxWeight);
-        chromo.bumpinessWeight = randomFloat(minWeight, maxWeight);
-        chromo.lineClearWeight = randomFloat(minWeight, maxWeight);
-        chromo.score = 0;
-        chromo.linesCleared = 0;
+        Chromosome chromo = generateRandomChromosome();
         population.push_back(chromo);
     }
 
-    const float scoreWeight = 1.0f;  // Weight for the score
-    const float linesClearedWeight = 0.5f;  // Weight for lines cleared
-    const float gameOverPenalty = -1000.0f;  // Penalty for losing the game
-
-    // Evolve over generations
     for (int gen = 0; gen < generations; ++gen) {
         Serial.printf("Generation %d\n", gen + 1);
-
-        // Evaluate fitness of each chromosome
+        // Evaluate fitness
         for (auto& chromo : population) {
-            tetrisAI.setWeights(
-                chromo.heightWeight,
-                chromo.holeWeight,
-                chromo.bumpinessWeight,
-                chromo.lineClearWeight
-            );
-
-            resetGame();
-
-            while (!blockMap.checkGameOver()) {
-                if (!shape) {
-                    createNewShape();
-                } else {
-                    executeAIStep();
-                    if (!shape) {
-                        createNewShape();
-                    } else {
-                        unsigned long currentTime = millis();
-                        updateShapePosition(currentTime);
-                    }
-                }
-            }
-
-            chromo.score = score;
-            chromo.linesCleared = linesCleared;
-
-            // Calculate fitness
-            chromo.fitness = (scoreWeight * chromo.score) +
-                            (linesClearedWeight * chromo.linesCleared);
-
-            // Apply penalty for game over
-            if (blockMap.checkGameOver()) {
-                chromo.fitness += gameOverPenalty;
-            }
-
-            tetrisAI.printSimulationResults(score, linesCleared);
+            evaluateFitness(chromo);
+            tetrisAI.printSimulationResults(chromo.score, chromo.linesCleared);
         }
 
-        // Sort population based on fitness (e.g., score)
+        // Sort by fitness
         std::sort(population.begin(), population.end(), [](const Chromosome& a, const Chromosome& b) {
             return a.fitness > b.fitness;
         });
 
-        // Selection: Take top 50% as parents
-        int numParents = populationSize / 2;
-        std::vector<Chromosome> parents(population.begin(), population.begin() + numParents);
+        // Carry over elites
+        std::vector<Chromosome> newPopulation(population.begin(), population.begin() + eliteCount);
+
+        // Diversity Monitoring
+        float diversity = calculateDiversity(population);
+        Serial.printf("Generation %d | Diversity: %.2f\n", gen + 1, diversity);
+
+        // Adaptive Mutation
+        float mutationRate = initialMutationRate - gen * (initialMutationRate - finalMutationRate) / generations;
+        if (diversity < 0.1f) mutationRate *= 2.0f; // Boost mutation if diversity drops
 
         // Generate new population
-        std::vector<Chromosome> newPopulation;
-
         while (newPopulation.size() < populationSize) {
-            // Crossover
             if (randomFloat(0.0f, 1.0f) < crossoverRate) {
-                // Select two random parents
-                int parent1Idx = random(0, numParents);
-                int parent2Idx = random(0, numParents);
-
-                Chromosome offspring = crossover(parents[parent1Idx], parents[parent2Idx]);
-
-                // Mutation
-                mutate(offspring, mutationRate, minWeight, maxWeight);
-
+                int parent1Idx = random(0, populationSize / 2);
+                int parent2Idx = random(0, populationSize / 2);
+                Chromosome offspring = crossover(population[parent1Idx], population[parent2Idx]);
+                mutate(offspring, mutationRate);
                 newPopulation.push_back(offspring);
             } else {
-                // Copy parent without changes
-                int parentIdx = random(0, numParents);
-                newPopulation.push_back(parents[parentIdx]);
+                int parentIdx = random(0, populationSize / 2);
+                newPopulation.push_back(population[parentIdx]);
+            }
+        }
+
+        // Periodic Random Injection
+        if (gen % 10 == 0) {
+            for (int i = 0; i < eliteCount; ++i) {
+                newPopulation[random() % populationSize] = generateRandomChromosome();
             }
         }
 
         population = newPopulation;
     }
 
-    // After the last generation, output the best chromosome
     Chromosome bestChromo = population[0];
-    Serial.println("Best Weights Found:");
-    Serial.printf("HeightWeight: %.2f, HoleWeight: %.2f, BumpinessWeight: %.2f, LineClearWeight: %.2f\n",
-                  bestChromo.heightWeight, bestChromo.holeWeight, bestChromo.bumpinessWeight, bestChromo.lineClearWeight);
-    Serial.printf("Score: %d, Lines Cleared: %d\n", bestChromo.score, bestChromo.linesCleared);
+    Serial.printf("Best Weights: HeightWeight: %.2f, HoleWeight: %.2f, BumpinessWeight: %.2f, LineClearWeight: %.2f, MaxHeightWeight: %.2f\n",
+                  bestChromo.heightWeight, bestChromo.holeWeight, bestChromo.bumpinessWeight,
+                  bestChromo.lineClearWeight, bestChromo.maxHeightWeight);
 }
 
+void Game::mutate(Chromosome& chromo, float mutationRate) {
+    // Adjust mutation range for finer tuning
+    const float explorationFactor = 0.2f; // Controls the extent of exploration
 
-float Game::randomFloat(float min, float max) {
-    return min + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (max - min)));
+    if (randomFloat(0.0f, 1.0f) < mutationRate) {
+        // Mutate heightWeight with some randomness
+        float adjustment = randomFloat(-explorationFactor, explorationFactor);
+        chromo.heightWeight += adjustment;
+        chromo.heightWeight = clamp(chromo.heightWeight, heightWeightMin, heightWeightMax);
+    }
+    if (randomFloat(0.0f, 1.0f) < mutationRate) {
+        // Mutate holeWeight with some randomness
+        float adjustment = randomFloat(-explorationFactor, explorationFactor);
+        chromo.holeWeight += adjustment;
+        chromo.holeWeight = clamp(chromo.holeWeight, holeWeightMin, holeWeightMax);
+    }
+    if (randomFloat(0.0f, 1.0f) < mutationRate) {
+        // Mutate bumpinessWeight with some randomness
+        float adjustment = randomFloat(-explorationFactor, explorationFactor);
+        chromo.bumpinessWeight += adjustment;
+        chromo.bumpinessWeight = clamp(chromo.bumpinessWeight, bumpinessWeightMin, bumpinessWeightMax);
+    }
+    if (randomFloat(0.0f, 1.0f) < mutationRate) {
+        // Mutate lineClearWeight with some randomness
+        float adjustment = randomFloat(-explorationFactor, explorationFactor);
+        chromo.lineClearWeight += adjustment;
+        chromo.lineClearWeight = clamp(chromo.lineClearWeight, lineClearWeightMin, lineClearWeightMax);
+    }
+    if (randomFloat(0.0f, 1.0f) < mutationRate) {
+        // Mutate maxHeightWeight with some randomness
+        float adjustment = randomFloat(-explorationFactor, explorationFactor);
+        chromo.maxHeightWeight += adjustment;
+        chromo.maxHeightWeight = clamp(chromo.maxHeightWeight, maxHeightWeightMin, maxHeightWeightMax);
+    }
 }
 
 Game::Chromosome Game::crossover(const Chromosome& parent1, const Chromosome& parent2) {
     Chromosome offspring;
-    // Single-point crossover
-    int crossoverPoint = random(1, 4); // Between 1 and 3
-    switch (crossoverPoint) {
-        case 1:
-            offspring.heightWeight = parent1.heightWeight;
-            offspring.holeWeight = parent2.holeWeight;
-            offspring.bumpinessWeight = parent2.bumpinessWeight;
-            offspring.lineClearWeight = parent2.lineClearWeight;
-            break;
-        case 2:
-            offspring.heightWeight = parent1.heightWeight;
-            offspring.holeWeight = parent1.holeWeight;
-            offspring.bumpinessWeight = parent2.bumpinessWeight;
-            offspring.lineClearWeight = parent2.lineClearWeight;
-            break;
-        case 3:
-            offspring.heightWeight = parent1.heightWeight;
-            offspring.holeWeight = parent1.holeWeight;
-            offspring.bumpinessWeight = parent1.bumpinessWeight;
-            offspring.lineClearWeight = parent2.lineClearWeight;
-            break;
-        default:
-            offspring = parent1; // In case of error, copy parent1
-            break;
-    }
+
+    // Blend crossover: Combine weights from both parents with random weighting
+    offspring.heightWeight = randomFloat(0.4f, 0.6f) * parent1.heightWeight +
+                             (1.0f - randomFloat(0.4f, 0.6f)) * parent2.heightWeight;
+
+    offspring.holeWeight = randomFloat(0.4f, 0.6f) * parent1.holeWeight +
+                           (1.0f - randomFloat(0.4f, 0.6f)) * parent2.holeWeight;
+
+    offspring.bumpinessWeight = randomFloat(0.4f, 0.6f) * parent1.bumpinessWeight +
+                                (1.0f - randomFloat(0.4f, 0.6f)) * parent2.bumpinessWeight;
+
+    offspring.lineClearWeight = randomFloat(0.4f, 0.6f) * parent1.lineClearWeight +
+                                (1.0f - randomFloat(0.4f, 0.6f)) * parent2.lineClearWeight;
+
+    offspring.maxHeightWeight = randomFloat(0.4f, 0.6f) * parent1.maxHeightWeight +
+                                (1.0f - randomFloat(0.4f, 0.6f)) * parent2.maxHeightWeight;
+
+    // Clamp offspring weights to valid ranges
+    offspring.heightWeight = clamp(offspring.heightWeight, heightWeightMin, heightWeightMax);
+    offspring.holeWeight = clamp(offspring.holeWeight, holeWeightMin, holeWeightMax);
+    offspring.bumpinessWeight = clamp(offspring.bumpinessWeight, bumpinessWeightMin, bumpinessWeightMax);
+    offspring.lineClearWeight = clamp(offspring.lineClearWeight, lineClearWeightMin, lineClearWeightMax);
+    offspring.maxHeightWeight = clamp(offspring.maxHeightWeight, maxHeightWeightMin, maxHeightWeightMax);
+
     return offspring;
 }
 
-void Game::mutate(Chromosome& chromo, float mutationRate, float minWeight, float maxWeight) {
-    if (randomFloat(0.0f, 1.0f) < mutationRate) {
-        chromo.heightWeight = randomFloat(minWeight, maxWeight);
+float Game::clamp(float value, float minValue, float maxValue) {
+    if (value < minValue) return minValue;
+    if (value > maxValue) return maxValue;
+    return value;
+}
+
+Game::Chromosome Game::generateRandomChromosome() {
+    Chromosome chromo;
+    chromo.heightWeight = randomFloat(heightWeightMin, heightWeightMax);
+    chromo.holeWeight = randomFloat(holeWeightMin, holeWeightMax);
+    chromo.bumpinessWeight = randomFloat(bumpinessWeightMin, bumpinessWeightMax);
+    chromo.lineClearWeight = randomFloat(lineClearWeightMin, lineClearWeightMax);
+    chromo.maxHeightWeight = randomFloat(maxHeightWeightMin, maxHeightWeightMax);
+    return chromo;
+}
+
+void Game::evaluateFitness(Chromosome& chromo) {
+    tetrisAI.setWeights(
+        chromo.heightWeight,
+        chromo.maxHeightWeight,
+        chromo.holeWeight,
+        chromo.bumpinessWeight,
+        chromo.lineClearWeight
+    );
+
+    resetGame();
+
+    while (!blockMap.checkGameOver()) {
+        if (!shape) createNewShape();
+        else executeAIStep();
     }
-    if (randomFloat(0.0f, 1.0f) < mutationRate) {
-        chromo.holeWeight = randomFloat(minWeight, maxWeight);
+
+    chromo.score = score;
+    chromo.linesCleared = linesCleared;
+    chromo.fitness = (chromo.score * 1.0f) + (chromo.linesCleared * 0.5f) - (blockMap.checkGameOver() ? 1000.0f : 0);
+}
+
+float Game::calculateDiversity(const std::vector<Chromosome>& population) {
+    float diversity = 0.0f;
+    for (size_t i = 0; i < population.size(); ++i) {
+        for (size_t j = i + 1; j < population.size(); ++j) {
+            diversity += calculateChromosomeDifference(population[i], population[j]);
+        }
     }
-    if (randomFloat(0.0f, 1.0f) < mutationRate) {
-        chromo.bumpinessWeight = randomFloat(minWeight, maxWeight);
-    }
-    if (randomFloat(0.0f, 1.0f) < mutationRate) {
-        chromo.lineClearWeight = randomFloat(minWeight, maxWeight);
-    }
+    return diversity / (population.size() * (population.size() - 1) / 2);
+}
+
+float Game::calculateChromosomeDifference(const Chromosome& a, const Chromosome& b) {
+    return fabs(a.heightWeight - b.heightWeight) +
+           fabs(a.holeWeight - b.holeWeight) +
+           fabs(a.bumpinessWeight - b.bumpinessWeight) +
+           fabs(a.lineClearWeight - b.lineClearWeight) +
+           fabs(a.maxHeightWeight - b.maxHeightWeight);
 }

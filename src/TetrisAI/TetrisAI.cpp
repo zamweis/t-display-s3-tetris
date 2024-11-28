@@ -16,8 +16,9 @@ TetrisAI::TetrisAI()
 TetrisAI::~TetrisAI() {}
 
 // Method to set weights
-void TetrisAI::setWeights(float heightWeight, float holeWeight, float bumpinessWeight, float lineClearWeight) {
+void TetrisAI::setWeights(float heightWeight, float maxHeightWeight, float holeWeight, float bumpinessWeight, float lineClearWeight) {
     this->heightWeight = heightWeight;
+    this->maxHeightWeight = maxHeightWeight;
     this->holeWeight = holeWeight;
     this->bumpinessWeight = bumpinessWeight;
     this->lineClearWeight = lineClearWeight;
@@ -102,7 +103,8 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
             testShape.fallDown(simulatedMap);
             simulatedMap.addBlocks(testShape.getBlockList(), Shape::NUM_BLOCKS);
 
-            double score = calculateScore(simulatedMap);
+            double linesCleared = simulatedMap.clearAndMoveAllFullLines2(testShape);
+            double score = calculateScore(simulatedMap, linesCleared);
 
             if (score > bestMove.score) {
                 bestMove = {x, targetRotation, score, rotateClockwise};
@@ -119,11 +121,11 @@ TetrisAI::Move TetrisAI::findBestMove(const BlockMap& blockMap, const Shape& sha
 }
 
 
-double TetrisAI::calculateScore(const BlockMap& blockMap) {
+double TetrisAI::calculateScore(const BlockMap& blockMap, double linesCleared) {
     double totalHeight = 0.0;
     double holes = 0.0;
     double bumpiness = 0.0;
-    double clearedLines = static_cast<double>(blockMap.getAmoutOfFullLines());
+    double clearedLines = linesCleared;
     int previousHeight = 0;
 
     for (int x = 0; x < BlockMap::MAP_WIDTH; ++x) {

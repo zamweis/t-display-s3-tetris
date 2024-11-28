@@ -2,7 +2,8 @@
 #define BLOCKMAP_H
 #include <vector>
 #include "Model/Block.h"
-
+#include "Model/Block.h"
+#include <array> 
 // Forward declaration of Shape
 class Shape;
 
@@ -16,7 +17,7 @@ public:
     static constexpr int MAP_WIDTH = 10;
     static constexpr int MAP_HEIGHT = 19;
 
-    Block* map[MAP_WIDTH][MAP_HEIGHT];
+    Block* map[MAP_WIDTH * MAP_HEIGHT] = {nullptr}; // Single contiguous array
 
     // Block management
     void addBlock(Block* block);
@@ -29,10 +30,13 @@ public:
 
     // Line operations
     void clearLine(int lineIndex, TFT_eSPI& tft, uint16_t backgroundColor);
+    void clearLine(int lineIndex);
     bool isLineFull(int lineIndex) const;
     bool isLineEmpty(int lineIndex) const;
     void moveLineDown(int lineIndex, TFT_eSPI& tft, int amountOfLines, uint16_t backgroundColor);
-    int clearAndMoveAllFullLines(TFT_eSPI& tft, uint16_t backgroundColor);
+    void moveLineDown(int lineIndex, int amountOfLines);
+    int clearAndMoveAllFullLines(TFT_eSPI& tft, const Shape& shape, uint16_t backgroundColor);
+    int clearAndMoveAllFullLines2(const Shape& shape);
     
     // AI-specific utility methods
     int getColumnHeight(int x) const; // Returns the height of a specified column

@@ -17,8 +17,7 @@ public:
     // Constructor and Destructor
     TetrisAI();
     ~TetrisAI();
-
-    void setWeights(float heightWeight, float holeWeight, float bumpinessWeight, float lineClearWeight);
+    void setWeights(float heightWeight, float maxHeightWeight, float holeWeight, float bumpinessWeight, float lineClearWeight);
     void printSimulationResults(int score, int linesCleared);
 
     // Method to find the best move given the current state of the game
@@ -32,6 +31,7 @@ private:
     float holeRightExponent = 1.5;   // Exponent for holes right of blocks
 
     // Heuristic weights (can be adjusted for different AI behavior)
+    float maxHeightWeight;
     double lineClearWeight;
     double heightWeight;
     double holeWeight;
@@ -39,7 +39,7 @@ private:
 
     void adjustHeuristicWeights(const BlockMap& blockMap); // Dynamically adjust weights
     double evaluatePlacement(const BlockMap& blockMap, const Shape& shape, int x, int rotation);
-    double calculateScore(const BlockMap& blockMap);
+    double calculateScore(const BlockMap& blockMap, double linesCleared);
 };
 
 #endif // TETRISAI_H

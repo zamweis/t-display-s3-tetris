@@ -44,8 +44,8 @@ public:
     int getYPosition(int index) const;
     Block getLeftBlock() const;
     Block getRightBlock() const;
-    Block getHighestBlock();
-    Block getLowestBlock();
+    Block getHighestBlock() const;
+    Block getLowestBlock() const;
     Block getMaintBlock();
     void generateShape();
 

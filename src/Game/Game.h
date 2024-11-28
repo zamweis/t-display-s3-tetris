@@ -63,19 +63,26 @@ private:
     void finalizeShapePlacement();
 
     // GA helper methods and structures
+    // In Game.h or a relevant header file
     struct Chromosome {
         float heightWeight;
         float holeWeight;
         float bumpinessWeight;
         float lineClearWeight;
-        int score;
-        int linesCleared;
-        float fitness; // Fitness value for genetic selection
+        float maxHeightWeight;
+        float score;
+        float linesCleared;
+        float fitness;
     };
 
     float randomFloat(float min, float max);
     Chromosome crossover(const Chromosome& parent1, const Chromosome& parent2);
-    void mutate(Chromosome& chromo, float mutationRate, float minWeight, float maxWeight);
+    void mutate(Chromosome& chromo, float mutationRate);
+    Chromosome generateRandomChromosome();
+    void evaluateFitness(Chromosome& chromo);
+    float calculateDiversity(const std::vector<Chromosome>& population);
+    float calculateChromosomeDifference(const Chromosome& a, const Chromosome& b);
+    float clamp(float value, float minValue, float maxValue);
 };
 
 #endif // GAME_H

@@ -275,7 +275,7 @@ void Shape::moveRight() {
     }
 }
 
-Block Shape::getLowestBlock() {
+Block Shape::getLowestBlock() const {
     Block lowestBlock = blockList[0];
     for (int i = 1; i < NUM_BLOCKS; ++i) {
         if (lowestBlock.getY() < blockList[i].getY()) {
@@ -285,7 +285,7 @@ Block Shape::getLowestBlock() {
     return lowestBlock;
 }
 
-Block Shape::getHighestBlock() {
+Block Shape::getHighestBlock() const {
     Block highestBlock = blockList[0];
     for (int i = 1; i < NUM_BLOCKS; ++i) {
         if (highestBlock.getY() > blockList[i].getY()) {

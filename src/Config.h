@@ -36,4 +36,11 @@ constexpr int maxHighScores = 15;  // Ensure this is constexpr
 // Level speed table (values in milliseconds)
 constexpr int levelSpeeds[] = {250};
 
+// Weight ranges
+constexpr float heightWeightMin = -10.0f, heightWeightMax = 0.0f;   // Wide range to explore extremes
+constexpr float holeWeightMin = -12.0f, holeWeightMax = 0.0f;      // Significant exploration around -5.80
+constexpr float bumpinessWeightMin = -10.0f, bumpinessWeightMax = 0.0f; // Wide range around -4.51
+constexpr float lineClearWeightMin = -15.0f, lineClearWeightMax = 0.0f; // Extremely broad to allow novel solutions
+constexpr float maxHeightWeightMin = -2.0f, maxHeightWeightMax = 4.0f;  // Larger range around 0.12
+
 #endif // CONFIG_H
